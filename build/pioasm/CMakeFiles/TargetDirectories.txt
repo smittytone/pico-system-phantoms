@@ -1,0 +1,3 @@
+/Users/smitty/GitHub/pico-system-phantoms/build/pioasm/CMakeFiles/rebuild_cache.dir
+/Users/smitty/GitHub/pico-system-phantoms/build/pioasm/CMakeFiles/edit_cache.dir
+/Users/smitty/GitHub/pico-system-phantoms/build/pioasm/CMakeFiles/pioasm.dir
