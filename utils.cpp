@@ -9,7 +9,7 @@
  */
 #include "main.h"
 
-using namespace PicoSystem
+using namespace picosystem;
 
 uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
 
@@ -20,7 +20,7 @@ namespace Utils {
     https://github.com/MersenneTwister-Lab/TinyMT
     Generate a PRG between 0 and max-1 then add start,
     eg. 10, 20 -> range 10-29
- 
+
  */
 int irandom(int start, int max) {
     uint32_t value = tinymt32_generate_uint32(&tinymt_store);

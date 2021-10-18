@@ -9,7 +9,7 @@
  */
 #include "main.h"
 
-using namespace Picosystem;
+using namespace picosystem;
 
 namespace Gfx {
 
@@ -191,11 +191,23 @@ void draw_far_wall(uint8_t frame_index) {
 /*
     Draw the laser sight: big cross on the screen.
  */
-void Gfx::draw_reticule() {
+void draw_reticule() {
     pen(1,1,0);
     line(100, 120, 140, 120);
     line(120, 100, 120, 140);
 }
 
+
+void draw_zap() {
+
+}
+
+void animate_turn(bool is_right) {
+
+}
+
+void draw_phantom(uint8_t frame_number, uint8_t* phantom_count) {
+
+}
 
 }   // namespace Gfx

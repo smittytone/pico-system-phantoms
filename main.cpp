@@ -12,6 +12,9 @@
 using namespace picosystem;
 
 
+uint8_t count = 0;
+
+
 void init() {
     // Use for debugging
     stdio_init_all();
@@ -46,22 +49,22 @@ void update(uint32_t time_ms) {
         default:
             // The game is afoot!
             // NOTE Return as quickly as possible
-            
+
             // Was a key tapped?
             uint8_t key = Utils::inkey();
-            
+
             if (key > 0x0F) {
                 // A move key has been pressed
                 uint8_t dir = get_direction(key);
                 uint8_t nx = game.player.x;
                 uint8_t ny = game.player.y;
-                
+
                 if (dir == MOVE_FORWARD || dir == MOVE_BACKWARD) {
                     // Move player forward or backward if we can
-                    if (player_direction == DIRECTION_NORTH) ny += (dir == MOVE_FORWARD ? -1 : 1);
-                    if (player_direction == DIRECTION_SOUTH) ny += (dir == MOVE_FORWARD ? 1 : -1);
-                    if (player_direction == DIRECTION_EAST) nx += (dir == MOVE_FORWARD ? 1 : -1);
-                    if (player_direction == DIRECTION_WEST) nx += (dir == MOVE_FORWARD ? -1 : 1);
+                    if (game.player.direction == DIRECTION_NORTH) ny += (dir == MOVE_FORWARD ? -1 : 1);
+                    if (game.player.direction == DIRECTION_SOUTH) ny += (dir == MOVE_FORWARD ? 1 : -1);
+                    if (game.player.direction == DIRECTION_EAST) nx += (dir == MOVE_FORWARD ? 1 : -1);
+                    if (game.player.direction == DIRECTION_WEST) nx += (dir == MOVE_FORWARD ? -1 : 1);
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
                         // Has the player walked up to a Phantom?
@@ -77,15 +80,15 @@ void update(uint32_t time_ms) {
                     }
                 } else if (dir == TURN_RIGHT) {
                     // Turn player right
-                    ++player_direction;
-                    if (player_direction > DIRECTION_WEST) player_direction = DIRECTION_NORTH;
+                    ++game.player.direction;
+                    if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_NORTH;
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) Gfx::animate_turn(false);
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
-                    --player_direction;
-                    if (player_direction > DIRECTION_WEST) player_direction = DIRECTION_WEST;
+                    --game.player.direction;
+                    if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_WEST;
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) Gfx::animate_turn(true);
@@ -100,7 +103,7 @@ void update(uint32_t time_ms) {
                     }
                 }
             }
-            
+
             // Check for firing
             // NOTE This uses separate code because it requires the button
             //      to be held down (fire on release)
@@ -123,30 +126,30 @@ void update(uint32_t time_ms) {
                 }
             }
     }
-    
+
     // Manage and draw the world
     update_world();
 }
 
 
 void draw() {
-    
+
     if (game.state == IN_PLAY) {
         // Render the screen
         if (chase_mode) {
             Gfx::draw_screen(game.phantoms[0].x, game.phantoms[0].y, game.phantoms[0].direction);
         } else if (map_mode) {
-            Gfx::draw_map(0, true);
+            Map::draw(0, true);
         } else {
             Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
         }
-        
+
         // Is the laser being fired?
-        if (game.in_play && game.is_firing) {
+        if (game.is_firing) {
             game.is_firing = false;
             fire_laser();
         }
-        
+
         // Has the player primed the laser? If so show the crosshair
         if (game.show_reticule) {
             Gfx::draw_reticule();
@@ -159,10 +162,32 @@ void draw() {
  *      INITIALISATION FUNCTIONS
  */
 void setup() {
-
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, adc_read());
+    //tinymt32_init(&tinymt_store, adc_read());
+
+    // Make the graphic frame rects
+    // NOTE These are pixel values:
+    //      left, top, width, height, Phantom lateral offset
+    uint8_t coords[] = { 0,    0, 240, 160, 60,     // Outer LED frame
+                         20,   9, 200, 142, 50,
+                         45,  20, 150, 120, 38,
+                         67,  30, 106, 100, 26,
+                         88,  39,  64,  82, 20,
+                         103, 46,  34,  68,  8,
+                         113, 58,  14,  60,  2};    // 'End wall' for distant views
+
+    // Read the array values into Rect structures
+    uint8_t c = 0;
+    for (uint8_t i = 0 ; i < sizeof(coords) ; i += 5) {
+        Rect a_rect;
+        a_rect.x = coords[i];
+        a_rect.y = coords[i + 1];
+        a_rect.width = coords[i + 2];
+        a_rect.height = coords[i + 3];
+        a_rect.spot = coords[i + 4];
+        rects[c++] = a_rect;
+    }
 }
 
 
@@ -269,8 +294,8 @@ void create_world() {
             }
         }
     }
-    
-    game.phantoms.append(p);
+
+    game.phantoms.push_back(p);
 
     /* TEST DATA
     player_x = 0;
@@ -314,8 +339,8 @@ void update_world() {
     Move all the current Phantoms
 */
 void move_phantoms() {
-    for (uint8_t i = 0 ; i < game.phatoms.size() ; ++i) {
-        game.phatoms[i].move();
+    for (uint8_t i = 0 ; i < game.phantoms.size() ; ++i) {
+        game.phantoms[i].move();
     }
 }
 
@@ -335,7 +360,7 @@ void manage_phantoms() {
         if (game.level_kills == game.level) {
             game.level_kills = 0;
             ++game.level;
-            ++game.phantoms;
+            ++game.phantom_count;
             level_up = true;
         }
     } else {
@@ -353,12 +378,12 @@ void manage_phantoms() {
     }
 
     // Just in case...
-    if (game.phantoms > MAX_PHANTOMS) game.phantoms = MAX_PHANTOMS;
+    if (game.phantom_count > MAX_PHANTOMS) game.phantom_count = MAX_PHANTOMS;
 
     // Do we need to add any new phantoms to the board?
     if (game.phantoms.size() < game.phantom_count) {
         Phantom p = Phantom();
-        game.phantoms.append(p);
+        game.phantoms.push_back(p);
     }
 }
 
@@ -415,7 +440,7 @@ void do_teleport() {
 void fire_laser() {
     // Show the zap
     Gfx::draw_zap();
-    
+
     // Did we hit a Phantom?
     uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
     if (n != ERROR_CONDITION) {
@@ -439,13 +464,13 @@ void fire_laser() {
             // tone(600, 100, 200);
 
             // Quickly show the map
-            ssd1306_clear();
-            show_scores();
+            //ssd1306_clear();
+            //show_scores();
             sleep_ms(MAP_POST_KILL_SHOW_MS);
 
             // Take the dead phantom off the board
             // (so it gets re-rolled in 'managePhantoms()')
-            game.phantoms.remove(n);
+            game.phantoms.erase(game.phantoms.begin() + n);
         }
     }
 
@@ -487,14 +512,17 @@ void death() {
     Get player movement action from the joypad
     Favour movement over rotation
  */
-uint8_t get_direction(uint8_t key_pressed) {
-    if (key & 0x10) return MOVE_FORWARD;
-    if (key & 0x20) return MOVE_BACKWARD;
-    if (key & 0x40) return TURN_LEFT;
-    if (key & 0x80) return TURN_RIGHT;
-    
+uint8_t get_direction(uint8_t keys_pressed) {
+    if (keys_pressed & 0x10) return MOVE_FORWARD;
+    if (keys_pressed & 0x20) return MOVE_BACKWARD;
+    if (keys_pressed & 0x40) return TURN_LEFT;
+    if (keys_pressed & 0x80) return TURN_RIGHT;
+
     // Just in case
     return ERROR_CONDITION;
 }
 
 
+uint8_t get_facing_phantom(uint8_t range) {
+
+}

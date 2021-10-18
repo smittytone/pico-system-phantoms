@@ -41,12 +41,15 @@ const uint8_t level_data[84] = {
 
 
 Phantom::Phantom() {
-    this.hp = Utils::irandom(min_hit_points, max_hit_points);
-    this.hp_max = this.hp;
-    this.back_steps = 0;
-    this.direction = DIRECTION_NORTH;
-    this.x = ERROR_CONDITION;
-    this.y = ERROR_CONDITION;
+    uint8_t level_index = (game.level - 1) * 4;
+    uint8_t min_hit_points = level_data[level_index];
+    uint8_t max_hit_points = level_data[level_index + 1];
+    hp = Utils::irandom(min_hit_points, max_hit_points);
+    hp_max = hp;
+    back_steps = 0;
+    direction = DIRECTION_NORTH;
+    x = ERROR_CONDITION;
+    y = ERROR_CONDITION;
 }
 
 /*
@@ -54,14 +57,14 @@ Phantom::Phantom() {
  */
 void Phantom::move() {
     // Only move phantoms that are in the maze
-    if (this.x != ERROR_CONDITION) {
-        uint8_t new_x = this.x;
-        uint8_t new_y = this.y;
-        uint8_t new_direction = this.direction;
+    if (x != ERROR_CONDITION) {
+        uint8_t new_x = x;
+        uint8_t new_y = y;
+        uint8_t new_direction = direction;
 
         // Get distance to player
-        int8_t dx = this.x - game.player.x;
-        int8_t dy = this.y - game.player.y;
+        int8_t dx = x - game.player.x;
+        int8_t dy = y - game.player.y;
 
         // Has the phantom got the player?
         if (dx == 0 && dy == 0) {
@@ -77,22 +80,22 @@ void Phantom::move() {
         uint8_t exit_count = 0;
 
         // Determine the directions in which the phantom *can* move: empty spaces with no phantom already there
-        if (this.x > 0 && Map::get_square_contents(this.x - 1, this.y) != MAP_TILE_WALL && locate_phantom(this.x - 1, this.y) == ERROR_CONDITION) {
+        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && locate_phantom(x - 1, y) == ERROR_CONDITION) {
             available_directions |= PHANTOM_WEST;
             ++exit_count;
         }
 
-        if (this.x < MAP_MAX && Map::get_square_contents(this.x + 1, this.y) != MAP_TILE_WALL && locate_phantom(this.x + 1, this.y) == ERROR_CONDITION) {
+        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && locate_phantom(x + 1, y) == ERROR_CONDITION) {
             available_directions |= PHANTOM_EAST;
             ++exit_count;
         }
 
-        if (this.y > 0 && Map::get_square_contents(this.x, this.y - 1) != MAP_TILE_WALL && locate_phantom(this.x, this.y - 1) == ERROR_CONDITION) {
+        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && locate_phantom(x, y - 1) == ERROR_CONDITION) {
             available_directions |= PHANTOM_NORTH;
             ++exit_count;
         }
 
-        if (this.y < MAP_MAX && Map::get_square_contents(this.x, this.y + 1) != MAP_TILE_WALL && locate_phantom(this.x, this.y + 1) == ERROR_CONDITION) {
+        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && locate_phantom(x, y + 1) == ERROR_CONDITION) {
             available_directions |= PHANTOM_SOUTH;
             ++exit_count;
         }
@@ -105,7 +108,7 @@ void Phantom::move() {
         // FROM 1.0.1
         // Move away from the player if the Phantom is reversing
         uint8_t from = 0;
-        if (this.back_steps > 0) {
+        if (back_steps > 0) {
             // Phantom is indeed reversing, so get the direction
             // from which it moved into this square -- we'll use this
             // to prevent the Phantom from back-tracking if in the next
@@ -114,7 +117,7 @@ void Phantom::move() {
             if (exit_count > 2) {
                 // The Phantom has reached a junction, ie. a square with more than
                 // two exits, so reset the reversal and try to move toward the player again
-                this.back_steps = 0;
+                back_steps = 0;
             } else {
                 // The Phantom isn't at a junction, so calculate its
                 // vector away from the player ('dx' and 'dy'
@@ -202,7 +205,7 @@ void Phantom::move() {
                         if (r == 0) {
                             move_one((available_directions & (1 << i)), &new_x, &new_y);
                             new_direction = (available_directions & (1 << i));
-                            this.back_steps = 1;
+                            back_steps = 1;
                             break;
                         } else {
                             r--;
@@ -216,9 +219,9 @@ void Phantom::move() {
         }
 
         // Set the Phantom's new location
-        this.x = new_x;
-        this.y = new_y;
-        this.direction = new_direction;
+        x = new_x;
+        y = new_y;
+        direction = new_direction;
     }
 }
 
@@ -226,19 +229,20 @@ void Phantom::move() {
     Move the Phantom one space according in the chosen direction.
  */
 void Phantom::move_one(uint8_t direction, uint8_t *x, uint8_t *y) {
-    if (direction == PHANTOM_NORTH) *y = this.y - 1;
-    if (direction == PHANTOM_SOUTH) *y = this.y + 1;
-    if (direction == PHANTOM_EAST)  *x = this.x + 1;
-    if (direction == PHANTOM_WEST)  *x = this.x - 1;
+    if (direction == PHANTOM_NORTH) *y -= 1;
+    if (direction == PHANTOM_SOUTH) *y += 1;
+    if (direction == PHANTOM_EAST)  *x += 1;
+    if (direction == PHANTOM_WEST)  *x -= 1;
 }
+
 
 /*
     Return the direction the phantom has come from.
  */
 uint8_t Phantom::from_direction() {
-    if (this.direction == PHANTOM_WEST)  return PHANTOM_EAST;
-    if (this.direction == PHANTOM_EAST)  return PHANTOM_WEST;
-    if (this.direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
+    if (direction == PHANTOM_WEST)  return PHANTOM_EAST;
+    if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
+    if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
     return PHANTOM_NORTH;
 }
 
@@ -249,8 +253,10 @@ uint8_t Phantom::from_direction() {
 uint8_t Phantom::locate_phantom(uint8_t x, uint8_t y) {
     for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
         Phantom p = game.phantoms[i];
-        if (p == this) return;
+        if (p == self) return;
         if (p.x != x && p.y != y) return ERROR_CONDITION;
-        return 0;
+        return i;
     }
+
+    return ERROR_CONDITION;
 }

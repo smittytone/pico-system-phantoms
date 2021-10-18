@@ -291,7 +291,7 @@ uint8_t init(uint8_t last_map) {
 }
 
 
-void show(uint8_t y_delta, bool show_entities) {
+void draw(uint8_t y_delta, bool show_entities) {
     // Draw the current map on the screen buffer, centred but
     // vertically adjusted according to 'y_delta'. If 'show_entities'
     // is true, the phantom locations are plotted in. The player and
@@ -339,8 +339,8 @@ void show(uint8_t y_delta, bool show_entities) {
             }
 
             // Show the player as an arrow at the current square
-            if (j == player_x && i == player_y) {
-                switch(player_direction) {
+            if (j == game.player.x && i == game.player.y) {
+                switch(game.player.direction) {
                     case DIRECTION_NORTH:
                         /*
                         ssd1306_plot(x + j * 3 + 1, y + i * 3,     0);
@@ -380,18 +380,19 @@ void show(uint8_t y_delta, bool show_entities) {
                         ssd1306_plot(x + j * 3 + 2, y + i * 3    , 0);
                         ssd1306_plot(x + j * 3 + 2, y + i * 3 + 2, 0);
                         */
+                       break;
                 }
             }
 
             if (show_entities) {
                 // Show any phantoms at the current square as a cross
-                for (uint8_t k = 0 ; k < game.phantoms; ++k) {
-                    if (j == phantoms[k].x && i == phantoms[k].y) {
-                        ssd1306_plot(x + j * 3    , y + i * 3 + 1, 0);
-                        ssd1306_plot(x + j * 3 + 1, y + i * 3,     0);
-                        ssd1306_plot(x + j * 3 + 1, y + i * 3 + 1, 0);
-                        ssd1306_plot(x + j * 3 + 1, y + i * 3 + 2, 0);
-                        ssd1306_plot(x + j * 3 + 2, y + i * 3 + 1, 0);
+                for (uint8_t k = 0 ; k < game.phantom_count; ++k) {
+                    if (j == game.phantoms[k].x && i == game.phantoms[k].y) {
+                        //ssd1306_plot(x + j * 3    , y + i * 3 + 1, 0);
+                        //ssd1306_plot(x + j * 3 + 1, y + i * 3,     0);
+                        //ssd1306_plot(x + j * 3 + 1, y + i * 3 + 1, 0);
+                        //ssd1306_plot(x + j * 3 + 1, y + i * 3 + 2, 0);
+                        //ssd1306_plot(x + j * 3 + 2, y + i * 3 + 1, 0);
                     }
                 }
             }

@@ -20,8 +20,12 @@ namespace Gfx {
     void        draw_teleporter(uint8_t frame_index);
     void        draw_left_wall(uint8_t frame_index, bool is_open);
     void        draw_right_wall(uint8_t frame_index, bool is_open);
+    void        draw_far_wall(uint8_t frame_index);
 
     void        draw_reticule();
+    void        draw_zap();
+    void        animate_turn(bool is_right);
+    void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count);
 
 }
 
