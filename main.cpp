@@ -68,7 +68,7 @@ void update(uint32_t time_ms) {
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
                         // Has the player walked up to a Phantom?
-                        if (locate_phantom(nx, ny) != ERROR_CONDITION) {
+                        if (Map::phantom_on_square(nx, ny)) {
                             // Yes -- so the player is dead!
                             game.state = PLAYER_IS_DEAD;
                             return;
@@ -205,7 +205,7 @@ void init_game() {
     game.can_teleport = false;
     game.level_score = 0;
     game.audio_range = 4;
-    game.phantom_count = 1;
+    game.phantom_count = 0;
     game.level = 1;
     game.zap_time = 0;
     game.tele_x = 0;
@@ -229,6 +229,7 @@ void init_game() {
 void init_phantoms() {
     // Reset the array stored phantoms structures
     game.phantoms.clear();
+    game.phantom_count = 0;
 }
 
 
@@ -279,7 +280,7 @@ void create_world() {
 
     // Add the first phantom to the map, everywhere but empty
     // or where the player
-    Phantom p = Phantom();
+    Phantom p = Phantom(x, y);
     while (true) {
         // Pick a random co-ordinate
         uint8_t x = Utils::irandom(0, 20);
@@ -298,8 +299,8 @@ void create_world() {
     game.phantoms.push_back(p);
 
     /* TEST DATA
-    player_x = 0;
-    player_y = 0;
+    game.player.x = 0;
+    game.player.y = 0;
     player_direction = 1;
 
     game.phantoms = 3;
@@ -405,7 +406,7 @@ void check_senses() {
         for (int8_t j = dy ; j < dy + (game.audio_range << 1) ; ++j) {
             if (j < 0) continue;
             if (j > MAP_MAX) break;
-            if (locate_phantom(i, j) != ERROR_CONDITION) {
+            if (Map::phantom_on_square(i, j)) {
                 // There's a Phantom in range, so
                 // flash the LED and sound a tone
                 // tone(200, 10, 0);
@@ -522,7 +523,86 @@ uint8_t get_direction(uint8_t keys_pressed) {
     return ERROR_CONDITION;
 }
 
-
+/*
+    Return the index of the closest facing Phantom to the
+    player from the the 'phantoms' array -- or ERROR_CONDITION.
+    'range' is the number of squares we'll iterate over.
+ */
 uint8_t get_facing_phantom(uint8_t range) {
+    uint8_t p_index = ERROR_CONDITION;
+    switch(game.player.direction) {
+        case DIRECTION_NORTH:
+            if (game.player.y == 0) return ERROR_CONDITION;
+            if (game.player.y - range < 0) range = game.player.y;
+            for (int8_t i = game.player.y ; i > game.player.y - range ; --i) {
+                p_index = Map::phantom_on_square(game.player.x, i);
+                if (p_index != ERROR_CONDITION) return p_index;
+            }
+            break;
+        case DIRECTION_EAST:
+            if (game.player.x == MAP_MAX) return ERROR_CONDITION;
+            if (game.player.x + range > MAP_MAX) range = MAP_MAX - game.player.x;
+            for (int8_t i = game.player.x ; i < game.player.x + range ; ++i) {
+                p_index = Map::phantom_on_square(i, game.player.y);
+                if (p_index != ERROR_CONDITION) return p_index;
+            }
+            break;
+        case DIRECTION_SOUTH:
+            if (game.player.y == MAP_MAX) return ERROR_CONDITION;
+            if (game.player.y + range > MAP_MAX) range = MAP_MAX - game.player.y;
+            for (int8_t i = game.player.y ; i < game.player.y + range ; ++i) {
+                p_index = Map::phantom_on_square(game.player.x, i);
+                if (p_index != ERROR_CONDITION) return p_index;
+            }
+            break;
+        default:
+            if (game.player.x == 0) return ERROR_CONDITION;
+            if (game.player.x - range < 0) range = game.player.x;
+            for (int8_t i = game.player.x ; i > game.player.x - range ; --i) {
+                p_index = Map::phantom_on_square(i, game.player.y);
+                if (p_index != ERROR_CONDITION) return p_index;
+            }
+    }
 
+    return p_index;
+}
+
+
+/*
+    Return the number of Phantoms in front of the player
+    'range' is the number of squares we'll iterate over.
+ */
+uint8_t count_facing_phantoms(uint8_t range) {
+    uint8_t phantom_count = 0;
+    switch(game.player.direction) {
+        case DIRECTION_NORTH:
+            if (game.player.y == 0) return phantom_count;
+            if (game.player.y - range < 0) range = game.player.y;
+            for (int8_t i = game.player.y ; i >= game.player.y - range ; --i) {
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);;
+            }
+            break;
+        case DIRECTION_EAST:
+            if (game.player.x == 19) return phantom_count;
+            if (game.player.x + range > 19) range = 19 - game.player.x;
+            for (int8_t i = game.player.x ; i <= game.player.x + range ; ++i) {
+                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);;
+            }
+            break;
+        case DIRECTION_SOUTH:
+            if (game.player.y == 19) return phantom_count;
+            if (game.player.y + range > 19) range = 19 - game.player.y;
+            for (int8_t i = game.player.y ; i <= game.player.y + range ; ++i) {
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);;
+            }
+            break;
+        default:
+            if (game.player.x == 0) return phantom_count;
+            if (game.player.x - range < 0) range = game.player.x;
+            for (int8_t i = game.player.x ; i >= game.player.x - range ; --i) {
+                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);;
+            }
+    }
+
+    return phantom_count;
 }

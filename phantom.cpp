@@ -40,7 +40,7 @@ const uint8_t level_data[84] = {
 };
 
 
-Phantom::Phantom() {
+Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
     uint8_t max_hit_points = level_data[level_index + 1];
@@ -48,8 +48,10 @@ Phantom::Phantom() {
     hp_max = hp;
     back_steps = 0;
     direction = DIRECTION_NORTH;
-    x = ERROR_CONDITION;
-    y = ERROR_CONDITION;
+
+    // Use 'ERROR_CONDITION' as 'not on board yet'
+    x = start_x;
+    y = start_y;
 }
 
 /*
@@ -80,22 +82,22 @@ void Phantom::move() {
         uint8_t exit_count = 0;
 
         // Determine the directions in which the phantom *can* move: empty spaces with no phantom already there
-        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && locate_phantom(x - 1, y) == ERROR_CONDITION) {
+        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && !Map::phantom_on_square(x - 1, y)) {
             available_directions |= PHANTOM_WEST;
             ++exit_count;
         }
 
-        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && locate_phantom(x + 1, y) == ERROR_CONDITION) {
+        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && !Map::phantom_on_square(x + 1, y)) {
             available_directions |= PHANTOM_EAST;
             ++exit_count;
         }
 
-        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && locate_phantom(x, y - 1) == ERROR_CONDITION) {
+        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y - 1)) {
             available_directions |= PHANTOM_NORTH;
             ++exit_count;
         }
 
-        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && locate_phantom(x, y + 1) == ERROR_CONDITION) {
+        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y + 1)) {
             available_directions |= PHANTOM_SOUTH;
             ++exit_count;
         }
@@ -113,7 +115,7 @@ void Phantom::move() {
             // from which it moved into this square -- we'll use this
             // to prevent the Phantom from back-tracking if in the next
             // lines it can go after the player again
-            from = from_direction();
+            from = came_from();
             if (exit_count > 2) {
                 // The Phantom has reached a junction, ie. a square with more than
                 // two exits, so reset the reversal and try to move toward the player again
@@ -154,7 +156,7 @@ void Phantom::move() {
         // Handle the move itself
         if (count == 1) {
             // Only one way for the Phantom to go, so take it
-            move_one(usable_directions, &new_x, &new_y);
+            move_one_square(usable_directions, &new_x, &new_y);
             new_direction = usable_directions;
         } else if (count == 2) {
             // The Phantom has two ways to go, so pick one of them at random:
@@ -167,7 +169,7 @@ void Phantom::move() {
                 if (usable_directions & (1 << i)) {
                     if (r == 0) {
                         // Take this direction
-                        move_one((usable_directions & (1 << i)), &new_x, &new_y);
+                        move_one_square((usable_directions & (1 << i)), &new_x, &new_y);
                         new_direction = (usable_directions & (1 << i));
                         break;
                     } else {
@@ -188,7 +190,7 @@ void Phantom::move() {
                 // doesn't leave it with no way out)
                 // NOTE re-calculate 'from' here so we don't mess up
                 //      the ealier case when it needs to be zero
-                from = from_direction();
+                from = came_from();
                 uint8_t ad = available_directions;
                 ad &= (~from);
 
@@ -203,7 +205,7 @@ void Phantom::move() {
                 while (true) {
                     if ((available_directions & (1 << i)) > 0) {
                         if (r == 0) {
-                            move_one((available_directions & (1 << i)), &new_x, &new_y);
+                            move_one_square((available_directions & (1 << i)), &new_x, &new_y);
                             new_direction = (available_directions & (1 << i));
                             back_steps = 1;
                             break;
@@ -228,7 +230,7 @@ void Phantom::move() {
 /*
     Move the Phantom one space according in the chosen direction.
  */
-void Phantom::move_one(uint8_t direction, uint8_t *x, uint8_t *y) {
+void Phantom::move_one_square(uint8_t direction, uint8_t *x, uint8_t *y) {
     if (direction == PHANTOM_NORTH) *y -= 1;
     if (direction == PHANTOM_SOUTH) *y += 1;
     if (direction == PHANTOM_EAST)  *x += 1;
@@ -239,24 +241,9 @@ void Phantom::move_one(uint8_t direction, uint8_t *x, uint8_t *y) {
 /*
     Return the direction the phantom has come from.
  */
-uint8_t Phantom::from_direction() {
+uint8_t Phantom::came_from() {
     if (direction == PHANTOM_WEST)  return PHANTOM_EAST;
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
     if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
     return PHANTOM_NORTH;
-}
-
-
-/*
-    Check for any Phantom in the specified square
- */
-uint8_t Phantom::locate_phantom(uint8_t x, uint8_t y) {
-    for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
-        Phantom p = game.phantoms[i];
-        if (p == self) return;
-        if (p.x != x && p.y != y) return ERROR_CONDITION;
-        return i;
-    }
-
-    return ERROR_CONDITION;
 }

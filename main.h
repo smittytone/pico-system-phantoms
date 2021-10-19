@@ -131,7 +131,6 @@ void        create_world();
 void        update_world();
 void        move_phantoms();
 void        manage_phantoms();
-uint8_t     locate_phantom(uint8_t x, uint8_t y);
 
 void        check_senses();
 void        fire_laser();
@@ -141,6 +140,7 @@ uint8_t     get_direction(uint8_t key_pressed);
 
 uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
+
 
 
 /*
@@ -156,6 +156,8 @@ Game        game;
 
 // Graphics structures
 Rect        rects[7];
+
+extern const uint8_t level_data[84];
 
 
 

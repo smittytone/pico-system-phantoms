@@ -40,7 +40,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 // NOTE 'phantom_count comes back so we can keep track of multiple
                 //      Phantoms in the player's field of view and space them
                 //      laterally
-                if (phantom_count > 0 && locate_phantom(x, i) != ERROR_CONDITION) {
+                if (phantom_count > 0 && Map::phantom_on_square(x, i)) {
                     draw_phantom(frame, &phantom_count);
                 }
 
@@ -54,7 +54,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x + last_frame;
             do {
                 draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, last_frame);
-                if (phantom_count > 0 && locate_phantom(i, y) != ERROR_CONDITION) {
+                if (phantom_count > 0 && Map::phantom_on_square(i, y)) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;
@@ -66,7 +66,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = y + last_frame;
             do {
                 draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, last_frame);
-                if (phantom_count > 0 && locate_phantom(x, i) != ERROR_CONDITION) {
+                if (phantom_count > 0 && Map::phantom_on_square(x, i)) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;
@@ -78,7 +78,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x - last_frame;
             do {
                 draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, last_frame);
-                if (phantom_count > 0 && locate_phantom(i, y) != ERROR_CONDITION) {
+                if (phantom_count > 0 && Map::phantom_on_square(i, y)) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;

@@ -10,6 +10,7 @@
 #ifndef _GFX_UTILS_HEADER_
 #define _GFX_UTILS_HEADER_
 
+
 /*
  *      PROTOTYPES
  */
@@ -26,7 +27,6 @@ namespace Gfx {
     void        draw_zap();
     void        animate_turn(bool is_right);
     void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count);
-
 }
 
 

@@ -11,23 +11,22 @@
 #define _PHANTOM_HEADER_
 
 
+# define NOT_ON_BOARD       99
+
+
 /*
  * PROTOTYPES
  */
 class Phantom {
     public:
-        Phantom();
+        // Methods
+        Phantom(uint8_t start_x = NOT_ON_BOARD, uint8_t start_y = NOT_ON_BOARD);
 
         void        move();
-        void        move_one(uint8_t c, uint8_t *x, uint8_t *y);
-        uint8_t     from_direction();
-        uint8_t     locate_phantom(uint8_t x, uint8_t y);
+        void        move_one_square(uint8_t c, uint8_t *x, uint8_t *y);
+        uint8_t     came_from();
 
-        void        manage_phantoms();
-        void        roll_new_phantom(uint8_t index);
-        uint8_t     get_facing_phantom(uint8_t range);
-        uint8_t     count_facing_phantoms(uint8_t range);
-
+        // Properties
         uint8_t     x;
         uint8_t     y;
         uint8_t     hp;

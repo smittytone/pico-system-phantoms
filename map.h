@@ -20,13 +20,14 @@ namespace Map {
     bool            set_square_contents(uint8_t x, uint8_t y, uint8_t value);
     uint8_t         get_square_contents(uint8_t x, uint8_t y);
     uint8_t         get_view_distance(int8_t x, int8_t y, uint8_t direction);
+    uint8_t         phantom_on_square(uint8_t x, uint8_t y);
 }
 
 /*
  * GLOBALS
  */
 // The current map data
-char *current_map[20];
+uint8_t *current_map[20];
 
 
 /*
