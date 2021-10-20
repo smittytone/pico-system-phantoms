@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Map management functions
  *
  * @version     1.1.0
  * @author      smittytone
@@ -9,6 +10,13 @@
  */
 #ifndef _PHANTOMS_MAP_HEADER_
 #define _PHANTOMS_MAP_HEADER_
+
+
+/*
+ * CONSTANTS
+ */
+#define NUMBER_OF_MAPS              6
+#define MAP_MAX                     19
 
 
 /*
@@ -26,15 +34,7 @@ namespace Map {
 /*
  * GLOBALS
  */
-// The current map data
-uint8_t *current_map[20];
-
-
-/*
- * CONSTANTS
- */
-#define NUMBER_OF_MAPS              6
-#define MAP_MAX                     19
+uint8_t     *current_map[20];
 
 
 // _PHANTOMS_MAP_HEADER_

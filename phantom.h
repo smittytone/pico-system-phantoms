@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Phantom class code
  *
  * @version     1.1.0
  * @author      smittytone
@@ -11,11 +12,14 @@
 #define _PHANTOM_HEADER_
 
 
+/*
+ *  CONSTANTS
+ */
 # define NOT_ON_BOARD       99
 
 
 /*
- * PROTOTYPES
+ *  PROTOTYPES
  */
 class Phantom {
     public:
@@ -25,6 +29,7 @@ class Phantom {
         void        move();
         void        move_one_square(uint8_t c, uint8_t *x, uint8_t *y);
         uint8_t     came_from();
+        void        roll_location();
 
         // Properties
         uint8_t     x;

@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Phantom class code
  *
  * @version     1.1.0
  * @author      smittytone
@@ -40,6 +41,9 @@ const uint8_t level_data[84] = {
 };
 
 
+/*
+ *  CLASS
+ */
 Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
@@ -53,6 +57,7 @@ Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
     x = start_x;
     y = start_y;
 }
+
 
 /*
     Move the Phantom.
@@ -227,6 +232,7 @@ void Phantom::move() {
     }
 }
 
+
 /*
     Move the Phantom one space according in the chosen direction.
  */
@@ -246,4 +252,30 @@ uint8_t Phantom::came_from() {
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
     if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
     return PHANTOM_NORTH;
+}
+
+
+/*
+    Locate a new Phantom
+ */
+void Phantom::roll_location() {
+    while (true) {
+        // Pick a random co-ordinate
+        uint8_t new_x = Utils::irandom(0, 20);
+        uint8_t new_y = Utils::irandom(0, 20);
+
+        // Make sure we're selecting a clear square, the player is not there
+        // already and is not in an adjacent square either
+        bool good = (Map::get_square_contents(new_x, new_y) == MAP_TILE_CLEAR);
+        good &= ((new_x != game.player.x)     && (new_y != game.player.y));
+        good &= ((new_x != game.player.x - 1) && (new_x != game.player.x + 1));
+        good &= ((new_y != game.player.y - 1) && (new_y != game.player.y + 1));
+
+        // If the chosen square is valid, use it
+        if (good) {
+            x = new_x;
+            y = new_y;
+            break;
+        }
+    }
 }

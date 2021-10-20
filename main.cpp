@@ -12,15 +12,23 @@
 using namespace picosystem;
 
 
+/*
+ *  GLOBALS
+ */
 uint8_t count = 0;
 
 
+/*
+ *  PICOSYSTEM CALLBACKS
+ */
 void init() {
     // Use for debugging
     stdio_init_all();
 
+    // Set up the game
     setup();
 
+    // Display the intro animation
     // play_intro();
 
     // Start a new game -- the first
@@ -28,11 +36,11 @@ void init() {
 }
 
 
-void update(uint32_t time_ms) {
+void update(uint32_t tick_ms) {
 
     switch (game.state) {
         case PLAYER_IS_DEAD:
-            // Just await any key to start again
+            // Just await any key press to start again
             if (Utils::inkey() > 0) {
                 // Start a new game
                 start_new_game();
@@ -40,14 +48,18 @@ void update(uint32_t time_ms) {
             break;
         case START_COUNT:
             // Count down five seconds
-
+            if (tick_ms % 100 == 0) {
+                count++;
+                // bleep
+                // Update on screen number
+            }
 
             if (count == 0) {
                 game.state = IN_PLAY;
             }
             break;
         default:
-            // The game is afoot!
+            // The game is afoot! game.state = IN_PLAY
             // NOTE Return as quickly as possible
 
             // Was a key tapped?
@@ -122,7 +134,7 @@ void update(uint32_t time_ms) {
                     game.show_reticule = false;
                     game.is_firing = true;
                     game.can_fire = false;
-                    game.zap_time = time_us_32();
+                    game.zap_charge_time = time_us_32();
                 }
             }
     }
@@ -137,17 +149,19 @@ void draw() {
     if (game.state == IN_PLAY) {
         // Render the screen
         if (chase_mode) {
+            // Show the first Phantom's view
             Gfx::draw_screen(game.phantoms[0].x, game.phantoms[0].y, game.phantoms[0].direction);
         } else if (map_mode) {
+            // Draw the map
             Map::draw(0, true);
         } else {
+            // Show the player's view
             Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
         }
 
         // Is the laser being fired?
         if (game.is_firing) {
-            game.is_firing = false;
-            fire_laser();
+            Gfx::draw_zap();
         }
 
         // Has the player primed the laser? If so show the crosshair
@@ -165,6 +179,7 @@ void setup() {
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
     //tinymt32_init(&tinymt_store, adc_read());
+    // NOTE Need a entropy source for this.
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -191,28 +206,36 @@ void setup() {
 }
 
 
+/*
+    Start a new game by re-initialising the game state,
+    and setting up a new maze.
+ */
 void start_new_game() {
     init_game();
     create_world();
 }
 
 
+/*
+    Reset the main game control structure.
+    NOTE Phantom data is separated out into `init_phantoms()`.
+ */
 void init_game() {
-    // Reset the main game control structure
     game.state = NOT_IN_PLAY;
     game.show_reticule = false;
-    game.is_firing = false;
     game.can_teleport = false;
+    game.is_firing = false;
+    game.can_fire = true;
+    game.zap_frame = 0;
+    game.zap_charge_time = 0;
+    game.zap_fire_time = 0;
     game.level_score = 0;
     game.audio_range = 4;
-    game.phantom_count = 0;
     game.level = 1;
-    game.zap_time = 0;
     game.tele_x = 0;
     game.tele_y = 0;
     game.start_x = 0;
     game.start_y = 0;
-    game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
 
     // If these demo/test modes are both set,
     // chase mode takes priority
@@ -226,19 +249,24 @@ void init_game() {
 }
 
 
+/*
+    Initialise the current game's Phantom data.
+ */
 void init_phantoms() {
     // Reset the array stored phantoms structures
     game.phantoms.clear();
     game.phantom_count = 0;
+    game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
 }
 
 
+/*
+    Generate and populate a new maze which happens
+    at the start of a new game and at the start of
+    each level. A level jump is triggered when all the
+    current phantoms have been dispatched.
+ */
 void create_world() {
-    // Generate and populate a new maze which happens
-    // at the start of a new game and at the start of
-    // each level. A level jump is triggered when all the
-    // current phantoms have been dispatched
-
     // Reset the game
     if (game.level > 0) init_game();
     game.state = IN_PLAY;
@@ -316,10 +344,10 @@ void create_world() {
 }
 
 
+/*
+    Update the world at the end of the move cycle.
+ */
 void update_world() {
-    // Update the world at the end of the move cycle
-    // Draw the graphics and animate the phantoms
-
     // Move the Phantoms periodically -- this is how
     // we increase their speed as the game progresses
     uint32_t now = time_us_32();
@@ -330,19 +358,122 @@ void update_world() {
     }
 
     // Check for a laser recharge
-    if (now - game.zap_time > LASER_RECHARGE_US) {
-        game.zap_time = 0;
+    if (now - game.zap_charge_time > LASER_RECHARGE_US) {
+        game.zap_charge_time = 0;
         game.can_fire = true;
+    }
+
+    // Animate the laser zap
+    if (game.is_firing && now - game.zap_fire_time > LASER_FIRE_US) {
+        game.zap_fire_time = now;
+        game.zap_frame++;
+        if (game.zap_frame == 6) {
+            game.zap_frame = 0;
+            game.is_firing = false;
+        } else {
+            fire_laser();
+        }
     }
 }
 
+
 /*
-    Move all the current Phantoms
+    Tell all of the current Phantoms to move.
 */
 void move_phantoms() {
     for (uint8_t i = 0 ; i < game.phantoms.size() ; ++i) {
         game.phantoms[i].move();
     }
+}
+
+
+/*
+ *      ACTIONS
+ */
+
+/*
+    Scan around the player for nearby phantoms
+ */
+void check_senses() {
+    int8_t dx = game.player.x - game.audio_range;
+    int8_t dy = game.player.y - game.audio_range;
+
+    for (int8_t i = dx ; i < dx + (game.audio_range << 1) ; ++i) {
+        if (i < 0) continue;
+        if (i > MAP_MAX) break;
+        for (int8_t j = dy ; j < dy + (game.audio_range << 1) ; ++j) {
+            if (j < 0) continue;
+            if (j > MAP_MAX) break;
+            if (Map::phantom_on_square(i, j)) {
+                // There's a Phantom in range, so
+                // flash the LED and sound a tone
+                // tone(200, 10, 0);
+
+                // Only play one beep, no matter
+                // how many nearby phantoms there are
+                return;
+            }
+        }
+    }
+}
+
+
+/*
+    Jump back to the teleport square if the player has walked over it.
+ */
+void do_teleport() {
+    // Flash the screen
+    bool tstate = false;
+    for (uint8_t i = 0 ; i < 10 ; ++i) {
+        //tone((tstate ? 4000 : 2000), 100, 0);
+        tstate = !tstate;
+    }
+
+    // Move the player to the stored square
+    game.player.x = game.start_x;
+    game.player.y = game.start_y;
+}
+
+
+/*
+    Hit the front-most facing phantom, if there is one.
+ */
+void fire_laser() {
+    // Did we hit a Phantom?
+    uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
+    if (n != ERROR_CONDITION) {
+        // A hit! A palpable hit!
+        // Deduct 1HP from the Phantom
+        Phantom p = game.phantoms[n];
+        p.hp -= 1;
+
+        // FROM 1.0.2
+        // Use original scoring: 2 points for a hit, 10 for a kill
+        game.level_score += 2;
+
+        // Did that kill it?
+        if (p.hp == 0) {
+            // Yes! One dead Phantom...
+            game.level_score += 10;
+            ++game.level_kills;
+
+            // Briefly invert the screen and sound some tones
+            // tone(1200, 100, 200);
+            // tone(600, 100, 200);
+
+            // Quickly show the map
+            //ssd1306_clear();
+            //show_scores();
+            sleep_ms(MAP_POST_KILL_SHOW_MS);
+
+            // Take the dead phantom off the board
+            // (so it gets re-rolled in 'managePhantoms()')
+            game.phantoms.erase(game.phantoms.begin() + n);
+        }
+    }
+
+    // Update phantoms list
+    manage_phantoms();
 }
 
 
@@ -384,99 +515,9 @@ void manage_phantoms() {
     // Do we need to add any new phantoms to the board?
     if (game.phantoms.size() < game.phantom_count) {
         Phantom p = Phantom();
+        p.roll_location();
         game.phantoms.push_back(p);
     }
-}
-
-
-/*
- *      ACTIONS
- */
-
-/*
-    Scan around the player for nearby phantoms
- */
-void check_senses() {
-    int8_t dx = game.player.x - game.audio_range;
-    int8_t dy = game.player.y - game.audio_range;
-
-    for (int8_t i = dx ; i < dx + (game.audio_range << 1) ; ++i) {
-        if (i < 0) continue;
-        if (i > MAP_MAX) break;
-        for (int8_t j = dy ; j < dy + (game.audio_range << 1) ; ++j) {
-            if (j < 0) continue;
-            if (j > MAP_MAX) break;
-            if (Map::phantom_on_square(i, j)) {
-                // There's a Phantom in range, so
-                // flash the LED and sound a tone
-                // tone(200, 10, 0);
-
-                // Only play one beep, no matter
-                // how many nearby phantoms there are
-                return;
-            }
-        }
-    }
-}
-
-/*
-    Jump back to the teleport square if the player has walked over it.
- */
-void do_teleport() {
-    // Flash the screen
-    bool tstate = false;
-    for (uint8_t i = 0 ; i < 10 ; ++i) {
-        //tone((tstate ? 4000 : 2000), 100, 0);
-        tstate = !tstate;
-    }
-
-    // Move the player to the stored square
-    game.player.x = game.start_x;
-    game.player.y = game.start_y;
-}
-
-/*
-    Hit the front-most facing phantom, if there is one.
- */
-void fire_laser() {
-    // Show the zap
-    Gfx::draw_zap();
-
-    // Did we hit a Phantom?
-    uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
-    if (n != ERROR_CONDITION) {
-        // A hit! A palpable hit!
-        // Deduct 1HP from the Phantom
-        Phantom p = game.phantoms[n];
-        p.hp -= 1;
-
-        // FROM 1.0.2
-        // Use original scoring: 2 points for a hit, 10 for a kill
-        game.level_score += 2;
-
-        // Did that kill it?
-        if (p.hp == 0) {
-            // Yes! One dead Phantom...
-            game.level_score += 10;
-            ++game.level_kills;
-
-            // Briefly invert the screen and sound some tones
-            // tone(1200, 100, 200);
-            // tone(600, 100, 200);
-
-            // Quickly show the map
-            //ssd1306_clear();
-            //show_scores();
-            sleep_ms(MAP_POST_KILL_SHOW_MS);
-
-            // Take the dead phantom off the board
-            // (so it gets re-rolled in 'managePhantoms()')
-            game.phantoms.erase(game.phantoms.begin() + n);
-        }
-    }
-
-    // Update phantoms list
-    manage_phantoms();
 }
 
 

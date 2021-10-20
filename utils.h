@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Utility functions
  *
  * @version     1.1.0
  * @author      smittytone
@@ -18,5 +19,6 @@ namespace Utils {
     int             irandom(int start, int max);
     uint8_t         inkey();
 }
+
 
 #endif  // _GAME_UTILS_HEADER_

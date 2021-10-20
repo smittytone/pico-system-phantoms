@@ -11,12 +11,18 @@
 
 using namespace picosystem;
 
+
 namespace Gfx {
 
 /*
     Render a single viewpoint frame at the specified square.
     Progressively draw in walls, square by square, moving away
     from (x,y) in the specified direction.
+
+    - Parameters:
+        - x:          The square's X co-ordinate.
+        - y:          The square's Y co-ordinate.
+        - directions: The direction in which the viewer is facing.
  */
 void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     int8_t last_frame = Map::get_view_distance(x, y, direction);
@@ -90,6 +96,14 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 /*
     Draw a section of the view, ie. a frame.
 
+    - Parameters:
+        - x:              The square's X co-ordinate.
+        - y:              The square's Y co-ordinate.
+        - left_dir:       The direction to the left of the viewer.
+        - rightt_dir:     The direction to the left of the viewer.
+        - current_frame:  The viewpoint's frame index.
+        - furthest_frame: The frame index of the last visble square.
+
     - Returns: `true` when we've got to the furthest rendered square,
                `false` otherwise
  */
@@ -117,6 +131,9 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
 /*
     Draw a grid line on the floor -- this is all
     we do to create the floor (ceiling has no line)
+
+    - Parameters:
+        - frame_index: The frame index of the current frame.
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
@@ -126,7 +143,10 @@ void draw_floor_line(uint8_t frame_index) {
 
 /*
     Draw a green floor tile to indicate the Escape teleport location.
-    When stepping on this, the player can beam to their start point
+    When stepping on this, the player can beam to their start point.
+
+    - Parameters:
+        - frame_index: The frame index of the current frame.
  */
 void draw_teleporter(uint8_t frame_index) {
     Rect r = rects[frame_index];
@@ -137,7 +157,11 @@ void draw_teleporter(uint8_t frame_index) {
 /*
     Render a left-side wall section for the current square.
     NOTE 'is_open' is true if there is no wall -- ie. we're at
-         a junction point
+         a junction point.
+
+    - Parameters:
+        - frame_index: The frame index of the current frame.
+        - is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_left_wall(uint8_t frame_index, bool is_open) {
     // Get the 'i'ner and 'o'uter frames
@@ -155,10 +179,15 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
     fpoly({o.x, i.y, i.x, i.y, o.x, o.y});
 }
 
+
 /*
     Render a right-side wall section for the current square.
     NOTE 'is_open' is true if there is no wall -- we're at
-         a junction point
+         a junction point.
+
+    - Parameters:
+        - frame_index: The frame index of the current frame.
+        - is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_right_wall(uint8_t frame_index, bool is_open) {
     // Get the 'i'ner and 'o'uter frames
@@ -179,7 +208,10 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
 /*
     Draw the wall facing the viewer, or for very long distances,
-    an 'infinity' view
+    an 'infinity' view.
+
+    - Parameters:
+        - frame_index: The frame index of the current frame.
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
@@ -192,7 +224,7 @@ void draw_far_wall(uint8_t frame_index) {
     Draw the laser sight: big cross on the screen.
  */
 void draw_reticule() {
-    pen(1,1,0);
+    pen(1, 0, 0);
     line(100, 120, 140, 120);
     line(120, 100, 120, 140);
 }
@@ -209,5 +241,6 @@ void animate_turn(bool is_right) {
 void draw_phantom(uint8_t frame_number, uint8_t* phantom_count) {
 
 }
+
 
 }   // namespace Gfx

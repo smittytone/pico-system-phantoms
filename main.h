@@ -56,6 +56,7 @@ extern "C" {
 #define PHANTOM_MOVE_TIME_US                            1000000
 #define LASER_RECHARGE_US                               2000000
 #define MAP_POST_KILL_SHOW_MS                           3000
+#define LASER_FIRE_US                                   500000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
@@ -106,7 +107,9 @@ typedef struct {
     uint16_t level_score;
     uint16_t high_score;
 
-    uint32_t zap_time;
+    uint32_t zap_charge_time;
+    uint32_t zap_fire_time;
+    uint8_t zap_frame;
 } Game;
 
 typedef struct {
@@ -116,7 +119,6 @@ typedef struct {
     uint8_t  height;
     uint8_t  spot;
 } Rect;
-
 
 
 /*
@@ -140,7 +142,6 @@ uint8_t     get_direction(uint8_t key_pressed);
 
 uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
-
 
 
 /*

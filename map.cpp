@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Map management functions
  *
  * @version     1.1.0
  * @author      smittytone
@@ -9,6 +10,7 @@
  */
 #include "main.h"
 
+using namespace picosystem;
 
 /*
  *      MAP DATA
@@ -138,7 +140,6 @@ uint8_t base_map_116[20] = {0xFF, 0xFF, 0xEE, 0xFF, 0xFF, 0xEE, 0xFF, 0xEE, 0xEE
 uint8_t base_map_117[20] = {0xFF, 0xEE, 0xFF, 0xFF, 0xEE, 0xEE, 0xFF, 0xFF, 0xFF, 0xEE, 0xFF, 0xFF, 0xFF, 0xEE, 0xFF, 0xEE, 0xEE, 0xFF, 0xFF, 0xFF};
 uint8_t base_map_118[20] = {0xFF, 0xEE, 0xEE, 0xFF, 0xEE, 0xEE, 0xFF, 0xEE, 0xEE, 0xEE, 0xFF, 0xEE, 0xFF, 0xEE, 0xEE, 0xFF, 0xEE, 0xEE, 0xEE, 0xFF};
 uint8_t base_map_119[20] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
 
 
 namespace Map {
@@ -292,20 +293,29 @@ uint8_t init(uint8_t last_map) {
 }
 
 
-void draw(uint8_t y_delta, bool show_entities) {
-    // Draw the current map on the screen buffer, centred but
-    // vertically adjusted according to 'y_delta'. If 'show_entities'
-    // is true, the phantom locations are plotted in. The player and
-    // the teleport sqaure positions are always shown.
-    // NOTE With the map now drawn on 3x3 blocks, 'y_delta'
-    //      has s very limited range of useable values
+/*
+    Draw the current map on the screen buffer, centred but
+    vertically adjusted according to `y_delta`.
+    If `show_entities` is `true`, the phantom locations
+    are plotted in. The player and the teleport sqaure positions
+    are always shown.
 
-    // Put a Box around the map
-    //ssd1306_rect(32, 0 + y_delta, 64, 64, 1, false);
+    NOTE With the map now drawn on 3x3 blocks, `y_delta`
+         has s very limited range of useable values.
+
+    - parameters:
+        - y_delta:       Offset in the y-axis.
+        - show_entities: Display phantoms.
+ */
+void draw(uint8_t y_delta, bool show_entities) {
+    // Set the map background (blue)
+    pen(0, 0, 1);
+    frect(32, 0 + y_delta, 64, 64);
 
     // Draw the map
     uint8_t x = 34;
     uint8_t y = 2 + y_delta;
+    pen(1, 1, 0);
 
     for (uint8_t i = 0 ; i < 20 ; ++i) {
         uint8_t *line = current_map[i];
@@ -314,29 +324,16 @@ void draw(uint8_t y_delta, bool show_entities) {
 
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
-                /*
-                ssd1306_plot(x + j * 3,     y + i * 3,     1);
-                ssd1306_plot(x + j * 3 + 1, y + i * 3,     1);
-                ssd1306_plot(x + j * 3 + 2, y + i * 3,     1);
-
-                ssd1306_plot(x + j * 3,     y + i * 3 + 1, 1);
-                ssd1306_plot(x + j * 3 + 1, y + i * 3 + 1, 1);
-                ssd1306_plot(x + j * 3 + 2, y + i * 3 + 1, 1);
-
-                ssd1306_plot(x + j * 3,     y + i * 3 + 2, 1);
-                ssd1306_plot(x + j * 3 + 1, y + i * 3 + 2, 1);
-                ssd1306_plot(x + j * 3 + 2, y + i * 3 + 2, 1);
-                */
+                // Yellow
+                frect(x + j * 3, y + i * 3, 10, 10);
             }
 
             // Show the teleport square
             if (pixel == MAP_TILE_TELEPORTER) {
-                /*
-                ssd1306_plot(x + j * 3 + 1, y + i * 3, 0);
-                ssd1306_plot(x + j * 3,     y + i * 3 + 1, 0);
-                ssd1306_plot(x + j * 3 + 2, y + i * 3 + 1, 0);
-                ssd1306_plot(x + j * 3 + 1, y + i * 3 + 2, 0);
-                */
+                // Greem
+                pen(1, 0, 0);
+                frect(x + j * 3, y + i * 3, 10, 10);
+                pen(1, 1, 0);
             }
 
             // Show the player as an arrow at the current square
@@ -386,20 +383,18 @@ void draw(uint8_t y_delta, bool show_entities) {
             }
 
             if (show_entities) {
-                // Show any phantoms at the current square as a cross
+                // Show any phantoms at the current square as a red square
+                pen(1, 0, 0);
                 for (uint8_t k = 0 ; k < game.phantom_count; ++k) {
                     if (j == game.phantoms[k].x && i == game.phantoms[k].y) {
-                        //ssd1306_plot(x + j * 3    , y + i * 3 + 1, 0);
-                        //ssd1306_plot(x + j * 3 + 1, y + i * 3,     0);
-                        //ssd1306_plot(x + j * 3 + 1, y + i * 3 + 1, 0);
-                        //ssd1306_plot(x + j * 3 + 1, y + i * 3 + 2, 0);
-                        //ssd1306_plot(x + j * 3 + 2, y + i * 3 + 1, 0);
+                        frect(x + j * 3    , y + i * 3 + 1, 10, 10);
                     }
                 }
             }
         }
     }
 }
+
 
 /*
     Return the contents of the specified grid reference.
@@ -415,6 +410,7 @@ uint8_t get_square_contents(uint8_t x, uint8_t y) {
     uint8_t *line = current_map[y];
     return line[x];
 }
+
 
 /*
     Set the contents of the specified grid reference.
@@ -432,6 +428,7 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
     line[x] = value;
     return true;
 }
+
 
 /*
     Return the number of squares an entity can see.
@@ -487,6 +484,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
     if (count > MAX_VIEW_RANGE) count = MAX_VIEW_RANGE;
     return count;
 }
+
 
 /*
     Check for any Phantom in the specified square.

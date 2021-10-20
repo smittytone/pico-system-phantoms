@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Utility functions
  *
  * @version     1.1.0
  * @author      smittytone
@@ -11,7 +12,13 @@
 
 using namespace picosystem;
 
+
+/*
+ *  GLOBALS
+ */
+// NOTE Key values defined by picosystem
 uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
+
 
 namespace Utils {
 
@@ -39,5 +46,6 @@ uint8_t inkey() {
     }
     return bits;
 }
+
 
 }   // namespace Utils
