@@ -17,6 +17,19 @@ using namespace picosystem;
  */
 uint8_t count = 0;
 
+tinymt32_t  tinymt_store;
+
+bool        chase_mode = false;
+bool        map_mode = false;;
+
+// Game data
+Game     game;
+
+// Graphics structures
+Rect        rects[7];
+
+extern const uint8_t level_data[84];
+
 
 /*
  *  PICOSYSTEM CALLBACKS
@@ -33,6 +46,8 @@ void init() {
 
     // Start a new game -- the first
     start_new_game();
+
+    printf("DONE INIT\n");
 }
 
 
@@ -80,15 +95,18 @@ void update(uint32_t tick_ms) {
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
                         // Has the player walked up to a Phantom?
-                        if (Map::phantom_on_square(nx, ny)) {
+                        printf("%i,%i\n",nx,ny);
+                        if (Map::phantom_on_square(nx, ny) != ERROR_CONDITION) {
                             // Yes -- so the player is dead!
                             game.state = PLAYER_IS_DEAD;
+                            printf("DEAD\n");
                             return;
                         }
 
                         // Set the new square for rendering later
                         game.player.x = nx;
                         game.player.y = ny;
+
                     }
                 } else if (dir == TURN_RIGHT) {
                     // Turn player right
@@ -96,14 +114,14 @@ void update(uint32_t tick_ms) {
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_NORTH;
 
                     // Animate the turn now
-                    if (!chase_mode && !map_mode) Gfx::animate_turn(false);
+                    //if (!chase_mode && !map_mode) Gfx::animate_turn(false);
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
                     --game.player.direction;
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_WEST;
 
                     // Animate the turn now
-                    if (!chase_mode && !map_mode) Gfx::animate_turn(true);
+                    //if (!chase_mode && !map_mode) Gfx::animate_turn(true);
                 }
             } else if (key & 0x02) {
                 // Player can only teleport if they have walked over the
@@ -185,12 +203,12 @@ void setup() {
     // NOTE These are pixel values:
     //      left, top, width, height, Phantom lateral offset
     uint8_t coords[] = { 0,    0, 240, 160, 60,     // Outer LED frame
-                         20,   9, 200, 142, 50,
-                         45,  20, 150, 120, 38,
-                         67,  30, 106, 100, 26,
-                         88,  39,  64,  82, 20,
-                         103, 46,  34,  68,  8,
-                         113, 58,  14,  60,  2};    // 'End wall' for distant views
+                         20,  10, 200, 140, 50,
+                         44,  20, 152, 120, 38,
+                         66,  30, 108, 100, 26,
+                         88,  40,  64,  80, 20,
+                         102, 46,  36,  68,  8,
+                         114, 50,  12,  60,  2};    // 'End wall' for distant views
 
     // Read the array values into Rect structures
     uint8_t c = 0;
@@ -203,6 +221,8 @@ void setup() {
         a_rect.spot = coords[i + 4];
         rects[c++] = a_rect;
     }
+
+    backlight(90);
 }
 
 
@@ -246,6 +266,7 @@ void init_game() {
     // Store the current map number so it's not
     // used in the next game
     game.map = ERROR_CONDITION;
+    printf("DONE INIT_GAME\n");
 }
 
 
@@ -324,13 +345,14 @@ void create_world() {
         }
     }
 
-    game.phantoms.push_back(p);
+    // game.phantoms.push_back(p);
 
-    /* TEST DATA
+
     game.player.x = 0;
     game.player.y = 0;
-    player_direction = 1;
+    game.player.direction = DIRECTION_NORTH;
 
+    /* TEST DATA
     game.phantoms = 3;
     phantoms[0].x = 8;
     phantoms[0].y = 0;
@@ -341,6 +363,8 @@ void create_world() {
     phantoms[2].x = 11;
     phantoms[2].y = 0;
      */
+
+    printf("DONE CREATE_WORLD\n");
 }
 
 
@@ -381,8 +405,10 @@ void update_world() {
     Tell all of the current Phantoms to move.
 */
 void move_phantoms() {
-    for (uint8_t i = 0 ; i < game.phantoms.size() ; ++i) {
-        game.phantoms[i].move();
+    if (game.phantom_count > 0) {
+        for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
+            game.phantoms[i].move();
+        }
     }
 }
 

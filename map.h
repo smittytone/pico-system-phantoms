@@ -31,10 +31,7 @@ namespace Map {
     uint8_t         phantom_on_square(uint8_t x, uint8_t y);
 }
 
-/*
- * GLOBALS
- */
-uint8_t     *current_map[20];
+
 
 
 // _PHANTOMS_MAP_HEADER_

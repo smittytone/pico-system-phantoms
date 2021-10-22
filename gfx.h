@@ -30,9 +30,4 @@ namespace Gfx {
 }
 
 
-extern      tinymt32_t  tinymt_store;
-extern      Game        game;
-extern      Rect        rects[7];
-
-
 #endif  // _GFX_UTILS_HEADER_

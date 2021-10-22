@@ -42,8 +42,12 @@ int irandom(int start, int max) {
 uint8_t inkey() {
     uint8_t bits = 0;
     for (uint8_t i = 0 ; i < 8 ; ++i) {
-        if (pressed(keys[i])) bits |= (1 << i);
+        if (pressed(keys[i])) {
+            bits |= (1 << i);
+            printf("KEY: %i\n", bits);
+        }
     }
+
     return bits;
 }
 

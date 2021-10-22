@@ -147,18 +147,18 @@ uint8_t     count_facing_phantoms(uint8_t range);
 /*
  *      GLOBALS
  */
-tinymt32_t  tinymt_store;
+extern tinymt32_t       tinymt_store;
 
-bool        chase_mode;
-bool        map_mode;
+extern bool             chase_mode;
+extern bool             map_mode;
 
 // Game data
-Game        game;
+extern Game             game;
 
 // Graphics structures
-Rect        rects[7];
+extern Rect             rects[7];
 
-extern const uint8_t level_data[84];
+extern const uint8_t    level_data[84];
 
 
 

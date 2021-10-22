@@ -25,3 +25,6 @@ picosystem_executable(phantom-slayer
                       utils.cpp)
 
 disable_startup_logo(phantom-slayer)
+
+pico_enable_stdio_usb(phantom-slayer 1)
+pico_enable_stdio_uart(phantom-slayer 0)
