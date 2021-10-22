@@ -237,7 +237,7 @@ void draw_reticule() {
 }
 
 
-void draw_zap() {
+void draw_zap(uint8_t frame) {
 
 }
 

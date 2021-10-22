@@ -134,14 +134,16 @@ void        update_world();
 void        move_phantoms();
 void        manage_phantoms();
 
+uint8_t     get_direction(uint8_t key_pressed);
+uint8_t     get_facing_phantom(uint8_t range);
+uint8_t     count_facing_phantoms(uint8_t range);
+
 void        check_senses();
 void        fire_laser();
 void        do_teleport();
 
-uint8_t     get_direction(uint8_t key_pressed);
-
-uint8_t     get_facing_phantom(uint8_t range);
-uint8_t     count_facing_phantoms(uint8_t range);
+void        death();
+void        show_scores();
 
 
 /*
