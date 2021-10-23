@@ -326,13 +326,13 @@ void draw(uint8_t y_delta, bool show_entities) {
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
                 pen(40, 30, 0);
-                if (pixel == MAP_TILE_TELEPORTER) {
+                if (i == game.tele_y && j == game.tele_x) {
                     // Show the teleport square in green
                     pen(0, 40, 0);
                 } else if (show_entities) {
                     // Show any phantoms at the current square as a red square
                     for (uint8_t k = 0 ; k < game.phantom_count; ++k) {
-                        if (i == game.phantoms[k].x && j == game.phantoms[k].y) {
+                        if (j == game.phantoms[k].x && i == game.phantoms[k].y) {
                             pen(40, 0, 0);
                         }
                     }
@@ -346,10 +346,10 @@ void draw(uint8_t y_delta, bool show_entities) {
                 pen(40, 0, 0);
                 switch(game.player.direction) {
                     case DIRECTION_NORTH:
-                        frect(x + i * 8 + 3, y + j * 8, 2, 5);
-                        frect(x + i * 8, y + j * 8 + 3, 2, 4);
-                        frect(x + i * 8 + 6, y + j * 8 + 3, 2, 4);
-                        frect(x + i * 8 + 1, y + j * 8 + 4, 6, 2);
+                        frect(x + j * 8 + 3, y + i * 8, 2, 5);
+                        frect(x + j * 8, y + i * 8 + 3, 2, 4);
+                        frect(x + j * 8 + 6, y + i * 8 + 3, 2, 4);
+                        frect(x + j * 8 + 1, y + i * 8 + 4, 6, 2);
                         break;
                     case DIRECTION_EAST:
                         frect(x + i * 8 + 3, y + j * 8 + 4, 5, 2);
