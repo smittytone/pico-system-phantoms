@@ -12,9 +12,12 @@
 using namespace picosystem;
 
 
+uint8_t radii[5] = {20, 16, 12, 8, 4};
+
+
 namespace Gfx {
 
-/*
+/**
     Render a single viewpoint frame at the specified square.
     Progressively draw in walls, square by square, moving away
     from (x,y) in the specified direction.
@@ -31,11 +34,11 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
+    // Set the background
     pen(0, 0, 0);
     clear();
     pen(40, 40, 0);
-    frect(0, 20, 240, 200);
-
+    frect(0, 39, 240, 162);
 
     switch(direction) {
         case DIRECTION_NORTH:
@@ -99,7 +102,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     }
 }
 
-/*
+/**
     Draw a section of the view, ie. a frame.
 
     - Parameters:
@@ -115,7 +118,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
  */
 bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uint8_t current_frame, uint8_t furthest_frame) {
     // Is the square a teleporter? If so, draw it
-    //if (x == game.tele_x && y == game.tele_y) draw_teleporter(current_frame);
+    if (x == game.tele_x && y == game.tele_y) draw_teleporter(current_frame);
 
     // Draw in left and right wall segments
     // NOTE Second argument is true or false: wall section is
@@ -134,7 +137,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     return false;
 }
 
-/*
+/**
     Draw a grid line on the floor -- this is all
     we do to create the floor (ceiling has no line)
 
@@ -144,11 +147,12 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
     pen(40, 0, 0);
-    // rect(r.x, r.y + 40, r.width, r.height);
-    line(r.x, r.y + r.height + 40, r.x + r.width, r.y + r.height + 40);
+    line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
+    line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
 
-/*
+
+/**
     Draw a green floor tile to indicate the Escape teleport location.
     When stepping on this, the player can beam to their start point.
 
@@ -156,12 +160,26 @@ void draw_floor_line(uint8_t frame_index) {
         - frame_index: The frame index of the current frame.
  */
 void draw_teleporter(uint8_t frame_index) {
-    Rect r = rects[frame_index];
+    Rect c = rects[frame_index];
+    Rect b = rects[frame_index + 1];
     pen(0, 40, 0);
-    frect(r.x, r.y, r.width, r.height); // Needs modifying
+    frect(c.x, b.y + b.height + 40, c.width, (c.y + c.height) - (b.y + b.height));
+
+    /*
+    bool dot_state = true;
+
+    // Plot a dot pattern
+    for (uint8_t y = r.y + r.height - 4; y < r.y + r.height ; ++y) {
+        for (uint8_t i = r.x ; i < r.x + r.width - 2; i += 2) {
+            pixel(dot_state ? i : i + 1, y);
+        }
+        dot_state = !dot_state;
+    }
+    */
 }
 
-/*
+
+/**
     Render a left-side wall section for the current square.
     NOTE 'is_open' is true if there is no wall -- ie. we're at
          a junction point.
@@ -187,7 +205,7 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 }
 
 
-/*
+/**
     Render a right-side wall section for the current square.
     NOTE 'is_open' is true if there is no wall -- we're at
          a junction point.
@@ -213,7 +231,7 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
     fpoly({xd + 1, i.y + i.height + 39, o.x + o.width - 1, i.y + i.height + 39, o.x + o.width - 1, o.y + o.height + 40});
 }
 
-/*
+/**
     Draw the wall facing the viewer, or for very long distances,
     an 'infinity' view.
 
@@ -227,23 +245,29 @@ void draw_far_wall(uint8_t frame_index) {
 }
 
 
-/*
+/**
     Draw the laser sight: big cross on the screen.
  */
 void draw_reticule() {
-    pen(40, 0, 0);
-    line(100, 120, 140, 120);
-    line(120, 100, 120, 140);
+    pen(0, 40, 0);
+    rect(100, 119, 40, 2);
+    rect(119, 100, 2, 40);
 }
 
 
 void draw_zap(uint8_t frame) {
-
+    if (frame < 5) {
+        uint16_t radius = radii[frame];
+        pen(40, 40, 40);
+        fcircle(120, 120, radius);
+    }
 }
+
 
 void animate_turn(bool is_right) {
 
 }
+
 
 void draw_phantom(uint8_t frame_number, uint8_t* phantom_count) {
 

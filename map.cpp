@@ -154,9 +154,9 @@ uint8_t init(uint8_t last_map) {
     } while (map == last_map);
 
     /* TEST VALUE
-
-    */
     map = 1;
+    */
+
     switch(map) {
         case 0:
             current_map[0] = base_map_00;

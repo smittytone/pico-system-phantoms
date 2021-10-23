@@ -14,6 +14,7 @@
  * C++ HEADERS
  */
 #include "picosystem.hpp"
+#include "hardware/adc.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -56,7 +57,7 @@ extern "C" {
 #define PHANTOM_MOVE_TIME_US                            1000000
 #define LASER_RECHARGE_US                               2000000
 #define MAP_POST_KILL_SHOW_MS                           3000
-#define LASER_FIRE_US                                   500000
+#define LASER_FIRE_US                                   200000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
@@ -95,17 +96,19 @@ typedef struct {
     Player  player;
 
     uint8_t  state;
+    uint8_t  map;
     uint8_t  audio_range;
     uint8_t  tele_x;
     uint8_t  tele_y;
     uint8_t  start_x;
     uint8_t  start_y;
-    uint8_t  level_kills;
-    uint8_t  map;
 
     uint16_t level;
-    uint16_t level_score;
+    uint16_t score;
     uint16_t high_score;
+    uint16_t kills;
+    uint16_t level_kills;
+    uint16_t level_hits;
 
     uint32_t zap_charge_time;
     uint32_t zap_fire_time;

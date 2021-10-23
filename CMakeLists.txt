@@ -26,7 +26,11 @@ picosystem_executable(phantom-slayer
                       tinymt32.c
                       utils.cpp)
 
-disable_startup_logo(phantom-slayer)
+#disable_startup_logo(phantom-slayer)
+
+target_link_libraries(phantom-slayer
+                      hardware_adc
+)
 
 pico_enable_stdio_usb(phantom-slayer 1)
 pico_enable_stdio_uart(phantom-slayer 0)

@@ -16,7 +16,6 @@ using namespace picosystem;
  *  GLOBALS
  */
 uint8_t     count_down = 0;
-uint8_t     radii[4] = {20, 16, 10, 4};
 
 tinymt32_t  tinymt_store;
 
@@ -73,13 +72,8 @@ void update(uint32_t tick_ms) {
             break;
         case START_COUNT:
             // Count down five seconds
-            if (tick_ms % 100 == 0) {
-                count_down++;
-            }
-
-            if (count_down == 5) {
-                game.state = IN_PLAY;
-            }
+            if (tick_ms % 100 == 0)  count_down++;
+            if (count_down == 5) game.state = IN_PLAY;
             break;
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -88,7 +82,7 @@ void update(uint32_t tick_ms) {
             // Was a key tapped?
             uint8_t key = Utils::inkey();
 
-            if (key > 0x0F) {
+            if ((key > 0x0F) && !game.show_reticule) {
                 // A move key has been pressed
                 uint8_t dir = get_direction(key);
                 uint8_t nx = game.player.x;
@@ -102,43 +96,46 @@ void update(uint32_t tick_ms) {
                     if (game.player.direction == DIRECTION_WEST) nx += (dir == MOVE_FORWARD ? -1 : 1);
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
+                        #ifdef DEBUG
+                        printf("%i,%i\n", nx, ny);
+                        #endif
+
                         // Has the player walked up to a Phantom?
-                        printf("%i,%i\n",nx,ny);
                         if (Map::phantom_on_square(nx, ny) != ERROR_CONDITION) {
                             // Yes -- so the player is dead!
-                            game.state = PLAYER_IS_DEAD;
                             death();
+                            game.state = PLAYER_IS_DEAD;
+
+                            #ifdef DEBUG
+                            printf("PLAYER IS DEAD\n");
+                            #endif
                             return;
                         }
 
                         // Set the new square for rendering later
                         game.player.x = nx;
                         game.player.y = ny;
-
                     }
                 } else if (dir == TURN_RIGHT) {
                     // Turn player right
-                    ++game.player.direction;
+                    game.player.direction++;
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_NORTH;
 
                     // Animate the turn now
                     //if (!chase_mode && !map_mode) Gfx::animate_turn(false);
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
-                    --game.player.direction;
+                    game.player.direction--;
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_WEST;
 
                     // Animate the turn now
                     //if (!chase_mode && !map_mode) Gfx::animate_turn(true);
                 }
-            } else if (key & 0x02) {
+            } else if ((key & 0x02) && !game.show_reticule) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
-                if (!game.show_reticule) {
-                    // Teleport if the player's the square
-                    if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
-                        do_teleport();
-                    }
+                if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
+                    do_teleport();
                 }
             }
 
@@ -173,6 +170,19 @@ void update(uint32_t tick_ms) {
 
 void draw() {
 
+    if (game.state == START_COUNT) {
+        // Update on screen number
+
+        pen(0, 0, 40);
+        frect(220, 40, 19, 10);
+
+        pen(40, 30, 0);
+        char count_string[] = "00";
+        sprintf(count_string, "%02d", count_down);
+        //font(10, 10, 1);
+        text(count_string, 220, 40);
+    }
+
     if (game.state == IN_PLAY) {
         // Render the screen
         if (chase_mode) {
@@ -196,13 +206,6 @@ void draw() {
             Gfx::draw_reticule();
         }
     }
-
-    if (game.state = START_COUNT) {
-        // Update on screen number
-        char count_string[] = "00";
-        sprintf(count_string, "%02d", count_down);
-        text(count_string, 170, 48);
-    }
 }
 
 
@@ -212,8 +215,7 @@ void draw() {
 void setup() {
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    //tinymt32_init(&tinymt_store, adc_read());
-    // NOTE Need a entropy source for this.
+    tinymt32_init(&tinymt_store, adc_read());
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -259,11 +261,11 @@ void start_new_game() {
     Map::draw(0, false);
 
     text("NEW", 0, 40);
-    text("GAME", 0, 48);
-    text("LEVEL", 0, 52);
-    text("1", 0, 60);
+    text("GAME", 0, 50);
+    text("LEVEL", 0, 60);
+    text("1", 0, 70);
 
-    text("01", 170, 48);
+    text("00", 220, 40);
 
     // Set the loop mode
     game.state = START_COUNT;
@@ -271,7 +273,9 @@ void start_new_game() {
 
 
 /*
-    Reset the main game control structure.
+    Reset the main game control structure. Called only at the start of
+    a game, not the start of a level.
+
     NOTE Phantom data is separated out into `init_phantoms()`.
  */
 void init_game() {
@@ -283,9 +287,13 @@ void init_game() {
     game.zap_frame = 0;
     game.zap_charge_time = 0;
     game.zap_fire_time = 0;
-    game.level_score = 0;
+    game.score = 0;
     game.audio_range = 4;
     game.level = 1;
+    game.level_hits = 0;
+    game.level_kills = 0;
+    game.score = 0;
+    game.kills = 0;
     game.tele_x = 0;
     game.tele_y = 0;
     game.start_x = 0;
@@ -300,7 +308,10 @@ void init_game() {
     // Store the current map number so it's not
     // used in the next game
     game.map = ERROR_CONDITION;
+
+    #ifdef DEBUG
     printf("DONE INIT_GAME\n");
+    #endif
 }
 
 
@@ -315,8 +326,8 @@ void init_phantoms() {
 }
 
 
-/*
-    Generate and populate a new maze which happens
+/**
+    Generate and populate a new maze. This happens
     at the start of a new game and at the start of
     each level. A level jump is triggered when all the
     current phantoms have been dispatched.
@@ -381,7 +392,6 @@ void create_world() {
 
     // game.phantoms.push_back(p);
 
-
     game.player.x = 0;
     game.player.y = 0;
     game.player.direction = DIRECTION_NORTH;
@@ -398,12 +408,19 @@ void create_world() {
     phantoms[2].y = 0;
      */
 
+    game.tele_x = 8;
+    game.tele_y = 0;
+
+    #ifdef DEBUG
     printf("DONE CREATE_WORLD\n");
+    #endif
 }
 
 
-/*
+/**
     Update the world at the end of the move cycle.
+
+    Called from the main `update()` callback.
  */
 void update_world() {
     // Move the Phantoms periodically -- this is how
@@ -424,20 +441,26 @@ void update_world() {
     // Animate the laser zap
     if (game.is_firing && now - game.zap_fire_time > LASER_FIRE_US) {
         game.zap_fire_time = now;
-        game.zap_frame++;
+
         if (game.zap_frame == 6) {
             game.zap_frame = 0;
             game.is_firing = false;
         } else {
-            fire_laser();
+            game.zap_frame++;
         }
     }
 }
 
 
-/*
+/**
     Get player movement action from the joypad
-    Favour movement over rotation
+    Favour movement over rotation.
+
+    - Parameters:
+        - keys_pressed: Bitfield indicating which
+                        keys have been pressed.
+
+    - Returns: The direction in which the player is facing.
  */
 uint8_t get_direction(uint8_t keys_pressed) {
     if (keys_pressed & 0x10) return MOVE_FORWARD;
@@ -449,10 +472,16 @@ uint8_t get_direction(uint8_t keys_pressed) {
     return ERROR_CONDITION;
 }
 
-/*
+
+/**
     Return the index of the closest facing Phantom to the
-    player from the the 'phantoms' array -- or ERROR_CONDITION.
-    'range' is the number of squares we'll iterate over.
+    player from the the 'game.phantoms' vector --
+    or `ERROR_CONDITION`.
+
+    - Parameters:
+        - range: The number of squares to iterate over.
+
+    - Returns: The index of the Phantom in the vector.
  */
 uint8_t get_facing_phantom(uint8_t range) {
     uint8_t p_index = ERROR_CONDITION;
@@ -494,9 +523,13 @@ uint8_t get_facing_phantom(uint8_t range) {
 }
 
 
-/*
-    Return the number of Phantoms in front of the player
-    'range' is the number of squares we'll iterate over.
+/**
+    Return the number of Phantoms in front of the player.
+
+    - Parameters:
+        - range: The number of squares to iterate over.
+
+    - Returns: The number of Phantoms in front of the Player.
  */
 uint8_t count_facing_phantoms(uint8_t range) {
     uint8_t phantom_count = 0;
@@ -534,12 +567,13 @@ uint8_t count_facing_phantoms(uint8_t range) {
 }
 
 
-/*
+/**
     Tell all of the current Phantoms to move.
 */
 void move_phantoms() {
-    if (game.phantom_count > 0) {
-        for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
+    uint8_t number = game.phantoms.size();
+    if (number > 0) {
+        for (uint8_t i = 0 ; i < number ; ++i) {
             game.phantoms[i].move();
         }
     }
@@ -550,8 +584,8 @@ void move_phantoms() {
  *      ACTIONS
  */
 
-/*
-    Scan around the player for nearby phantoms
+/**
+    Scan around the player for nearby Phantoms.
  */
 void check_senses() {
     int8_t dx = game.player.x - game.audio_range;
@@ -577,7 +611,7 @@ void check_senses() {
 }
 
 
-/*
+/**
     Jump back to the teleport square if the player has walked over it.
  */
 void do_teleport() {
@@ -594,8 +628,8 @@ void do_teleport() {
 }
 
 
-/*
-    Hit the front-most facing phantom, if there is one.
+/**
+    Hit the front-most facing Phantom, if there is one.
  */
 void fire_laser() {
     // Did we hit a Phantom?
@@ -608,13 +642,15 @@ void fire_laser() {
 
         // FROM 1.0.2
         // Use original scoring: 2 points for a hit, 10 for a kill
-        game.level_score += 2;
+        game.score += 2;
+        game.level_hits++;
 
         // Did that kill it?
         if (p.hp == 0) {
             // Yes! One dead Phantom...
-            game.level_score += 10;
-            ++game.level_kills;
+            game.score += 8;
+            game.level_kills++;
+            game.kills++;
 
             // Briefly invert the screen and sound some tones
             // tone(1200, 100, 200);
@@ -636,7 +672,7 @@ void fire_laser() {
 }
 
 
-/*
+/**
     Check whether we need to increase the number of phantoms
     on the board or increase their speed -- all caused by a
     level-up. We up the level if all the level's phantoms have
@@ -650,15 +686,17 @@ void manage_phantoms() {
     if (game.level < MAX_PHANTOMS) {
         if (game.level_kills == game.level) {
             game.level_kills = 0;
-            ++game.level;
-            ++game.phantom_count;
+            game.level_hits = 0;
             level_up = true;
+            game.level++;
+            game.phantom_count++;
         }
     } else {
         if (game.level_kills == MAX_PHANTOMS) {
             game.level_kills = 0;
+            game.level_hits = 0;
             level_up = true;
-            ++game.level;
+            game.level++;
         }
     }
 
@@ -672,7 +710,7 @@ void manage_phantoms() {
     if (game.phantom_count > MAX_PHANTOMS) game.phantom_count = MAX_PHANTOMS;
 
     // Do we need to add any new phantoms to the board?
-    if (game.phantoms.size() < game.phantom_count) {
+    while (game.phantoms.size() < game.phantom_count) {
         Phantom p = Phantom();
         p.roll_location();
         game.phantoms.push_back(p);
@@ -684,7 +722,7 @@ void manage_phantoms() {
  *      GAME OUTCOMES
  */
 
-/*
+/**
     The player has died -- show the map and the score.
  */
 void death() {
@@ -710,21 +748,21 @@ void death() {
 }
 
 
-/*
+/**
     Code used in a couple of 'show map' locations
     Show the current score alongside the map.
  */
 void show_scores() {
     char score_string[5] = "000";
     text("SCORE", 170, 40);
-    sprintf(score_string, "%02d", game.level_score);
+    sprintf(score_string, "%02d", game.score);
     text(score_string, 170, 48);
 
     // Show the high score
     text("HIGH", 170, 96);
     text("SCORE", 170, 104);
 
-    if (game.high_score < game.level_score) game.high_score = game.level_score;
+    if (game.high_score < game.score) game.high_score = game.score;
     sprintf(score_string, "%02d", game.high_score);
     text(score_string, 98, 49);
 
