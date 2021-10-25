@@ -32,7 +32,5 @@ namespace Map {
 }
 
 
-
-
 // _PHANTOMS_MAP_HEADER_
 #endif

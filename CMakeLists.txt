@@ -19,6 +19,7 @@ pico_sdk_init()
 find_package(PICOSYSTEM REQUIRED)
 
 picosystem_executable(phantom-slayer
+                      assets.cpp
                       gfx.cpp
                       main.cpp
                       map.cpp
@@ -27,6 +28,7 @@ picosystem_executable(phantom-slayer
                       utils.cpp)
 
 #disable_startup_logo(phantom-slayer)
+no_spritesheet(phantom-slayer)
 
 target_link_libraries(phantom-slayer
                       hardware_adc

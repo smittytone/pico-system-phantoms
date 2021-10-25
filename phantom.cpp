@@ -16,33 +16,18 @@ using std::string;
 /*
  *      BASIC LEVEL DATA
  */
-const uint8_t level_data[84] = {
-    1,1,1,0,        // 1
-    1,2,1,0,        // 2
-    1,3,1,0,        // 3
-    1,4,0,0,        // 4
-    1,5,0,0,        // 5
-    1,6,0,0,        // 6
-    2,6,0,0,        // 7
-    2,6,0,0,        // 8
-    2,6,0,0,        // 9
-    3,6,0,1,        // 10
-    3,6,0,1,        // 11
-    3,6,0,1,        // 12
-    4,6,0,1,        // 13
-    4,6,0,1,        // 14
-    4,6,0,1,        // 15
-    4,8,0,2,        // 16
-    4,8,0,2,        // 17
-    4,8,0,2,        // 18
-    5,9,0,2,        // 19
-    5,9,0,2,        // 20
-    5,9,0,2         // 21
-};
+
 
 
 /*
- *  CLASS
+ *      EXTERNALLY-DEFINED GLOBALS
+ */
+extern Game         game;
+extern tinymt32_t   tinymt_store;
+
+
+/*
+ *      CLASS
  */
 Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
     uint8_t level_index = (game.level - 1) * 4;
@@ -77,6 +62,7 @@ void Phantom::move() {
         if (dx == 0 && dy == 0) {
             // Yes!
             game.state = PLAYER_IS_DEAD;
+            death();
             return;
         }
 
@@ -87,22 +73,22 @@ void Phantom::move() {
         uint8_t exit_count = 0;
 
         // Determine the directions in which the phantom *can* move: empty spaces with no phantom already there
-        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && !Map::phantom_on_square(x - 1, y)) {
+        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x - 1, y) == ERROR_CONDITION) {
             available_directions |= PHANTOM_WEST;
             ++exit_count;
         }
 
-        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && !Map::phantom_on_square(x + 1, y)) {
+        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x + 1, y) == ERROR_CONDITION) {
             available_directions |= PHANTOM_EAST;
             ++exit_count;
         }
 
-        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y - 1)) {
+        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y - 1) == ERROR_CONDITION) {
             available_directions |= PHANTOM_NORTH;
             ++exit_count;
         }
 
-        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y + 1)) {
+        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y + 1) == ERROR_CONDITION) {
             available_directions |= PHANTOM_SOUTH;
             ++exit_count;
         }
@@ -226,9 +212,13 @@ void Phantom::move() {
         }
 
         // Set the Phantom's new location
-        x = new_x;
-        y = new_y;
-        direction = new_direction;
+        if (x != new_x && y != new_y) {
+            x = new_x;
+            y = new_y;
+            direction = new_direction;
+        } else {
+            beep();
+        }
     }
 }
 
@@ -236,11 +226,11 @@ void Phantom::move() {
 /*
     Move the Phantom one space according in the chosen direction.
  */
-void Phantom::move_one_square(uint8_t direction, uint8_t *x, uint8_t *y) {
-    if (direction == PHANTOM_NORTH) *y -= 1;
-    if (direction == PHANTOM_SOUTH) *y += 1;
-    if (direction == PHANTOM_EAST)  *x += 1;
-    if (direction == PHANTOM_WEST)  *x -= 1;
+void Phantom::move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny) {
+    if (nd == PHANTOM_NORTH) *ny = y - 1;
+    if (nd == PHANTOM_SOUTH) *ny = y + 1;
+    if (nd == PHANTOM_EAST)  *nx = x + 1;
+    if (nd == PHANTOM_WEST)  *nx = x - 1;
 }
 
 

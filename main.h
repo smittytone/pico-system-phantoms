@@ -141,6 +141,7 @@ uint8_t     get_direction(uint8_t key_pressed);
 uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
 
+
 void        check_senses();
 void        fire_laser();
 void        do_teleport();
@@ -148,27 +149,19 @@ void        do_teleport();
 void        death();
 void        show_scores();
 
+void        beep();
+
 
 /*
  *      GLOBALS
  */
-extern tinymt32_t       tinymt_store;
-
-extern bool             chase_mode;
-extern bool             map_mode;
-
-// Game data
-extern Game             game;
-
-// Graphics structures
-extern Rect             rects[7];
-
-extern const uint8_t    level_data[84];
 
 
 
 #ifdef __cplusplus
 }
+
+
 #endif
 
 #endif // _PHANTOM_SLAYER_MAIN_HEADER_

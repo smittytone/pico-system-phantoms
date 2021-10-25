@@ -10,9 +10,23 @@
 #include "main.h"
 
 using namespace picosystem;
+using std::string;
 
 
-uint8_t radii[5] = {20, 16, 12, 8, 4};
+/*
+ *      EXTERNALLY-DEFINED GLOBALS
+ */
+extern tinymt32_t       tinymt_store;
+extern Game             game;
+extern Rect             rects[7];
+
+
+/*
+ *      GLOBALS
+ */
+const uint8_t           radii[5] = {20, 16, 12, 8, 4};
+buffer_t*               word_buffer = buffer(68, 50, (void *)word_sprites);
+buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprites);
 
 
 namespace Gfx {
@@ -28,17 +42,46 @@ namespace Gfx {
         - directions: The direction in which the viewer is facing.
  */
 void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
-    int8_t far_frame = Map::get_view_distance(x, y, direction);
+    uint8_t far_frame = Map::get_view_distance(x, y, direction);
     int8_t frame = far_frame;
+
+    // Set 'phantom_count' upper nibble to total number of
+    // Phantoms facing the player; lower nibble is the 'current'
+    // Phantom if the player can see more than one
     uint8_t phantom_count = count_facing_phantoms(far_frame);
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
     // Set the background
-    pen(0, 0, 0);
-    clear();
-    pen(40, 40, 0);
-    frect(0, 39, 240, 162);
+    pen(0, 0, 40);
+    frect(0, 0, 240, 200);
+    pen(40, 36, 0);
+    frect(0, 40, 240, 160);
+
+    if (game.player.x < 10) {
+        draw_number(game.player.x, 0, 0);
+    } else {
+        draw_number(1, 0, 0);
+        draw_number(x - 10, 4, 0);
+    }
+
+    if (game.player.y < 10) {
+        draw_number(game.player.y, 0, 12);
+    } else {
+        draw_number(1, 0, 12);
+        draw_number(game.player.y - 10, 4, 12);
+    }
+
+    draw_number(game.player.direction, 0, 24);
+
+    draw_number((phantom_count >> 4), 160, 0);
+
+    if (far_frame < 10) {
+        draw_number(far_frame, 80, 0);
+    } else {
+        draw_number(1, 80, 0);
+        draw_number(far_frame - 10, 84, 0);
+    }
 
     switch(direction) {
         case DIRECTION_NORTH:
@@ -55,7 +98,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 // NOTE 'phantom_count comes back so we can keep track of multiple
                 //      Phantoms in the player's field of view and space them
                 //      laterally
-                if (phantom_count > 0 && Map::phantom_on_square(x, i)) {
+                if (phantom_count > 0 && Map::phantom_on_square(x, i) != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count);
                 }
 
@@ -69,7 +112,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x + far_frame;
             do {
                 draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(i, y)) {
+                if (phantom_count > 0 && Map::phantom_on_square(i, y) != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;
@@ -81,7 +124,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = y + far_frame;
             do {
                 draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(x, i)) {
+                if (phantom_count > 0 && Map::phantom_on_square(x, i) != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;
@@ -93,7 +136,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x - far_frame;
             do {
                 draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(i, y)) {
+                if (phantom_count > 0 && Map::phantom_on_square(i, y) != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count);
                 }
                 --frame;
@@ -269,8 +312,162 @@ void animate_turn(bool is_right) {
 }
 
 
-void draw_phantom(uint8_t frame_number, uint8_t* phantom_count) {
+void draw_phantom(uint8_t frame_index, uint8_t* count) {
+    // Draw a Phantom in the specified frame - which determines
+    // its x and y co-ordinates in the frame
+    Rect r = rects[frame_index];
+    uint8_t dx = 120;
+    uint8_t c = *count;
+    uint8_t number_phantoms = (c >> 4);
+    uint8_t current = c & 0x0F;
 
+    // Space the phantoms sideways ccording to
+    // the number of them on screen
+    if (number_phantoms > 1) {
+        if (current == 2) dx = 120 - r.spot;
+        if (current == 1) dx = 120 + r.spot;
+        *count = c - 1;
+    }
+
+    // NOTE Screen render frame indices run from 0 to 5, front to back
+    uint8_t height = phantom_sizes[frame_index * 2];
+    uint8_t width =  phantom_sizes[frame_index * 2 + 1];
+    uint8_t sx =  0;
+    uint8_t sy =  0;
+    uint8_t dy = 120 - (height >> 1);
+    dx -= (width >> 1);
+
+    if (frame_index > 0) {
+        for (uint8_t i = 0 ; i < frame_index ; i++) {
+            sx += phantom_sizes[i * 2 + 1];
+        }
+    }
+
+    // Paint in the Phantom
+    blit(phantom_buffer, sx, sy, width, height, dx, dy);
+}
+
+
+void draw_text(int8_t x, int8_t y, string the_string, bool do_wrap) {
+    // Print the supplied string at (x,y) (top-left co-ordinate), wrapping to the next line
+    // if required. 'do_double' selects double-height output (currently not working)
+    uint8_t space_size = 4;
+    uint8_t bit_max = 16;
+    pen(40, 0, 40);
+
+    return;
+    for (size_t i = 0 ; i < the_string.size() ; ++i) {
+        uint8_t glyph[6];
+        uint8_t col_1 = 0;
+        uint8_t col_0 = 0;
+        ssize_t glyph_len = 0;
+
+        uint8_t asc_val = the_string[i] - 32;
+        glyph_len = CHARSET[asc_val][0] + 1;
+        for (size_t j = 0 ; j < glyph_len ; ++j) {
+            if (j == glyph_len - 1) {
+                glyph[j] = 0x00;
+            } else {
+                glyph[j] = CHARSET[asc_val][j + 1];
+            }
+        }
+
+        col_0 = glyph[0];
+        printf("Glyph LEN: %i",glyph_len);
+
+        if (do_wrap) {
+            if ((x + glyph_len * 2 >= 240)) {
+                if (y + bit_max < 240) {
+                    x = 0;
+                    y += bit_max;
+                } else {
+                    return;
+                }
+            }
+        }
+
+        /*
+        for (size_t j = 1 ; j < glyph_len + 1 ; ++j) {
+            if (j == glyph_len) {
+                //if (do_double) break;
+                col_1 = glyph[j - 1];
+            } else {
+                col_1 = glyph[j];
+            }
+
+            uint16_t col_0_right = 0;
+            uint16_t col_1_right = 0;
+            uint16_t col_0_left = 0;
+            uint16_t col_1_left = 0;
+
+            col_0_right = text_stretch(col_0);
+            col_0_left = col_0_right;
+            col_1_right = text_stretch(col_1);
+            col_1_left = col_1_right;
+
+            for (int8_t a = 6 ; a >= 0 ; --a) {
+                for (uint8_t b = 1 ; b < 3 ; b++) {
+                    if ((((col_0 >> a) & 3) == 3 - b) && (((col_1 >> a) & 3) == b)) {
+                        col_0_right |= (1 << ((a * 2) + b));
+                        col_1_left |= (1 << ((a * 2) + 3 - b));
+                    }
+                }
+            }
+
+            for (uint8_t k = 0 ; k < bit_max ; ++k) {
+                if (x < 240 && col_0_left & (1 << k)) pixel(x, y + k);
+                if (x + 1 < 240 && col_0_right & (1 << k)) pixel(x + 1, y + k);
+                if (x + 2 < 240 && col_1_left & (1 << k)) pixel(x + 2, y + k);
+                if (x + 3 < 240&& col_1_right & (1 << k)) pixel(x + 3, y + k);
+            }
+
+            x += 2;
+
+            if (x >= 240) {
+                if (!do_wrap) return;
+                if (y + bit_max < 240) {
+                    x = 0;
+                    y += bit_max;
+                } else {
+                    break;
+                }
+            }
+
+            col_0 = col_1;
+        }
+        */
+    }
+}
+
+/**
+    Pixel-doubles an 8-bit value to 16 bits.
+ */
+uint16_t text_stretch(uint8_t x) {
+    uint16_t v = (x & 0xF0) << 4 | (x & 0x0F);
+    v = (v << 2 | v) & 0x3333;
+    v = (v << 1 | v) & 0x5555;
+    v |= (v << 1);
+    return v;
+}
+
+
+void draw_word(uint8_t index, uint8_t x, uint8_t y) {
+    uint8_t w_x = word_sizes[index * 3];
+    uint8_t w_y = word_sizes[index * 3 + 1];
+    uint8_t w_len = word_sizes[index * 3 + 2];
+    blit(word_buffer, w_x, w_y, w_len, 10, x, y);
+}
+
+
+void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
+    uint8_t w_len = number == 1 ? 2 : 6;
+    uint8_t w_x = number == 1 ? 6 : (2 + (number - 1) * 6);
+    if (number == 0) w_x = 0;
+    if (do_double) {
+        blit(word_buffer, w_x, 40, w_len, 10, x, y, (w_len << 1), 20);
+    } else {
+        blit(word_buffer, w_x, 40, w_len, 10, x, y);
+    }
 }
 
 

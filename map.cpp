@@ -12,6 +12,13 @@
 
 using namespace picosystem;
 
+
+/*
+ *      EXTERNALLY-DEFINED GLOBALS
+ */
+extern Game     game;
+
+
 /*
  *      MAP DATA
  */
@@ -142,6 +149,7 @@ uint8_t base_map_118[20] = {0xFF, 0xEE, 0xEE, 0xFF, 0xEE, 0xEE, 0xFF, 0xEE, 0xEE
 uint8_t base_map_119[20] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 uint8_t     *current_map[20];
+
 
 namespace Map {
 
@@ -311,11 +319,11 @@ uint8_t init(uint8_t last_map) {
 void draw(uint8_t y_delta, bool show_entities) {
     // Set the map background (blue)
     pen(0, 0, 40);
-    frect(0, 40 + y_delta, 240, 160);
+    frect(0, 40, 240, 160);
 
     // Draw the map
     uint8_t x = 40;
-    uint8_t y = 40 + y_delta;
+    uint8_t y = 40;
     pen(40, 30, 0);
 
     for (uint8_t i = 0 ; i < 20 ; ++i) {
@@ -326,13 +334,17 @@ void draw(uint8_t y_delta, bool show_entities) {
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
                 pen(40, 30, 0);
+
                 if (i == game.tele_y && j == game.tele_x) {
                     // Show the teleport square in green
                     pen(0, 40, 0);
-                } else if (show_entities) {
+                }
+
+                if (show_entities) {
                     // Show any phantoms at the current square as a red square
-                    for (uint8_t k = 0 ; k < game.phantom_count; ++k) {
-                        if (j == game.phantoms[k].x && i == game.phantoms[k].y) {
+                    for (size_t k = 0 ; k < game.phantoms.size() ; ++k) {
+                        Phantom p = game.phantoms.at(k);
+                        if (j == p.x && i == p.y) {
                             pen(40, 0, 0);
                         }
                     }
@@ -352,22 +364,22 @@ void draw(uint8_t y_delta, bool show_entities) {
                         frect(x + j * 8 + 1, y + i * 8 + 4, 6, 2);
                         break;
                     case DIRECTION_EAST:
-                        frect(x + i * 8 + 3, y + j * 8 + 4, 5, 2);
-                        frect(x + i * 8, y + j * 8, 4, 2);
-                        frect(x + i * 8, y + j * 8 + 6, 4, 2);
-                        frect(x + i * 8 + 3, y + j * 8 + 1, 2, 6);
+                        frect(x + j * 8 + 3, y + i * 8 + 4, 5, 2);
+                        frect(x + j * 8, y + i * 8, 4, 2);
+                        frect(x + j * 8, y + i * 8 + 6, 4, 2);
+                        frect(x + j * 8 + 3, y + i * 8 + 1, 2, 6);
                         break;
                     case DIRECTION_SOUTH:
-                        frect(x + i * 8 + 3, y + j * 8 + 4, 2, 5);
-                        frect(x + i * 8, y + j * 8, 2, 4);
-                        frect(x + i * 8 + 6, y + j * 8, 2, 4);
-                        frect(x + i * 8 + 1, y + j * 8 + 4, 6, 2);
+                        frect(x + j * 8 + 3, y + i * 8 + 4, 2, 5);
+                        frect(x + j * 8, y + i * 8, 2, 4);
+                        frect(x + j * 8 + 6, y + i * 8, 2, 4);
+                        frect(x + j * 8 + 1, y + i * 8 + 4, 6, 2);
                         break;
                     default:
-                        frect(x + i * 8, y + j * 8 + 4, 5, 2);
-                        frect(x + i * 8 + 4, y + j * 8, 4, 2);
-                        frect(x + i * 8 + 4, y + j * 8 + 6, 4, 2);
-                        frect(x + i * 8 + 3, y + j * 8 + 1, 2, 6);
+                        frect(x + j * 8, y + i * 8 + 4, 5, 2);
+                        frect(x + j * 8 + 4, y + i * 8, 4, 2);
+                        frect(x + j * 8 + 4, y + i * 8 + 6, 4, 2);
+                        frect(x + j * 8 + 3, y + i * 8 + 1, 2, 6);
                        break;
                 }
             }
@@ -467,12 +479,15 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
 
 
 /*
-    Check for any Phantom in the specified square.
+    Is there a Phantom on the specified square?
+
+    - Returns: The index of the Phantom in the vector,
+               or `ERROR_CONDITION` if the square is empty.
  */
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
-    for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
-        Phantom p = game.phantoms[i];
-        if (p.x == x && p.y == y) return i;
+    for (size_t i = 0 ; i < game.phantoms.size() ; i++) {
+        Phantom p = game.phantoms.at(i);
+        if (x == p.x && y == p.y) return (uint8_t)i;
     }
 
     return ERROR_CONDITION;

@@ -15,20 +15,21 @@ using namespace picosystem;
 /*
  *  GLOBALS
  */
-uint8_t     count_down = 0;
-
+uint8_t     count_down = 5;
 tinymt32_t  tinymt_store;
-
 bool        chase_mode = false;
 bool        map_mode = false;
 
-// Game data
-Game        game;
-
 // Graphics structures
 Rect        rects[7];
+Game        game;
 
-extern const uint8_t level_data[84];
+// Audio entities
+voice_t blip = voice(10, 10, 10, 10, 40, 2);
+
+// External level data (see `phantoms.cpp`)
+// extern const uint8_t level_data[84];
+
 
 
 /*
@@ -72,8 +73,8 @@ void update(uint32_t tick_ms) {
             break;
         case START_COUNT:
             // Count down five seconds
-            if (tick_ms % 100 == 0)  count_down++;
-            if (count_down == 5) game.state = IN_PLAY;
+            if (tick_ms % 100 == 0)  count_down--;
+            if (count_down == 0) game.state = IN_PLAY;
             break;
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -137,6 +138,8 @@ void update(uint32_t tick_ms) {
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
                     do_teleport();
                 }
+            } else if (key & 0x04) {
+                map_mode = !map_mode;
             }
 
             // Check for firing
@@ -159,12 +162,13 @@ void update(uint32_t tick_ms) {
                     game.can_fire = false;
                     game.zap_charge_time = time_us_32();
                     game.zap_frame = 0;
+                    fire_laser();
                 }
             }
-    }
 
-    // Manage the world
-    update_world();
+            // Manage the world
+            update_world();
+    }
 }
 
 
@@ -172,15 +176,12 @@ void draw() {
 
     if (game.state == START_COUNT) {
         // Update on screen number
-
         pen(0, 0, 40);
-        frect(220, 40, 19, 10);
+        frect(223, 40, 17, 22);
 
         pen(40, 30, 0);
-        char count_string[] = "00";
-        sprintf(count_string, "%02d", count_down);
-        //font(10, 10, 1);
-        text(count_string, 220, 40);
+        uint8_t n_x = count_down == 1 ? 225 : 223;
+        Gfx::draw_number(count_down, n_x, 40, true);
     }
 
     if (game.state == IN_PLAY) {
@@ -213,6 +214,13 @@ void draw() {
  *      INITIALISATION FUNCTIONS
  */
 void setup() {
+    // Use one of the Pico's other analog inputs
+    // to seed the random number generator
+    adc_init();
+    adc_gpio_init(28);
+    adc_select_input(2);
+    srand(adc_read());
+
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
     tinymt32_init(&tinymt_store, adc_read());
@@ -256,16 +264,17 @@ void start_new_game() {
 
     // Clear the screen, present the current map and
     // give the player a five-second countdown
-    pen(0, 40, 0);
+    pen(0, 0, 40);
     clear();
-    Map::draw(0, false);
+    Map::draw(0, true);
 
-    text("NEW", 0, 40);
-    text("GAME", 0, 50);
-    text("LEVEL", 0, 60);
-    text("1", 0, 70);
+    Gfx::draw_word(WORD_NEW, 0, 40);
+    Gfx::draw_word(WORD_GAME, 0, 52);
 
-    text("00", 220, 40);
+    Gfx::draw_word(WORD_LEVEL, 0, 168);
+    Gfx::draw_number(1, 18, 180, true);
+
+    Gfx::draw_number(5, 223, 40, true);
 
     // Set the loop mode
     game.state = START_COUNT;
@@ -374,7 +383,7 @@ void create_world() {
 
     // Add the first phantom to the map, everywhere but empty
     // or where the player
-    Phantom p = Phantom(x, y);
+    Phantom p = Phantom(0,0);
     while (true) {
         // Pick a random co-ordinate
         uint8_t x = Utils::irandom(0, 20);
@@ -390,16 +399,14 @@ void create_world() {
         }
     }
 
-    // game.phantoms.push_back(p);
+    game.phantoms.push_back(p);
 
     game.player.x = 0;
     game.player.y = 0;
     game.player.direction = DIRECTION_NORTH;
 
     /* TEST DATA
-    game.phantoms = 3;
-    phantoms[0].x = 8;
-    phantoms[0].y = 0;
+
 
     phantoms[1].x = 9;
     phantoms[1].y = 0;
@@ -407,9 +414,6 @@ void create_world() {
     phantoms[2].x = 11;
     phantoms[2].y = 0;
      */
-
-    game.tele_x = 8;
-    game.tele_y = 0;
 
     #ifdef DEBUG
     printf("DONE CREATE_WORLD\n");
@@ -538,31 +542,35 @@ uint8_t count_facing_phantoms(uint8_t range) {
             if (game.player.y == 0) return phantom_count;
             if (game.player.y - range < 0) range = game.player.y;
             for (int8_t i = game.player.y ; i >= game.player.y - range ; --i) {
-                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);;
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);
             }
             break;
         case DIRECTION_EAST:
-            if (game.player.x == 19) return phantom_count;
-            if (game.player.x + range > 19) range = 19 - game.player.x;
+            if (game.player.x == MAP_MAX) {
+                Gfx::draw_number(8, 90, 12);
+                return phantom_count;
+            }
+            if (game.player.x + range > MAP_MAX) range = MAP_MAX - game.player.x;
             for (int8_t i = game.player.x ; i <= game.player.x + range ; ++i) {
-                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);;
+                phantom_count += (Map::phantom_on_square((uint8_t)i, game.player.y) != ERROR_CONDITION ? 1 : 0);
             }
             break;
         case DIRECTION_SOUTH:
-            if (game.player.y == 19) return phantom_count;
-            if (game.player.y + range > 19) range = 19 - game.player.y;
+            if (game.player.y == MAP_MAX) return phantom_count;
+            if (game.player.y + range > MAP_MAX) range = MAP_MAX - game.player.y;
             for (int8_t i = game.player.y ; i <= game.player.y + range ; ++i) {
-                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);;
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);
             }
             break;
         default:
             if (game.player.x == 0) return phantom_count;
             if (game.player.x - range < 0) range = game.player.x;
             for (int8_t i = game.player.x ; i >= game.player.x - range ; --i) {
-                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);;
+                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);
             }
     }
 
+    Gfx::draw_number(phantom_count, 80, 12);
     return phantom_count;
 }
 
@@ -571,14 +579,19 @@ uint8_t count_facing_phantoms(uint8_t range) {
     Tell all of the current Phantoms to move.
 */
 void move_phantoms() {
-    uint8_t number = game.phantoms.size();
+    size_t number = game.phantoms.size();
     if (number > 0) {
-        for (uint8_t i = 0 ; i < number ; ++i) {
-            game.phantoms[i].move();
+        for (size_t i = 0 ; i < number ; ++i) {
+            Phantom p = game.phantoms.at(i);
+            p.move();
         }
     }
 }
 
+
+void beep() {
+    play(blip, 1800, 30, 100);
+}
 
 /*
  *      ACTIONS
@@ -598,9 +611,10 @@ void check_senses() {
             if (j < 0) continue;
             if (j > MAP_MAX) break;
             if (Map::phantom_on_square(i, j)) {
-                // There's a Phantom in range, so
-                // flash the LED and sound a tone
-                // tone(200, 10, 0);
+                // There's a Phantom in range, so sound a tone
+                // play(blip, 1800, 30, 100);
+                cursor(150, 0); text(picosystem::str((int32_t)dx));
+                cursor(150, 12); text(picosystem::str((int32_t)dy));
 
                 // Only play one beep, no matter
                 // how many nearby phantoms there are
@@ -637,13 +651,14 @@ void fire_laser() {
     if (n != ERROR_CONDITION) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
-        Phantom p = game.phantoms[n];
+        Phantom p = game.phantoms.at(n);
         p.hp -= 1;
 
         // FROM 1.0.2
         // Use original scoring: 2 points for a hit, 10 for a kill
         game.score += 2;
         game.level_hits++;
+        game.is_firing = false;
 
         // Did that kill it?
         if (p.hp == 0) {
@@ -665,6 +680,8 @@ void fire_laser() {
             // (so it gets re-rolled in 'managePhantoms()')
             game.phantoms.erase(game.phantoms.begin() + n);
         }
+    } else {
+
     }
 
     // Update phantoms list

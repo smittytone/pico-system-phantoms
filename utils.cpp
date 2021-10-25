@@ -14,7 +14,13 @@ using namespace picosystem;
 
 
 /*
- *  GLOBALS
+ *      EXTERNALLY-DEFINED GLOBALS
+ */
+extern tinymt32_t   tinymt_store;
+
+
+/*
+ *      GLOBALS
  */
 // NOTE Key values defined by picosystem
 uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
@@ -35,7 +41,7 @@ namespace Utils {
     - Returns: The random number.
  */
 int irandom(int start, int max) {
-    uint32_t value = tinymt32_generate_uint32(&tinymt_store);
+    int value = rand(); // tinymt32_generate_uint32(&tinymt_store);
     return (value % max + start);
 }
 
