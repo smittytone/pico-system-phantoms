@@ -18,6 +18,8 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "system_error": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "locale": "cpp",
+        "type_traits": "cpp"
     }
 }

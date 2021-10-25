@@ -52,6 +52,9 @@ extern "C" {
 #define IN_PLAY                                         1
 #define PLAYER_IS_DEAD                                  2
 #define START_COUNT                                     3
+#define PLAY_INTRO                                      4
+#define DO_TELEPORT_ONE                                 5
+#define DO_TELEPORT_TWO                                 6
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
@@ -86,12 +89,10 @@ typedef struct {
     bool     show_reticule;
     bool     can_fire;
     bool     is_firing;
-    bool     can_teleport;
 
     std::vector<Phantom> phantoms;
     uint32_t phantom_speed;
     uint32_t last_phantom_move;
-    uint8_t  phantom_count;
 
     Player  player;
 

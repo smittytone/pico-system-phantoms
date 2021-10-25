@@ -19,10 +19,47 @@ uint8_t     count_down = 5;
 tinymt32_t  tinymt_store;
 bool        chase_mode = false;
 bool        map_mode = false;
+bool        tele_state = false;
+uint32_t    tele_flash_time = 0;
+uint32_t    tele_done_time = 0;
 
 // Graphics structures
 Rect        rects[7];
-Game        game;
+
+Game        game = {
+    show_reticule = false;
+    can_fire = true;
+    is_firing = false;
+
+    phantoms = vector<Phantom>;
+    phantom_speed = PHANTOM_MOVE_TIME_US << 1;
+    uint32_t last_phantom_move;
+
+    player = {
+        x = ERROR_CONDITION;
+        y = ERROR_CONDITION;
+        direction = 0;
+    };
+
+    state = NOT_IN_PLAY;
+    map = ERROR_CONDITION;;
+    audio_range = 4;
+    tele_x = ERROR_CONDITION;
+    tele_y = ERROR_CONDITION;
+    start_x = ERROR_CONDITION;
+    start_y = ERROR_CONDITION;
+
+    level = 1;
+    score = 0;
+    high_score = 0;
+    kills = 0;
+    level_kills = 0;
+    level_hits = 0;
+
+    zap_charge_time = 0;
+    zap_fire_time = 0;
+    zap_frame = 0;
+};
 
 // Audio entities
 voice_t blip = voice(10, 10, 10, 10, 40, 2);
@@ -61,20 +98,30 @@ void init() {
 
 
 void update(uint32_t tick_ms) {
-
     switch (game.state) {
-        case PLAYER_IS_DEAD:
-            // NOTE Call 'death()' before coming here
-            // Just await any key press to start again
-            if (Utils::inkey() > 0) {
-                // Start a new game
-                start_new_game();
-            }
+        case PLAY_INTRO:
             break;
         case START_COUNT:
             // Count down five seconds
-            if (tick_ms % 100 == 0)  count_down--;
+            if (tick_ms % 100 == 0) count_down--;
             if (count_down == 0) game.state = IN_PLAY;
+            break;
+        case PLAYER_IS_DEAD:
+            // NOTE Call 'death()' before coming here
+            // Just await any key press to start again
+            if (Utils::inkey() > 0) start_new_game();
+            break;
+        case DO_TELEPORT_ONE:
+            uint32_t now = time_us_32();
+            if (now - tele_flash_time > 200000) {
+                tele_state = !tele_state;
+                tele_flash_time = now;
+            }
+
+            if (now - tele_done_time > 2000000) {
+                game.state = IN_PLAY;
+            }
+
             break;
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -173,39 +220,40 @@ void update(uint32_t tick_ms) {
 
 
 void draw() {
+    switch(game.state) {
+        case START_COUNT:
+            // Update the on-screen countdown
+            pen(0, 0, 40);
+            frect(223, 40, 17, 22);
 
-    if (game.state == START_COUNT) {
-        // Update on screen number
-        pen(0, 0, 40);
-        frect(223, 40, 17, 22);
+            pen(40, 30, 0);
+            uint8_t nx = (count_down == 1 ? 225 : 223);
+            Gfx::draw_number(count_down, nx, 40, true);
+            break;
+        default:
+            // game.state == IN_PLAY
+            // Render the screen
+            if (chase_mode) {
+                // Show the first Phantom's view
+                Phantom p = game.phantoms.at(0);
+                Gfx::draw_screen(p.x, p.y, p.direction);
+            } else if (map_mode) {
+                // Draw an overhead view
+                Map::draw(0, true);
+            } else {
+                // Show the player's view
+                Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
+            }
 
-        pen(40, 30, 0);
-        uint8_t n_x = count_down == 1 ? 225 : 223;
-        Gfx::draw_number(count_down, n_x, 40, true);
-    }
+            // Is the laser being fired?
+            if (game.is_firing) {
+                Gfx::draw_zap(game.zap_frame);
+            }
 
-    if (game.state == IN_PLAY) {
-        // Render the screen
-        if (chase_mode) {
-            // Show the first Phantom's view
-            Gfx::draw_screen(game.phantoms[0].x, game.phantoms[0].y, game.phantoms[0].direction);
-        } else if (map_mode) {
-            // Draw an overhead view
-            Map::draw(0, true);
-        } else {
-            // Show the player's view
-            Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
-        }
-
-        // Is the laser being fired?
-        if (game.is_firing) {
-            Gfx::draw_zap(game.zap_frame);
-        }
-
-        // Has the player primed the laser? If so show the crosshair
-        if (game.show_reticule) {
-            Gfx::draw_reticule();
-        }
+            // Has the player primed the laser?
+            if (game.show_reticule) {
+                Gfx::draw_reticule();
+            }
     }
 }
 
@@ -266,7 +314,7 @@ void start_new_game() {
     // give the player a five-second countdown
     pen(0, 0, 40);
     clear();
-    Map::draw(0, true);
+    Map::draw(0, false);
 
     Gfx::draw_word(WORD_NEW, 0, 40);
     Gfx::draw_word(WORD_GAME, 0, 52);
@@ -288,26 +336,6 @@ void start_new_game() {
     NOTE Phantom data is separated out into `init_phantoms()`.
  */
 void init_game() {
-    game.state = NOT_IN_PLAY;
-    game.show_reticule = false;
-    game.can_teleport = false;
-    game.is_firing = false;
-    game.can_fire = true;
-    game.zap_frame = 0;
-    game.zap_charge_time = 0;
-    game.zap_fire_time = 0;
-    game.score = 0;
-    game.audio_range = 4;
-    game.level = 1;
-    game.level_hits = 0;
-    game.level_kills = 0;
-    game.score = 0;
-    game.kills = 0;
-    game.tele_x = 0;
-    game.tele_y = 0;
-    game.start_x = 0;
-    game.start_y = 0;
-
     // If these demo/test modes are both set,
     // chase mode takes priority
     chase_mode = false;
@@ -330,7 +358,6 @@ void init_game() {
 void init_phantoms() {
     // Reset the array stored phantoms structures
     game.phantoms.clear();
-    game.phantom_count = 0;
     game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
 }
 
@@ -343,8 +370,10 @@ void init_phantoms() {
  */
 void create_world() {
     // Reset the game
-    if (game.level > 0) init_game();
-    game.state = IN_PLAY;
+    if (game.level > 0) {
+        init_game();
+        init_phantoms();
+    }
 
     // Initialise the current map
     game.map = Map::init(game.map);
@@ -593,6 +622,7 @@ void beep() {
     play(blip, 1800, 30, 100);
 }
 
+
 /*
  *      ACTIONS
  */
@@ -610,9 +640,9 @@ void check_senses() {
         for (int8_t j = dy ; j < dy + (game.audio_range << 1) ; ++j) {
             if (j < 0) continue;
             if (j > MAP_MAX) break;
-            if (Map::phantom_on_square(i, j)) {
+            if (Map::phantom_on_square(i, j) != ERROR_CONDITION) {
                 // There's a Phantom in range, so sound a tone
-                // play(blip, 1800, 30, 100);
+                beep();
                 cursor(150, 0); text(picosystem::str((int32_t)dx));
                 cursor(150, 12); text(picosystem::str((int32_t)dy));
 
@@ -629,16 +659,12 @@ void check_senses() {
     Jump back to the teleport square if the player has walked over it.
  */
 void do_teleport() {
-    // Flash the screen
-    bool tstate = false;
-    for (uint8_t i = 0 ; i < 10 ; ++i) {
-        //tone((tstate ? 4000 : 2000), 100, 0);
-        tstate = !tstate;
-    }
-
     // Move the player to the stored square
     game.player.x = game.start_x;
     game.player.y = game.start_y;
+    game.state = DO_TELEPORT_ONE;
+    tele_flash_time = time_us_32();
+    tele_done_time = tele_flash_time;
 }
 
 
@@ -697,6 +723,7 @@ void fire_laser() {
  */
 void manage_phantoms() {
     bool level_up = false;
+    size_t phantom_count = game.phantoms.size();
 
     // If we're on levels 1 and 2, we only have that number of
     // Phantoms. From 3 and up, there are aways three in the maze
@@ -704,9 +731,9 @@ void manage_phantoms() {
         if (game.level_kills == game.level) {
             game.level_kills = 0;
             game.level_hits = 0;
-            level_up = true;
             game.level++;
-            game.phantom_count++;
+            level_up = true;
+            phantom_count++;
         }
     } else {
         if (game.level_kills == MAX_PHANTOMS) {
@@ -724,10 +751,10 @@ void manage_phantoms() {
     }
 
     // Just in case...
-    if (game.phantom_count > MAX_PHANTOMS) game.phantom_count = MAX_PHANTOMS;
+    if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
 
     // Do we need to add any new phantoms to the board?
-    while (game.phantoms.size() < game.phantom_count) {
+    while (game.phantoms.size() < phantom_count) {
         Phantom p = Phantom();
         p.roll_location();
         game.phantoms.push_back(p);

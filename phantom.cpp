@@ -14,12 +14,6 @@ using std::string;
 
 
 /*
- *      BASIC LEVEL DATA
- */
-
-
-
-/*
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern Game         game;
@@ -62,7 +56,6 @@ void Phantom::move() {
         if (dx == 0 && dy == 0) {
             // Yes!
             game.state = PLAYER_IS_DEAD;
-            death();
             return;
         }
 
