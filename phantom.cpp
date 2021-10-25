@@ -140,20 +140,24 @@ void Phantom::move() {
         // Handle the move itself
         if (count == 1) {
             // Only one way for the Phantom to go, so take it
-            move_one_square(usable_directions, &new_x, &new_y);
+            uint8_t* p_x = &new_x;
+            uint8_t* p_y = &new_x;
+            move_one_square(usable_directions, p_x, p_y);
             new_direction = usable_directions;
         } else if (count == 2) {
             // The Phantom has two ways to go, so pick one of them at random:
             // even roll go the first way (0); odd roll go the second (1)
             uint8_t r = (Utils::irandom(1, 100) % 2);
             uint8_t i = 0;
+            uint8_t* p_x = &new_x;
+            uint8_t* p_y = &new_x;
             while(true) {
                 // Iterate through the directions until we have that can be
                 // used and then is selectable (r == 0)
                 if (usable_directions & (1 << i)) {
                     if (r == 0) {
                         // Take this direction
-                        move_one_square((usable_directions & (1 << i)), &new_x, &new_y);
+                        move_one_square((usable_directions & (1 << i)), p_x, p_y);
                         new_direction = (usable_directions & (1 << i));
                         break;
                     } else {
@@ -186,10 +190,12 @@ void Phantom::move() {
                 // until it comes to zero -- then take that one
                 uint8_t i = 0;
                 uint8_t r = Utils::irandom(0, 4);
+                uint8_t* p_x = &new_x;
+                uint8_t* p_y = &new_x;
                 while (true) {
                     if ((available_directions & (1 << i)) > 0) {
                         if (r == 0) {
-                            move_one_square((available_directions & (1 << i)), &new_x, &new_y);
+                            move_one_square((available_directions & (1 << i)), p_x, p_y);
                             new_direction = (available_directions & (1 << i));
                             back_steps = 1;
                             break;
