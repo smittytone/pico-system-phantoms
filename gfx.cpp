@@ -53,7 +53,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     uint8_t i = 0;
 
     // Set the background
-    pen(0, 0, 40);
+    pen(0, 0, 0);
     frect(0, 0, 240, 200);
     pen(40, 36, 0);
     frect(0, 40, 240, 160);

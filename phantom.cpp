@@ -47,6 +47,12 @@ void Phantom::move() {
         uint8_t new_x = x;
         uint8_t new_y = y;
         uint8_t new_direction = direction;
+        uint8_t *p_x = &new_x;
+        uint8_t *p_y = &new_y;
+
+        #ifdef DEBUG
+        printf("Phantom @ %i,%i ", new_x, new_y);
+        #endif
 
         // Get distance to player
         int8_t dx = x - game.player.x;
@@ -140,8 +146,6 @@ void Phantom::move() {
         // Handle the move itself
         if (count == 1) {
             // Only one way for the Phantom to go, so take it
-            uint8_t* p_x = &new_x;
-            uint8_t* p_y = &new_x;
             move_one_square(usable_directions, p_x, p_y);
             new_direction = usable_directions;
         } else if (count == 2) {
@@ -149,14 +153,16 @@ void Phantom::move() {
             // even roll go the first way (0); odd roll go the second (1)
             uint8_t r = (Utils::irandom(1, 100) % 2);
             uint8_t i = 0;
-            uint8_t* p_x = &new_x;
-            uint8_t* p_y = &new_x;
             while(true) {
                 // Iterate through the directions until we have that can be
                 // used and then is selectable (r == 0)
                 if (usable_directions & (1 << i)) {
                     if (r == 0) {
                         // Take this direction
+                        #ifdef DEBUG
+                        printf(" ud %i ", usable_directions);
+                        #endif
+
                         move_one_square((usable_directions & (1 << i)), p_x, p_y);
                         new_direction = (usable_directions & (1 << i));
                         break;
@@ -190,8 +196,6 @@ void Phantom::move() {
                 // until it comes to zero -- then take that one
                 uint8_t i = 0;
                 uint8_t r = Utils::irandom(0, 4);
-                uint8_t* p_x = &new_x;
-                uint8_t* p_y = &new_x;
                 while (true) {
                     if ((available_directions & (1 << i)) > 0) {
                         if (r == 0) {
@@ -211,13 +215,17 @@ void Phantom::move() {
         }
 
         // Set the Phantom's new location
-        if (x != new_x && y != new_y) {
+        if (x != new_x || y != new_y) {
             x = new_x;
             y = new_y;
             direction = new_direction;
         } else {
             beep();
         }
+
+        #ifdef DEBUG
+        printf("moved to %i,%i\n", x, y);
+        #endif
     }
 }
 
@@ -226,10 +234,18 @@ void Phantom::move() {
     Move the Phantom one space according in the chosen direction.
  */
 void Phantom::move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny) {
+    #ifdef DEBUG
+    printf(" nx,ny %i,%i ", *nx, *ny);
+    #endif
+
     if (nd == PHANTOM_NORTH) *ny = y - 1;
     if (nd == PHANTOM_SOUTH) *ny = y + 1;
     if (nd == PHANTOM_EAST)  *nx = x + 1;
     if (nd == PHANTOM_WEST)  *nx = x - 1;
+
+    #ifdef DEBUG
+    printf(" nx2,ny2 %i,%i ", *nx, *ny);
+    #endif
 }
 
 

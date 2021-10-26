@@ -26,40 +26,7 @@ uint32_t    tele_done_time = 0;
 // Graphics structures
 Rect        rects[7];
 
-Game        game = {
-    show_reticule = false;
-    can_fire = true;
-    is_firing = false;
-
-    phantoms = vector<Phantom>;
-    phantom_speed = PHANTOM_MOVE_TIME_US << 1;
-    uint32_t last_phantom_move;
-
-    player = {
-        x = ERROR_CONDITION;
-        y = ERROR_CONDITION;
-        direction = 0;
-    };
-
-    state = NOT_IN_PLAY;
-    map = ERROR_CONDITION;;
-    audio_range = 4;
-    tele_x = ERROR_CONDITION;
-    tele_y = ERROR_CONDITION;
-    start_x = ERROR_CONDITION;
-    start_y = ERROR_CONDITION;
-
-    level = 1;
-    score = 0;
-    high_score = 0;
-    kills = 0;
-    level_kills = 0;
-    level_hits = 0;
-
-    zap_charge_time = 0;
-    zap_fire_time = 0;
-    zap_frame = 0;
-};
+Game        game;
 
 // Audio entities
 voice_t blip = voice(10, 10, 10, 10, 40, 2);
@@ -98,6 +65,7 @@ void init() {
 
 
 void update(uint32_t tick_ms) {
+    uint32_t now = time_us_32();
     switch (game.state) {
         case PLAY_INTRO:
             break;
@@ -112,7 +80,6 @@ void update(uint32_t tick_ms) {
             if (Utils::inkey() > 0) start_new_game();
             break;
         case DO_TELEPORT_ONE:
-            uint32_t now = time_us_32();
             if (now - tele_flash_time > 200000) {
                 tele_state = !tele_state;
                 tele_flash_time = now;
@@ -220,6 +187,7 @@ void update(uint32_t tick_ms) {
 
 
 void draw() {
+    uint8_t nx;
     switch(game.state) {
         case START_COUNT:
             // Update the on-screen countdown
@@ -227,7 +195,7 @@ void draw() {
             frect(223, 40, 17, 22);
 
             pen(40, 30, 0);
-            uint8_t nx = (count_down == 1 ? 225 : 223);
+            nx = (count_down == 1 ? 225 : 223);
             Gfx::draw_number(count_down, nx, 40, true);
             break;
         default:
