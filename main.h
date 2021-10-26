@@ -55,6 +55,7 @@ extern "C" {
 #define PLAY_INTRO                                      4
 #define DO_TELEPORT_ONE                                 5
 #define DO_TELEPORT_TWO                                 6
+#define SHOW_TEMP_MAP                                   7
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000

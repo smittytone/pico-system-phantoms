@@ -55,8 +55,6 @@ class Phantom {
         void        move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny);
         uint8_t     came_from();
         void        roll_location();
-        uint8_t     getx();
-        void        setx(uint8_t v);
 
 
         // Properties

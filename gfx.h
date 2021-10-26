@@ -13,6 +13,9 @@
 
 #define WORD_SCORE              0
 #define WORD_OVER               1
+#define WORD_KILLS              2
+#define WORD_HIGH               3
+#define WORD_HITS               4
 #define WORD_GAME               5
 #define WORD_NEW                6
 #define WORD_LEVEL              7

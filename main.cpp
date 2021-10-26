@@ -16,12 +16,14 @@ using namespace picosystem;
  *  GLOBALS
  */
 uint8_t     count_down = 5;
+
 tinymt32_t  tinymt_store;
 bool        chase_mode = false;
 bool        map_mode = false;
 bool        tele_state = false;
 uint32_t    tele_flash_time = 0;
 uint32_t    tele_done_time = 0;
+uint32_t    tick_count = 0;
 
 // Graphics structures
 Rect        rects[7];
@@ -80,15 +82,27 @@ void update(uint32_t tick_ms) {
             if (Utils::inkey() > 0) start_new_game();
             break;
         case DO_TELEPORT_ONE:
-            if (now - tele_flash_time > 200000) {
-                tele_state = !tele_state;
-                tele_flash_time = now;
+            tick_count++;
+            if (tick_count == 20) {
+                tick_count = 0;
+                game.state = DO_TELEPORT_TWO;
             }
-
-            if (now - tele_done_time > 2000000) {
+            break;
+        case DO_TELEPORT_TWO:
+            tick_count++;
+            if (tick_count == 20) {
+                tick_count = 0;
+                game.state = now - tele_done_time < 3000000 ? DO_TELEPORT_ONE : IN_PLAY;
+            }
+            break;
+        case SHOW_TEMP_MAP:
+            // Count 3000ms while the post-kill
+            // map is on screen
+            tick_count++;
+            if (tick_count == 1000) {
+                tick_count = 0;
                 game.state = IN_PLAY;
             }
-
             break;
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -198,12 +212,17 @@ void draw() {
             nx = (count_down == 1 ? 225 : 223);
             Gfx::draw_number(count_down, nx, 40, true);
             break;
+        case SHOW_TEMP_MAP:
+            pen(0, 0, 40);
+            clear();
+            show_scores();
+            break;
         default:
             // game.state == IN_PLAY
             // Render the screen
             if (chase_mode) {
                 // Show the first Phantom's view
-                Phantom p = game.phantoms.at(0);
+                Phantom &p = game.phantoms.at(0);
                 Gfx::draw_screen(p.x, p.y, p.direction);
             } else if (map_mode) {
                 // Draw an overhead view
@@ -214,14 +233,10 @@ void draw() {
             }
 
             // Is the laser being fired?
-            if (game.is_firing) {
-                Gfx::draw_zap(game.zap_frame);
-            }
+            if (game.is_firing) Gfx::draw_zap(game.zap_frame);
 
             // Has the player primed the laser?
-            if (game.show_reticule) {
-                Gfx::draw_reticule();
-            }
+            if (game.show_reticule) Gfx::draw_reticule();
     }
 }
 
@@ -235,7 +250,7 @@ void setup() {
     adc_init();
     adc_gpio_init(28);
     adc_select_input(2);
-    srand(adc_read());
+    srand(picosystem::battery() * 100);
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
@@ -276,6 +291,7 @@ void setup() {
 void start_new_game() {
     // Reset the settings and roll the world
     init_game();
+    init_phantoms();
     create_world();
 
     // Clear the screen, present the current map and
@@ -314,6 +330,30 @@ void init_game() {
     // used in the next game
     game.map = ERROR_CONDITION;
 
+    game.player.x = 0;
+    game.player.y = 0;
+    game.player.direction = 0;
+
+    game.show_reticule = false;
+    game.can_fire = true;
+    game.is_firing = false;
+
+    game.state = PLAY_INTRO;
+    game.tele_x = 0;
+    game.tele_y = 0;
+    game.start_x = 0;
+    game.start_y = 0;
+
+    game.level = 0;
+    game.score = 0;
+    game.kills = 0;
+    game.level_kills = 0;
+    game.level_hits = 0;
+
+    game.zap_charge_time = 0;
+    game.zap_fire_time = 0;
+    game.zap_frame = 0;
+
     #ifdef DEBUG
     printf("DONE INIT_GAME\n");
     #endif
@@ -327,21 +367,24 @@ void init_phantoms() {
     // Reset the array stored phantoms structures
     game.phantoms.clear();
     game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
+    game.last_phantom_move = 0;
 }
 
 
 /**
-    Generate and populate a new maze. This happens
+    Generate and populate a new level. This happens
     at the start of a new game and at the start of
     each level. A level jump is triggered when all the
     current phantoms have been dispatched.
  */
 void create_world() {
     // Reset the game
-    if (game.level > 0) {
+    if (game.level == 0) {
         init_game();
         init_phantoms();
     }
+
+    game.level++;
 
     // Initialise the current map
     game.map = Map::init(game.map);
@@ -398,19 +441,13 @@ void create_world() {
 
     game.phantoms.push_back(p);
 
-    game.player.x = 0;
-    game.player.y = 0;
-    game.player.direction = DIRECTION_NORTH;
-
     /* TEST DATA
 
-
-    phantoms[1].x = 9;
-    phantoms[1].y = 0;
-
-    phantoms[2].x = 11;
-    phantoms[2].y = 0;
      */
+
+    game.player.x = 0;
+    game.player.y = 0;
+    game.player.direction = DIRECTION_EAST;
 
     #ifdef DEBUG
     printf("DONE CREATE_WORLD\n");
@@ -441,13 +478,13 @@ void update_world() {
 
     // Animate the laser zap
     if (game.is_firing && now - game.zap_fire_time > LASER_FIRE_US) {
-        game.zap_fire_time = now;
-
         if (game.zap_frame == 6) {
             game.zap_frame = 0;
             game.is_firing = false;
+            game.zap_fire_time = 0;
         } else {
             game.zap_frame++;
+            game.zap_fire_time = now;
         }
     }
 }
@@ -579,8 +616,11 @@ void move_phantoms() {
     size_t number = game.phantoms.size();
     if (number > 0) {
         for (size_t i = 0 ; i < number ; ++i) {
-            Phantom p = game.phantoms.at(i);
-            p.move();
+            game.phantoms.at(i).move();
+
+            #ifdef DEBUG
+            printf("Moving Phantom %i of %i\n", i, number);
+            #endif
         }
     }
 }
@@ -611,8 +651,6 @@ void check_senses() {
             if (Map::phantom_on_square(i, j) != ERROR_CONDITION) {
                 // There's a Phantom in range, so sound a tone
                 beep();
-                cursor(150, 0); text(picosystem::str((int32_t)dx));
-                cursor(150, 12); text(picosystem::str((int32_t)dy));
 
                 // Only play one beep, no matter
                 // how many nearby phantoms there are
@@ -645,7 +683,7 @@ void fire_laser() {
     if (n != ERROR_CONDITION) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
-        Phantom p = game.phantoms.at(n);
+        Phantom &p = game.phantoms.at(n);
         p.hp -= 1;
 
         // FROM 1.0.2
@@ -666,16 +704,12 @@ void fire_laser() {
             // tone(600, 100, 200);
 
             // Quickly show the map
-            //ssd1306_clear();
-            //show_scores();
-            sleep_ms(MAP_POST_KILL_SHOW_MS);
+            game.state = SHOW_TEMP_MAP;
 
             // Take the dead phantom off the board
             // (so it gets re-rolled in 'managePhantoms()')
             game.phantoms.erase(game.phantoms.begin() + n);
         }
-    } else {
-
     }
 
     // Update phantoms list
@@ -701,7 +735,7 @@ void manage_phantoms() {
             game.level_hits = 0;
             game.level++;
             level_up = true;
-            phantom_count++;
+            phantom_count = game.level;
         }
     } else {
         if (game.level_kills == MAX_PHANTOMS) {
@@ -721,12 +755,16 @@ void manage_phantoms() {
     // Just in case...
     if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
 
+    printf("Phantoms: %i\n", phantom_count);
+
     // Do we need to add any new phantoms to the board?
     while (game.phantoms.size() < phantom_count) {
         Phantom p = Phantom();
         p.roll_location();
         game.phantoms.push_back(p);
     }
+
+    printf("Phantoms: %i\n", game.phantoms.size());
 }
 
 
@@ -765,18 +803,24 @@ void death() {
     Show the current score alongside the map.
  */
 void show_scores() {
-    char score_string[5] = "000";
-    text("SCORE", 170, 40);
-    sprintf(score_string, "%02d", game.score);
-    text(score_string, 170, 48);
+    if (game.high_score < game.score) game.high_score = game.score;
+
+    // Show the score
+    Gfx::draw_word(WORD_SCORE, 10, 5);
+    uint32_t score = Utils::bcd(game.score);
+    Gfx::draw_number(score & 0x000F, 100, 18, true);
+    Gfx::draw_number(score & 0x00F0,  86, 18, true);
+    Gfx::draw_number(score & 0x0F00,  72, 18, true);
+    Gfx::draw_number(score & 0xF000,  58, 18, true);
 
     // Show the high score
-    text("HIGH", 170, 96);
-    text("SCORE", 170, 104);
-
-    if (game.high_score < game.score) game.high_score = game.score;
-    sprintf(score_string, "%02d", game.high_score);
-    text(score_string, 98, 49);
+    Gfx::draw_word(WORD_HIGH, 162, 5);
+    Gfx::draw_word(WORD_SCORE, 192, 5);
+    score = Utils::bcd(game.high_score);
+    Gfx::draw_number(score & 0x000F, 220, 18, true);
+    Gfx::draw_number(score & 0x00F0, 206, 18, true);
+    Gfx::draw_number(score & 0x0F00, 192, 18, true);
+    Gfx::draw_number(score & 0xF000, 178, 18, true);
 
     // Add in the map
     Map::draw(0, true);

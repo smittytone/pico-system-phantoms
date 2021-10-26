@@ -343,7 +343,7 @@ void draw(uint8_t y_delta, bool show_entities) {
                 if (show_entities) {
                     // Show any phantoms at the current square as a red square
                     for (size_t k = 0 ; k < game.phantoms.size() ; ++k) {
-                        Phantom p = game.phantoms.at(k);
+                        Phantom &p = game.phantoms.at(k);
                         if (j == p.x && i == p.y) {
                             pen(40, 0, 0);
                         }
@@ -486,7 +486,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
  */
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
     for (size_t i = 0 ; i < game.phantoms.size() ; i++) {
-        Phantom p = game.phantoms.at(i);
+        Phantom &p = game.phantoms.at(i);
         if (x == p.x && y == p.y) return (uint8_t)i;
     }
 

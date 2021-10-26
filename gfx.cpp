@@ -54,8 +54,8 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
     // Set the background
     pen(0, 0, 0);
-    frect(0, 0, 240, 200);
-    pen(40, 36, 0);
+    frect(0, 0, 240, 240);
+    pen(40, 28, 0);
     frect(0, 40, 240, 160);
 
     if (game.player.x < 10) {
@@ -75,6 +75,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     draw_number(game.player.direction, 0, 24);
 
     draw_number((phantom_count >> 4), 160, 0);
+    draw_number((uint8_t)game.phantoms.size(), 170, 0);
 
     if (far_frame < 10) {
         draw_number(far_frame, 80, 0);
@@ -82,6 +83,9 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
         draw_number(1, 80, 0);
         draw_number(far_frame - 10, 84, 0);
     }
+
+    draw_number(game.level, 80, 12);
+    draw_number(game.kills, 80, 24);
 
     switch(direction) {
         case DIRECTION_NORTH:
@@ -460,13 +464,14 @@ void draw_word(uint8_t index, uint8_t x, uint8_t y) {
 
 
 void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
-    uint8_t w_len = number == 1 ? 2 : 6;
-    uint8_t w_x = number == 1 ? 6 : (2 + (number - 1) * 6);
-    if (number == 0) w_x = 0;
+    uint8_t n_len = number == 1 ? 2 : 6;
+    uint8_t n_x = number == 1 ? 6 : (2 + ((number - 1) * 6));
+    if (number == 0) n_x = 0;
+
     if (do_double) {
-        blit(word_buffer, w_x, 40, w_len, 10, x, y, (w_len << 1), 20);
+        blit(word_buffer, n_x, 40, n_len, 10, x, y, (n_len << 1), 20);
     } else {
-        blit(word_buffer, w_x, 40, w_len, 10, x, y);
+        blit(word_buffer, n_x, 40, n_len, 10, x, y);
     }
 }
 

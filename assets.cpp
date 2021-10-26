@@ -24,7 +24,7 @@ const uint8_t word_sizes[] = {
     0, 0, 38,       // SCORE
     39, 0, 30,      // OVER
     0, 10, 32,      // KILLS
-    0, 20, 25,      // HIGH
+    0, 20, 26,      // HIGH
     33, 10, 25,     // HITS
     0, 30, 34,      // GAME
     34, 30, 26,     // NEW
