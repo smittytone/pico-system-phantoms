@@ -19,6 +19,7 @@
 #define WORD_GAME               5
 #define WORD_NEW                6
 #define WORD_LEVEL              7
+#define PHRASE_ANY_KEY          10
 
 
 /*
@@ -41,6 +42,8 @@ namespace Gfx {
 
     void        draw_word(uint8_t index, uint8_t x, uint8_t y);
     void        draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double = false);
+    
+    void        show_debug_info();
 }
 
 

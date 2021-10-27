@@ -106,8 +106,6 @@ typedef struct {
     uint8_t                 start_x;
     uint8_t                 start_y;
 
-    uint8_t                 view_mode;
-
     uint16_t                level;
     uint16_t                score;
     uint16_t                high_score;
@@ -146,10 +144,10 @@ uint8_t     get_direction(uint8_t key_pressed);
 uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
 
-
 void        check_senses();
 void        fire_laser();
 void        do_teleport();
+void        reset_laser();
 
 void        death();
 void        show_scores();

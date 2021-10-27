@@ -17,25 +17,22 @@ using namespace picosystem;
  */
 uint8_t     count_down = 5;
 uint8_t     dead_phantom = ERROR_CONDITION;
+uint8_t     help_page_count = 0;
 
-tinymt32_t  tinymt_store;
 bool        chase_mode = false;
 bool        map_mode = false;
 bool        tele_state = false;
+
 uint32_t    tele_flash_time = 0;
-uint32_t    tele_done_time = 0;
 uint32_t    tick_count = 0;
 
-// Graphics structures
+tinymt32_t  tinymt_store;
+
 Rect        rects[7];
 
 Game        game;
 
-// Audio entities
 voice_t blip = voice(10, 10, 10, 10, 40, 2);
-
-// External level data (see `phantoms.cpp`)
-// extern const uint8_t level_data[84];
 
 
 
@@ -72,6 +69,12 @@ void update(uint32_t tick_ms) {
     switch (game.state) {
         case PLAY_INTRO:
             break;
+        case SHOW_HELP:
+            // Run through the help pages with
+            // eack key press
+            if (Utils::inkey() > 0) help_page_count++;
+            if (help_page_count > MAX_HELP_PAGES) start_new_game();
+            break;
         case START_COUNT:
             // Count down five seconds before
             // actually starting the game
@@ -88,17 +91,19 @@ void update(uint32_t tick_ms) {
             if (Utils::inkey() > 0) start_new_game();
             break;
         case DO_TELEPORT_ONE:
+            // Flip between TELE_ONE and TELE_TWO
+            // every 1/4 second for two seconds
             tick_count++;
-            if (tick_count == 20) {
+            if (tick_count == 25) {
                 tick_count = 0;
                 game.state = DO_TELEPORT_TWO;
             }
             break;
         case DO_TELEPORT_TWO:
             tick_count++;
-            if (tick_count == 20) {
+            if (tick_count == 25) {
                 tick_count = 0;
-                game.state = now - tele_done_time < 3000000 ? DO_TELEPORT_ONE : IN_PLAY;
+                game.state = now - tele_done_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
             }
             break;
         case SHOW_TEMP_MAP:
@@ -185,6 +190,7 @@ void update(uint32_t tick_ms) {
                     do_teleport();
                 }
             } else if (key & 0x04) {
+                // Map mode should be for debugging only
                 map_mode = !map_mode;
             }
 
@@ -204,10 +210,10 @@ void update(uint32_t tick_ms) {
                 if (game.show_reticule) {
                     // Fire the laser: clear the cross hair and zap
                     game.show_reticule = false;
+                    reset_laser();
                     game.is_firing = true;
-                    game.can_fire = false;
-                    game.zap_charge_time = time_us_32();
-                    game.zap_frame = 0;
+                    
+                    // Check if we've hit a Phantom
                     fire_laser();
                 }
             }
@@ -221,6 +227,10 @@ void update(uint32_t tick_ms) {
 void draw() {
     uint8_t nx;
     switch(game.state) {
+        case HELP_PAGE:
+            // Display a help page
+            Help::show_page(help_page_count);
+            break;
         case START_COUNT:
             // Update the on-screen countdown
             // NOTE The map is already there, so
@@ -229,7 +239,8 @@ void draw() {
             // Clear the number
             pen(0, 0, 15);
             frect(221, 40, 14, 21);
-
+            
+            // Show the new number
             pen(15, 15, 0);
             nx = (count_down == 1 ? 225 : 221);
             Gfx::draw_number(count_down, nx, 40, true);
@@ -255,7 +266,10 @@ void draw() {
                 // Show the player's view
                 Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
             }
-
+            
+            // Don't show gunnery if a Phantom has been hit
+            if (game.state == ZAP_PHANTOM) return;
+            
             // Is the laser being fired?
             if (game.is_firing) Gfx::draw_zap(game.zap_frame);
 
@@ -462,12 +476,10 @@ void create_world() {
     game.phantoms.push_back(p);
 
     /* TEST DATA
-
-     */
-
     game.player.x = 0;
     game.player.y = 0;
     game.player.direction = DIRECTION_EAST;
+     */
 
     #ifdef DEBUG
     printf("DONE CREATE_WORLD\n");
@@ -491,7 +503,11 @@ void update_world() {
         } else {
             // Player was killed
             game.state = PLAYER_IS_DEAD;
+            
+            #ifdef DEBUG
             printf("PLAYER IS DEAD\n");
+            #endif
+            
             return;
         }
     }
@@ -505,9 +521,7 @@ void update_world() {
     // Animate the laser zap
     if (game.is_firing && now - game.zap_fire_time > LASER_FIRE_US) {
         if (game.zap_frame == 6) {
-            game.zap_frame = 0;
-            game.is_firing = false;
-            game.zap_fire_time = 0;
+            reset_laser();
         } else {
             game.zap_frame++;
             game.zap_fire_time = now;
@@ -699,7 +713,9 @@ void do_teleport() {
     game.player.y = game.start_y;
     game.state = DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
-    tele_done_time = tele_flash_time;
+    
+    // Reset the laser if firing
+    reset_laser();
 }
 
 
@@ -735,11 +751,22 @@ void fire_laser() {
             // Quickly show the map
             game.state = ZAP_PHANTOM;
             dead_phantom = n;
+            
+            // Reset the laser
+            reset_laser();
         }
 
         // Update phantoms list
         //manage_phantoms();
     }
+}
+
+
+void reset_laser() {
+    game.is_firing = false;
+    game.can_fire = false;
+    game.zap_charge_time = time_us_32();
+    game.zap_frame = 0;
 }
 
 
@@ -781,8 +808,6 @@ void manage_phantoms() {
         // Just in case...
         if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
 
-        printf("Phantoms: %i\n", phantom_count);
-
         // Do we need to add any new phantoms to the board?
         while (game.phantoms.size() < phantom_count) {
             Phantom p = Phantom();
@@ -805,22 +830,16 @@ void manage_phantoms() {
     The player has died -- show the map and the score.
  */
 void death() {
-    game.state = PLAYER_IS_DEAD;
-
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     sleep_ms(50);
     //tone(2200, 500, 600);
-
-    pen(0, 15, 00);
+    
+    // Clear the display
+    pen(0, 0, 15);
     clear();
-
-    text("YOU", 0, 40);
-    text("WERE", 0, 48);
-    text("KILLED", 0, 52);
-
-    text("PRESS", 0, 96);
-    text("ANY", 0, 104);
-    text("KEY", 0, 112);
+    
+    // Give instructions
+    Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
 
     // Show the map
     show_scores();
@@ -858,18 +877,22 @@ void show_scores() {
     Gfx::draw_number((score & 0x0F00) >> 8,  cx, 18, true);
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
+    
+    if (game.state != PLAYER_IS_DEAD) {
+        // This is for the intermediate map only
+        // Show kills
+        Gfx::draw_word(WORD_KILLS, 198, 225);
+        score = Utils::bcd(game.level_kills);
+        cx = (score == 1) ? 206 : 202;
+        Gfx::draw_number(score, cx, 213, true);
 
-    // Show kills
-    Gfx::draw_word(WORD_KILLS, 198, 215);
-    score = Utils::bcd(game.level_kills);
-    cx = (score == 1) ? 206 : 202;
-    Gfx::draw_number(score, cx, 202, true);
-
-    Gfx::draw_word(WORD_HITS, 10, 215);
-    score = Utils::bcd(game.level_kills);
-    cx = (score == 1) ? 20 : 16;
-    Gfx::draw_number(score, cx, 202, true);
-
+        // Show hits
+        Gfx::draw_word(WORD_HITS, 10, 225);
+        score = Utils::bcd(game.level_hits);
+        cx = (score == 1) ? 20 : 16;
+        Gfx::draw_number(score, cx, 213, true);
+    }
+    
     // Add in the map
     Map::draw(0, true);
 }

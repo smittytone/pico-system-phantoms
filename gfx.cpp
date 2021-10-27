@@ -54,7 +54,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
-    if (game.view_mode == 1) {
+    if (game.state == DO_TELEPORT_ONE) {
         // Background: white
         // 3D View: red
         pen(15, 15, 15);
@@ -71,34 +71,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     }
 
     #ifdef DEBUG
-    if (game.player.x < 10) {
-        draw_number(game.player.x, 0, 0);
-    } else {
-        draw_number(1, 0, 0);
-        draw_number(x - 10, 4, 0);
-    }
-
-    if (game.player.y < 10) {
-        draw_number(game.player.y, 0, 12);
-    } else {
-        draw_number(1, 0, 12);
-        draw_number(game.player.y - 10, 4, 12);
-    }
-
-    draw_number(game.player.direction, 0, 24);
-
-    draw_number((phantom_count >> 4), 160, 0);
-    draw_number((uint8_t)game.phantoms.size(), 170, 0);
-
-    if (far_frame < 10) {
-        draw_number(far_frame, 80, 0);
-    } else {
-        draw_number(1, 80, 0);
-        draw_number(far_frame - 10, 84, 0);
-    }
-
-    draw_number(game.level, 80, 12);
-    draw_number(game.kills, 80, 24);
+    show_debug_info();
     #endif
 
     switch(direction) {
@@ -213,11 +186,13 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    if (game.view_mode == 1) {
+    
+    if (game.state == DO_TELEPORT_ONE) {
         pen(15, 15, 15);
     } else {
         pen(15, 0, 0);
     }
+    
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
@@ -266,8 +241,8 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    if (game.view_mode == 1) {
-        pen(15, 0, 0);
+    if (game.state == DO_TELEPORT_ONE) {
+        pen(15, 15, 15);
     } else {
         pen(0, 0, 15);
     }
@@ -297,8 +272,8 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    if (game.view_mode == 1) {
-        pen(15, 0, 0);
+    if (game.state == DO_TELEPORT_ONE) {
+        pen(15, 15, 15);
     } else {
         pen(0, 0, 15);
     }
@@ -322,11 +297,13 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    if (game.view_mode == 1) {
-        pen(15, 0, 0);
+    
+    if (game.state == DO_TELEPORT_ONE) {
+        pen(15, 15, 15);
     } else {
         pen(0, 0, 15);
     }
+    
     frect(r.x, r.y + 40, r.width, r.height);
 }
 
@@ -335,7 +312,7 @@ void draw_far_wall(uint8_t frame_index) {
     Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
-    pen(15, 15, 15);
+    pen(15, 10, 0);
     rect(100, 119, 40, 2);
     rect(119, 100, 2, 40);
 }
@@ -350,7 +327,7 @@ void draw_reticule() {
  void draw_zap(uint8_t frame_index) {
     if (frame_index < 5) {
         uint16_t radius = radii[frame_index];
-        pen(15, 15, 15);
+        pen(15, 10, 0);
         fcircle(120, 120, radius);
     }
 }
@@ -438,6 +415,38 @@ void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
     } else {
         blit(word_buffer, n_x, 40, n_len, 10, x, y);
     }
+}
+
+
+void show_debug_info() {
+    if (game.player.x < 10) {
+        draw_number(game.player.x, 0, 0);
+    } else {
+        draw_number(1, 0, 0);
+        draw_number(x - 10, 4, 0);
+    }
+
+    if (game.player.y < 10) {
+        draw_number(game.player.y, 0, 12);
+    } else {
+        draw_number(1, 0, 12);
+        draw_number(game.player.y - 10, 4, 12);
+    }
+
+    draw_number(game.player.direction, 0, 24);
+
+    draw_number((phantom_count >> 4), 160, 0);
+    draw_number((uint8_t)game.phantoms.size(), 170, 0);
+
+    if (far_frame < 10) {
+        draw_number(far_frame, 80, 0);
+    } else {
+        draw_number(1, 80, 0);
+        draw_number(far_frame - 10, 84, 0);
+    }
+
+    draw_number(game.level, 80, 12);
+    draw_number(game.kills, 80, 24);
 }
 
 
