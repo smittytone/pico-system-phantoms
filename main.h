@@ -150,6 +150,7 @@ void        do_teleport();
 
 void        death();
 void        show_scores();
+uint8_t     fix_num_width(uint8_t value, uint8_t current);
 
 void        beep();
 

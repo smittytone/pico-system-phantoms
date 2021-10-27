@@ -36,7 +36,7 @@ namespace Gfx {
     void        draw_reticule();
     void        draw_zap(uint8_t frame);
     void        animate_turn(bool is_right);
-    void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count);
+    void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count, bool is_zapped);
 
     void        draw_word(uint8_t index, uint8_t x, uint8_t y);
     void        draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double = false);
@@ -47,6 +47,7 @@ namespace Gfx {
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern const uint16_t   phantom_sprites[];
+extern const uint16_t   zapped_sprites[];
 extern const uint8_t    phantom_sizes[];
 extern const uint8_t    word_sizes[];
 extern const uint16_t   word_sprites[];

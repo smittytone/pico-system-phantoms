@@ -27,7 +27,7 @@ extern Rect             rects[7];
 const uint8_t           radii[5] = {20, 16, 12, 8, 4};
 buffer_t*               word_buffer = buffer(68, 50, (void *)word_sprites);
 buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprites);
-
+buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites);
 
 namespace Gfx {
 
@@ -105,8 +105,10 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 // NOTE 'phantom_count comes back so we can keep track of multiple
                 //      Phantoms in the player's field of view and space them
                 //      laterally
-                if (phantom_count > 0 && Map::phantom_on_square(x, i) != ERROR_CONDITION) {
-                    draw_phantom(frame, &phantom_count);
+                uint8_t n = Map::phantom_on_square(x, i);
+                if (phantom_count > 0 && n != ERROR_CONDITION) {
+                    bool is_zapped = (game.phantoms.at(n).hp == 0);
+                    draw_phantom(frame, &phantom_count, is_zapped);
                 }
 
                 // Move to the next frame and square
@@ -119,8 +121,10 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x + far_frame;
             do {
                 draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(i, y) != ERROR_CONDITION) {
-                    draw_phantom(frame, &phantom_count);
+                uint8_t n = Map::phantom_on_square(i, y);
+                if (phantom_count > 0 && n != ERROR_CONDITION) {
+                    bool is_zapped = (game.phantoms.at(n).hp == 0);
+                    draw_phantom(frame, &phantom_count, is_zapped);
                 }
                 --frame;
                 --i;
@@ -131,8 +135,10 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = y + far_frame;
             do {
                 draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(x, i) != ERROR_CONDITION) {
-                    draw_phantom(frame, &phantom_count);
+                uint8_t n = Map::phantom_on_square(x, i);
+                if (phantom_count > 0 && n != ERROR_CONDITION) {
+                    bool is_zapped = (game.phantoms.at(n).hp == 0);
+                    draw_phantom(frame, &phantom_count, is_zapped);
                 }
                 --frame;
                 --i;
@@ -143,8 +149,10 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             i = x - far_frame;
             do {
                 draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, far_frame);
-                if (phantom_count > 0 && Map::phantom_on_square(i, y) != ERROR_CONDITION) {
-                    draw_phantom(frame, &phantom_count);
+                uint8_t n = Map::phantom_on_square(i, y);
+                if (phantom_count > 0 && n != ERROR_CONDITION) {
+                    bool is_zapped = (game.phantoms.at(n).hp == 0);
+                    draw_phantom(frame, &phantom_count, is_zapped);
                 }
                 --frame;
                 ++i;
@@ -336,7 +344,7 @@ void animate_turn(bool is_right) {
         - frame_index: The frame in which to place the Phantom.
         - count:       The number of Phantoms on screen.
  */
-void draw_phantom(uint8_t frame_index, uint8_t* count) {
+void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
     Rect r = rects[frame_index];
     uint8_t dx = 120;
     uint8_t c = *count;
@@ -366,7 +374,7 @@ void draw_phantom(uint8_t frame_index, uint8_t* count) {
     }
 
     // Paint in the Phantom
-    blit(phantom_buffer, sx, sy, width, height, dx, dy);
+    blit(is_zapped ? zapped_buffer : phantom_buffer, sx, sy, width, height, dx, dy);
 }
 
 

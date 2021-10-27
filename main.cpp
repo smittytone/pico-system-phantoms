@@ -803,25 +803,38 @@ void death() {
     Show the current score alongside the map.
  */
 void show_scores() {
+    uint8_t cx = 10;
     if (game.high_score < game.score) game.high_score = game.score;
 
     // Show the score
     Gfx::draw_word(WORD_SCORE, 10, 5);
     uint32_t score = Utils::bcd(game.score);
-    Gfx::draw_number(score & 0x000F, 100, 18, true);
-    Gfx::draw_number((score & 0x00F0) >> 4,  86, 18, true);
-    Gfx::draw_number((score & 0x0F00) >> 8,  72, 18, true);
-    Gfx::draw_number((score & 0xF000) >> 12, 58, 18, true);
+    Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
+    cx += (((score & 0xF000) >> 12) == 1 ? 6 : 14);
+    Gfx::draw_number((score & 0x0F00) >> 8, cx, 18, true);
+    cx += (((score & 0x0F00) >> 8) == 1 ? 6 : 14);
+    Gfx::draw_number((score & 0x00F0) >> 4, cx, 18, true);
+    cx += (((score & 0x00F0) >> 4) == 1 ? 6 : 14);
+    Gfx::draw_number(score & 0x000F, cx, 18, true);
 
     // Show the high score
     Gfx::draw_word(WORD_HIGH, 162, 5);
     Gfx::draw_word(WORD_SCORE, 192, 5);
     score = Utils::bcd(game.high_score);
-    Gfx::draw_number(score & 0x000F, 220, 18, true);
-    Gfx::draw_number((score & 0x00F0) >> 4,  206, 18, true);
-    Gfx::draw_number((score & 0x0F00) >> 8,  192, 18, true);
-    Gfx::draw_number((score & 0xF000) >> 12, 178, 18, true);
+    cx = (score & 0x000F == 1) ? 226 : 218;
+    Gfx::draw_number(score & 0x000F, cx, 18, true);
+    cx = fix_num_width((score & 0x00F0) >> 4, cx);
+    Gfx::draw_number((score & 0x00F0) >> 4,  cx, 18, true);
+    cx = fix_num_width((score & 0x0F00) >> 8, cx);
+    Gfx::draw_number((score & 0x0F00) >> 8,  cx, 18, true);
+    cx = fix_num_width((score & 0xF000) >> 12, cx);
+    Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
 
     // Add in the map
     Map::draw(0, true);
+}
+
+
+uint8_t fix_num_width(uint8_t value, uint8_t current) {
+    return (current - (value == 1 ? 6 : 14));
 }
