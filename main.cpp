@@ -809,18 +809,18 @@ void show_scores() {
     Gfx::draw_word(WORD_SCORE, 10, 5);
     uint32_t score = Utils::bcd(game.score);
     Gfx::draw_number(score & 0x000F, 100, 18, true);
-    Gfx::draw_number(score & 0x00F0,  86, 18, true);
-    Gfx::draw_number(score & 0x0F00,  72, 18, true);
-    Gfx::draw_number(score & 0xF000,  58, 18, true);
+    Gfx::draw_number((score & 0x00F0) >> 4,  86, 18, true);
+    Gfx::draw_number((score & 0x0F00) >> 8,  72, 18, true);
+    Gfx::draw_number((score & 0xF000) >> 12, 58, 18, true);
 
     // Show the high score
     Gfx::draw_word(WORD_HIGH, 162, 5);
     Gfx::draw_word(WORD_SCORE, 192, 5);
     score = Utils::bcd(game.high_score);
     Gfx::draw_number(score & 0x000F, 220, 18, true);
-    Gfx::draw_number(score & 0x00F0, 206, 18, true);
-    Gfx::draw_number(score & 0x0F00, 192, 18, true);
-    Gfx::draw_number(score & 0xF000, 178, 18, true);
+    Gfx::draw_number((score & 0x00F0) >> 4,  206, 18, true);
+    Gfx::draw_number((score & 0x0F00) >> 8,  192, 18, true);
+    Gfx::draw_number((score & 0xF000) >> 12, 178, 18, true);
 
     // Add in the map
     Map::draw(0, true);
