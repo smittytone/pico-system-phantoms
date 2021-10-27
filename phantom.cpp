@@ -41,7 +41,7 @@ Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
 /*
     Move the Phantom.
  */
-void Phantom::move() {
+bool Phantom::move() {
     // Only move phantoms that are in the maze
     if (x != ERROR_CONDITION) {
         uint8_t new_x = x;
@@ -59,11 +59,7 @@ void Phantom::move() {
         int8_t dy = y - game.player.y;
 
         // Has the phantom got the player?
-        if (dx == 0 && dy == 0) {
-            // Yes!
-            game.state = PLAYER_IS_DEAD;
-            return;
-        }
+        if (dx == 0 && dy == 0) return true;
 
         // Set up direction storage
         uint8_t available_directions = 0;
@@ -94,7 +90,7 @@ void Phantom::move() {
 
         if (available_directions == 0) {
             // Phantom can't move anywhere -- all its exits are currently blocked
-            return;
+            return false;
         }
 
         // FROM 1.0.1
@@ -219,6 +215,8 @@ void Phantom::move() {
         printf("moved to %i,%i (%i,%i)\n", x, y, new_x, new_y);
         #endif
     }
+
+    return false;
 }
 
 
@@ -226,18 +224,10 @@ void Phantom::move() {
     Move the Phantom one space according in the chosen direction.
  */
 void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
-    #ifdef DEBUG
-    //printf(" nx,ny %i,%i ", *nx, *ny);
-    #endif
-
     if (nd == PHANTOM_NORTH) *ny = y - 1;
     if (nd == PHANTOM_SOUTH) *ny = y + 1;
     if (nd == PHANTOM_EAST)  *nx = x + 1;
     if (nd == PHANTOM_WEST)  *nx = x - 1;
-
-    #ifdef DEBUG
-    //printf(" nx2,ny2 %i,%i ", *nx, *ny);
-    #endif
 }
 
 

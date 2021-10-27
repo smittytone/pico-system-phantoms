@@ -81,48 +81,50 @@ extern "C" {
  * STRUCTURE DEFINITIONS
  */
 typedef struct {
-    uint8_t     x;
-    uint8_t     y;
-    uint8_t     direction;
+    uint8_t                 x;
+    uint8_t                 y;
+    uint8_t                 direction;
 } Player;
 
 typedef struct {
-    bool     show_reticule;
-    bool     can_fire;
-    bool     is_firing;
+    bool                    show_reticule;
+    bool                    can_fire;
+    bool                    is_firing;
 
-    std::vector<Phantom> phantoms;
-    uint32_t phantom_speed;
-    uint32_t last_phantom_move;
+    std::vector<Phantom>    phantoms;
+    uint32_t                phantom_speed;
+    uint32_t                last_phantom_move;
 
-    Player  player;
+    Player                  player;
 
-    uint8_t  state;
-    uint8_t  map;
-    uint8_t  audio_range;
-    uint8_t  tele_x;
-    uint8_t  tele_y;
-    uint8_t  start_x;
-    uint8_t  start_y;
+    uint8_t                 state;
+    uint8_t                 map;
+    uint8_t                 audio_range;
+    uint8_t                 tele_x;
+    uint8_t                 tele_y;
+    uint8_t                 start_x;
+    uint8_t                 start_y;
 
-    uint16_t level;
-    uint16_t score;
-    uint16_t high_score;
-    uint16_t kills;
-    uint16_t level_kills;
-    uint16_t level_hits;
+    uint8_t                 view_mode;
 
-    uint32_t zap_charge_time;
-    uint32_t zap_fire_time;
-    uint8_t zap_frame;
+    uint16_t                level;
+    uint16_t                score;
+    uint16_t                high_score;
+    uint16_t                kills;
+    uint16_t                level_kills;
+    uint16_t                level_hits;
+
+    uint32_t                zap_charge_time;
+    uint32_t                zap_fire_time;
+    uint8_t                 zap_frame;
 } Game;
 
 typedef struct {
-    uint8_t  x;
-    uint8_t  y;
-    uint8_t  width;
-    uint8_t  height;
-    uint8_t  spot;
+    uint8_t                 x;
+    uint8_t                 y;
+    uint8_t                 width;
+    uint8_t                 height;
+    uint8_t                 spot;
 } Rect;
 
 
@@ -136,7 +138,7 @@ void        init_phantoms();
 void        create_world();
 
 void        update_world();
-void        move_phantoms();
+bool        move_phantoms();
 void        manage_phantoms();
 
 uint8_t     get_direction(uint8_t key_pressed);

@@ -72,9 +72,14 @@ void update(uint32_t tick_ms) {
         case PLAY_INTRO:
             break;
         case START_COUNT:
-            // Count down five seconds
-            if (tick_ms % 100 == 0) count_down--;
-            if (count_down == 0) game.state = IN_PLAY;
+            // Count down five seconds before
+            // actually starting the game
+            tick_count++;
+            if (tick_count % 100 == 0) count_down--;
+            if (count_down == 0) {
+                tick_count = 0;
+                game.state = IN_PLAY;
+            }
             break;
         case PLAYER_IS_DEAD:
             // NOTE Call 'death()' before coming here
@@ -96,10 +101,10 @@ void update(uint32_t tick_ms) {
             }
             break;
         case SHOW_TEMP_MAP:
-            // Count 3000ms while the post-kill
+            // Wait 3s while the post-kill
             // map is on screen
             tick_count++;
-            if (tick_count == 1000) {
+            if (tick_count == 300) {
                 tick_count = 0;
                 game.state = IN_PLAY;
             }
@@ -205,14 +210,20 @@ void draw() {
     switch(game.state) {
         case START_COUNT:
             // Update the on-screen countdown
+            // NOTE The map is already there, so
+            //      we only need to update the countdown
+            //      itself
+            // Clear the number
             pen(0, 0, 15);
             frect(223, 40, 17, 22);
 
             pen(15, 15, 0);
-            nx = (count_down == 1 ? 225 : 223);
+            nx = (count_down == 1 ? 225 : 221);
             Gfx::draw_number(count_down, nx, 40, true);
             break;
         case SHOW_TEMP_MAP:
+            // Present a post-kill map
+            // TODO Draw only once, not on every pass
             pen(0, 0, 15);
             clear();
             show_scores();
@@ -343,6 +354,7 @@ void init_game() {
     game.tele_y = 0;
     game.start_x = 0;
     game.start_y = 0;
+    game.view_mode = 0;
 
     game.level = 0;
     game.score = 0;
@@ -466,8 +478,13 @@ void update_world() {
     uint32_t now = time_us_32();
     if (now - game.last_phantom_move > game.phantom_speed) {
         game.last_phantom_move = now;
-        move_phantoms();
-        check_senses();
+        if (move_phantoms()) {
+            check_senses();
+        } else {
+            // Player was killed
+            game.state = PLAYER_IS_DEAD;
+            return;
+        }
     }
 
     // Check for a laser recharge
@@ -612,17 +629,19 @@ uint8_t count_facing_phantoms(uint8_t range) {
 /**
     Tell all of the current Phantoms to move.
 */
-void move_phantoms() {
+bool move_phantoms() {
     size_t number = game.phantoms.size();
     if (number > 0) {
         for (size_t i = 0 ; i < number ; ++i) {
-            game.phantoms.at(i).move();
+            if (game.phantoms.at(i).move()) return true;
 
             #ifdef DEBUG
             printf("Moving Phantom %i of %i\n", i, number);
             #endif
         }
     }
+
+    return false;
 }
 
 

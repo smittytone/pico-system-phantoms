@@ -51,7 +51,7 @@ class Phantom {
         // Methods
         Phantom(uint8_t start_x = NOT_ON_BOARD, uint8_t start_y = NOT_ON_BOARD);
 
-        void        move();
+        bool        move();
         void        move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny);
         uint8_t     came_from();
         void        roll_location();

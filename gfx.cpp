@@ -53,11 +53,21 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
-    // Set the background
-    pen(0, 0, 0);
-    frect(0, 0, 240, 240);
-    pen(15, 15, 0);
-    frect(0, 40, 240, 160);
+    if (game.view_mode == 1) {
+        // Background: white
+        // 3D View: red
+        pen(15, 15, 15);
+        frect(0, 0, 240, 240);
+        pen(15, 0, 0);
+        frect(0, 40, 240, 160);
+    } else {
+        // Background: black
+        // 3D View: yellow
+        pen(0, 0, 0);
+        frect(0, 0, 240, 240);
+        pen(15, 15, 0);
+        frect(0, 40, 240, 160);
+    }
 
     #ifdef DEBUG
     if (game.player.x < 10) {
@@ -206,7 +216,11 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    pen(15, 0, 0);
+    if (game.view_mode == 1) {
+        pen(15, 15, 15);
+    } else {
+        pen(15, 0, 0);
+    }
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
@@ -255,7 +269,12 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(0, 0, 15);
+    if (game.view_mode == 1) {
+        pen(15, 0, 0);
+    } else {
+        pen(0, 0, 15);
+    }
+
     frect(o.x, i.y + 40, i.x - o.x - 1, i.height);
     if (is_open) return;
 
@@ -281,7 +300,12 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(0, 0, 15);
+    if (game.view_mode == 1) {
+        pen(15, 0, 0);
+    } else {
+        pen(0, 0, 15);
+    }
+
     uint8_t xd = i.x + i.width;
     frect(xd + 1, i.y + 40, o.width + o.x - xd - 1, i.height);
     if (is_open) return;
@@ -301,7 +325,11 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    pen(0, 0, 15);
+    if (game.view_mode == 1) {
+        pen(15, 0, 0);
+    } else {
+        pen(0, 0, 15);
+    }
     frect(r.x, r.y + 40, r.width, r.height);
 }
 
@@ -310,7 +338,7 @@ void draw_far_wall(uint8_t frame_index) {
     Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
-    pen(15, 0, 15);
+    pen(15, 15, 15);
     rect(100, 119, 40, 2);
     rect(119, 100, 2, 40);
 }
