@@ -20,6 +20,12 @@ extern tinymt32_t       tinymt_store;
 extern Game             game;
 extern Rect             rects[7];
 
+extern const uint16_t   phantom_sprites[];
+extern const uint8_t    phantom_sizes[];
+extern const uint8_t    word_sizes[];
+extern const uint16_t   word_sprites[];
+extern const uint8_t    CHARSET[128][6];
+
 
 /*
  *      GLOBALS
@@ -30,6 +36,7 @@ buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprite
 
 
 namespace Gfx {
+
 
 /**
     Render a single viewpoint frame at the specified square.
@@ -58,6 +65,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     pen(40, 28, 0);
     frect(0, 40, 240, 160);
 
+    #ifdef DEBUG
     if (game.player.x < 10) {
         draw_number(game.player.x, 0, 0);
     } else {
@@ -86,6 +94,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
     draw_number(game.level, 80, 12);
     draw_number(game.kills, 80, 24);
+    #endif
 
     switch(direction) {
         case DIRECTION_NORTH:
@@ -149,6 +158,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     }
 }
 
+
 /**
     Draw a section of the view, ie. a frame.
 
@@ -183,6 +193,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     draw_floor_line(current_frame);
     return false;
 }
+
 
 /**
     Draw a grid line on the floor -- this is all
@@ -278,6 +289,7 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
     fpoly({xd + 1, i.y + i.height + 39, o.x + o.width - 1, i.y + i.height + 39, o.x + o.width - 1, o.y + o.height + 40});
 }
 
+
 /**
     Draw the wall facing the viewer, or for very long distances,
     an 'infinity' view.
@@ -293,7 +305,7 @@ void draw_far_wall(uint8_t frame_index) {
 
 
 /**
-    Draw the laser sight: big cross on the screen.
+    Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
     pen(0, 40, 0);
@@ -302,9 +314,15 @@ void draw_reticule() {
 }
 
 
-void draw_zap(uint8_t frame) {
-    if (frame < 5) {
-        uint16_t radius = radii[frame];
+/**
+    Draw a laser bolt.
+    
+    - Parameters:
+        - frame_index: The frame in which to place the bolt.
+ */
+ void draw_zap(uint8_t frame_index) {
+    if (frame_index < 5) {
+        uint16_t radius = radii[frame_index];
         pen(40, 40, 40);
         fcircle(120, 120, radius);
     }
@@ -316,9 +334,15 @@ void animate_turn(bool is_right) {
 }
 
 
+/**
+    Draw a Phantom in the specified frame - which determines
+    its x and y co-ordinates in the frame.
+    
+    - Parameters:
+        - frame_index: The frame in which to place the Phantom.
+        - count:       The number of Phantoms on screen.
+ */      
 void draw_phantom(uint8_t frame_index, uint8_t* count) {
-    // Draw a Phantom in the specified frame - which determines
-    // its x and y co-ordinates in the frame
     Rect r = rects[frame_index];
     uint8_t dx = 120;
     uint8_t c = *count;
@@ -352,109 +376,14 @@ void draw_phantom(uint8_t frame_index, uint8_t* count) {
 }
 
 
-void draw_text(int8_t x, int8_t y, string the_string, bool do_wrap) {
-    // Print the supplied string at (x,y) (top-left co-ordinate), wrapping to the next line
-    // if required. 'do_double' selects double-height output (currently not working)
-    uint8_t space_size = 4;
-    uint8_t bit_max = 16;
-    pen(40, 0, 40);
-
-    return;
-    for (size_t i = 0 ; i < the_string.size() ; ++i) {
-        uint8_t glyph[6];
-        uint8_t col_1 = 0;
-        uint8_t col_0 = 0;
-        ssize_t glyph_len = 0;
-
-        uint8_t asc_val = the_string[i] - 32;
-        glyph_len = CHARSET[asc_val][0] + 1;
-        for (size_t j = 0 ; j < glyph_len ; ++j) {
-            if (j == glyph_len - 1) {
-                glyph[j] = 0x00;
-            } else {
-                glyph[j] = CHARSET[asc_val][j + 1];
-            }
-        }
-
-        col_0 = glyph[0];
-        printf("Glyph LEN: %i",glyph_len);
-
-        if (do_wrap) {
-            if ((x + glyph_len * 2 >= 240)) {
-                if (y + bit_max < 240) {
-                    x = 0;
-                    y += bit_max;
-                } else {
-                    return;
-                }
-            }
-        }
-
-        /*
-        for (size_t j = 1 ; j < glyph_len + 1 ; ++j) {
-            if (j == glyph_len) {
-                //if (do_double) break;
-                col_1 = glyph[j - 1];
-            } else {
-                col_1 = glyph[j];
-            }
-
-            uint16_t col_0_right = 0;
-            uint16_t col_1_right = 0;
-            uint16_t col_0_left = 0;
-            uint16_t col_1_left = 0;
-
-            col_0_right = text_stretch(col_0);
-            col_0_left = col_0_right;
-            col_1_right = text_stretch(col_1);
-            col_1_left = col_1_right;
-
-            for (int8_t a = 6 ; a >= 0 ; --a) {
-                for (uint8_t b = 1 ; b < 3 ; b++) {
-                    if ((((col_0 >> a) & 3) == 3 - b) && (((col_1 >> a) & 3) == b)) {
-                        col_0_right |= (1 << ((a * 2) + b));
-                        col_1_left |= (1 << ((a * 2) + 3 - b));
-                    }
-                }
-            }
-
-            for (uint8_t k = 0 ; k < bit_max ; ++k) {
-                if (x < 240 && col_0_left & (1 << k)) pixel(x, y + k);
-                if (x + 1 < 240 && col_0_right & (1 << k)) pixel(x + 1, y + k);
-                if (x + 2 < 240 && col_1_left & (1 << k)) pixel(x + 2, y + k);
-                if (x + 3 < 240&& col_1_right & (1 << k)) pixel(x + 3, y + k);
-            }
-
-            x += 2;
-
-            if (x >= 240) {
-                if (!do_wrap) return;
-                if (y + bit_max < 240) {
-                    x = 0;
-                    y += bit_max;
-                } else {
-                    break;
-                }
-            }
-
-            col_0 = col_1;
-        }
-        */
-    }
-}
-
 /**
-    Pixel-doubles an 8-bit value to 16 bits.
+    Display a pre-rendered word graphic.
+    
+    - Parameters:
+        - index: The word's index in the `word_sizes` array.
+        - x:     The target X co-ordinate.
+        - y:     The target Y co-ordinate.
  */
-uint16_t text_stretch(uint8_t x) {
-    uint16_t v = (x & 0xF0) << 4 | (x & 0x0F);
-    v = (v << 2 | v) & 0x3333;
-    v = (v << 1 | v) & 0x5555;
-    v |= (v << 1);
-    return v;
-}
-
-
 void draw_word(uint8_t index, uint8_t x, uint8_t y) {
     uint8_t w_x = word_sizes[index * 3];
     uint8_t w_y = word_sizes[index * 3 + 1];
@@ -463,6 +392,15 @@ void draw_word(uint8_t index, uint8_t x, uint8_t y) {
 }
 
 
+/**
+    Display a pre-rendered single-digit number graphic.
+    
+    - Parameters:
+        - index:     The word's index in the `word_sizes` array.
+        - x:         The target X co-ordinate.
+        - y:         The target Y co-ordinate.
+        - do_double: Render at 2x size.
+ */
 void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
     uint8_t n_len = number == 1 ? 2 : 6;
     uint8_t n_x = number == 1 ? 6 : (2 + ((number - 1) * 6));

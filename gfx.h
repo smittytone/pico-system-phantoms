@@ -40,16 +40,7 @@ namespace Gfx {
 
     void        draw_word(uint8_t index, uint8_t x, uint8_t y);
     void        draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double = false);
-
-    void        draw_text(int8_t x, int8_t y, std::string the_string, bool do_wrap);
-    uint16_t    text_stretch(uint8_t x);
 }
 
-
-extern const uint16_t phantom_sprites[];
-extern const uint8_t phantom_sizes[];
-extern const uint8_t word_sizes[];
-extern const uint16_t word_sprites[];
-extern const uint8_t CHARSET[128][6];
 
 #endif  // _GFX_UTILS_HEADER_
