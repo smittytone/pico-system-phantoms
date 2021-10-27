@@ -164,6 +164,7 @@ uint8_t init(uint8_t last_map) {
     /* TEST VALUE
     map = 1;
     */
+    map = 1;
 
     switch(map) {
         case 0:
@@ -358,10 +359,10 @@ void draw(uint8_t y_delta, bool show_entities) {
                 pen(15, 0, 0);
                 switch(game.player.direction) {
                     case DIRECTION_NORTH:
-                        frect(x + j * 8 + 3, y + i * 8, 2, 5);
-                        frect(x + j * 8, y + i * 8 + 3, 2, 4);
-                        frect(x + j * 8 + 6, y + i * 8 + 3, 2, 4);
-                        frect(x + j * 8 + 1, y + i * 8 + 4, 6, 2);
+                        frect(x + j * 8 + 3, y + i * 8, 2, 3);
+                        frect(x + j * 8, y + i * 8 + 3, 8, 2);
+                        frect(x + j * 8, y + i * 8 + 5, 2, 3);
+                        frect(x + j * 8 + 6, y + i * 8 + 5, 2, 3);
                         break;
                     case DIRECTION_EAST:
                         frect(x + j * 8 + 3, y + i * 8 + 4, 5, 2);
@@ -370,10 +371,10 @@ void draw(uint8_t y_delta, bool show_entities) {
                         frect(x + j * 8 + 3, y + i * 8 + 1, 2, 6);
                         break;
                     case DIRECTION_SOUTH:
-                        frect(x + j * 8 + 3, y + i * 8 + 4, 2, 5);
-                        frect(x + j * 8, y + i * 8, 2, 4);
-                        frect(x + j * 8 + 6, y + i * 8, 2, 4);
-                        frect(x + j * 8 + 1, y + i * 8 + 4, 6, 2);
+                        frect(x + j * 8 + 3, y + i * 8 + 5, 2, 3);
+                        frect(x + j * 8, y + i * 8 + 3, 8, 2);
+                        frect(x + j * 8, y + i * 8, 2, 3);
+                        frect(x + j * 8 + 6, y + i * 8, 2, 3);
                         break;
                     default:
                         frect(x + j * 8, y + i * 8 + 4, 5, 2);

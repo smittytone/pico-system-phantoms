@@ -19,6 +19,7 @@ using std::string;
 extern tinymt32_t       tinymt_store;
 extern Game             game;
 extern Rect             rects[7];
+extern uint8_t          dead_phantom;
 
 
 /*
@@ -117,8 +118,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 //      laterally
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
-                    bool is_zapped = (game.phantoms.at(n).hp == 0);
-                    draw_phantom(frame, &phantom_count, is_zapped);
+                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
                 }
 
                 // Move to the next frame and square
@@ -133,8 +133,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, far_frame);
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
-                    bool is_zapped = (game.phantoms.at(n).hp == 0);
-                    draw_phantom(frame, &phantom_count, is_zapped);
+                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
                 }
                 --frame;
                 --i;
@@ -147,8 +146,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, far_frame);
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
-                    bool is_zapped = (game.phantoms.at(n).hp == 0);
-                    draw_phantom(frame, &phantom_count, is_zapped);
+                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
                 }
                 --frame;
                 --i;
@@ -161,8 +159,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, far_frame);
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
-                    bool is_zapped = (game.phantoms.at(n).hp == 0);
-                    draw_phantom(frame, &phantom_count, is_zapped);
+                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
                 }
                 --frame;
                 ++i;

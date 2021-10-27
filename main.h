@@ -56,6 +56,7 @@ extern "C" {
 #define DO_TELEPORT_ONE                                 5
 #define DO_TELEPORT_TWO                                 6
 #define SHOW_TEMP_MAP                                   7
+#define ZAP_PHANTOM                                     8
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000

@@ -16,6 +16,7 @@ using namespace picosystem;
  *  GLOBALS
  */
 uint8_t     count_down = 5;
+uint8_t     dead_phantom = ERROR_CONDITION;
 
 tinymt32_t  tinymt_store;
 bool        chase_mode = false;
@@ -109,6 +110,18 @@ void update(uint32_t tick_ms) {
                 game.state = IN_PLAY;
             }
             break;
+        case ZAP_PHANTOM:
+            tick_count++;
+            if (tick_count == 100) {
+                tick_count = 0;
+                game.state = SHOW_TEMP_MAP;
+
+                // Take the dead phantom off the board
+                // (so it gets re-rolled in 'manage_phantoms()')
+                game.phantoms.erase(game.phantoms.begin() + dead_phantom);
+                manage_phantoms();
+                dead_phantom = ERROR_CONDITION;
+            }
         default:
             // The game is afoot! game.state = IN_PLAY
             // NOTE Return as quickly as possible
@@ -215,7 +228,7 @@ void draw() {
             //      itself
             // Clear the number
             pen(0, 0, 15);
-            frect(223, 40, 17, 22);
+            frect(221, 40, 14, 21);
 
             pen(15, 15, 0);
             nx = (count_down == 1 ? 225 : 221);
@@ -391,11 +404,6 @@ void init_phantoms() {
  */
 void create_world() {
     // Reset the game
-    if (game.level == 0) {
-        init_game();
-        init_phantoms();
-    }
-
     game.level++;
 
     // Initialise the current map
@@ -478,11 +486,12 @@ void update_world() {
     uint32_t now = time_us_32();
     if (now - game.last_phantom_move > game.phantom_speed) {
         game.last_phantom_move = now;
-        if (move_phantoms()) {
+        if (!move_phantoms()) {
             check_senses();
         } else {
             // Player was killed
             game.state = PLAYER_IS_DEAD;
+            printf("PLAYER IS DEAD\n");
             return;
         }
     }
@@ -633,7 +642,8 @@ bool move_phantoms() {
     size_t number = game.phantoms.size();
     if (number > 0) {
         for (size_t i = 0 ; i < number ; ++i) {
-            if (game.phantoms.at(i).move()) return true;
+            Phantom &p = game.phantoms.at(i);
+            if (p.move() == true) return true;
 
             #ifdef DEBUG
             printf("Moving Phantom %i of %i\n", i, number);
@@ -723,16 +733,13 @@ void fire_laser() {
             // tone(600, 100, 200);
 
             // Quickly show the map
-            game.state = SHOW_TEMP_MAP;
-
-            // Take the dead phantom off the board
-            // (so it gets re-rolled in 'managePhantoms()')
-            game.phantoms.erase(game.phantoms.begin() + n);
+            game.state = ZAP_PHANTOM;
+            dead_phantom = n;
         }
-    }
 
-    // Update phantoms list
-    manage_phantoms();
+        // Update phantoms list
+        //manage_phantoms();
+    }
 }
 
 
@@ -744,7 +751,7 @@ void fire_laser() {
  */
 void manage_phantoms() {
     bool level_up = false;
-    size_t phantom_count = game.phantoms.size();
+    size_t phantom_count = 0;
 
     // If we're on levels 1 and 2, we only have that number of
     // Phantoms. From 3 and up, there are aways three in the maze
@@ -762,6 +769,7 @@ void manage_phantoms() {
             game.level_hits = 0;
             level_up = true;
             game.level++;
+            phantom_count = MAX_PHANTOMS;
         }
     }
 
@@ -769,21 +777,23 @@ void manage_phantoms() {
     if (level_up) {
         uint8_t index = (game.level - 1) * 4;
         game.phantom_speed = ((PHANTOM_MOVE_TIME_US << level_data[index + 2]) >> level_data[index + 3]);
+
+        // Just in case...
+        if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
+
+        printf("Phantoms: %i\n", phantom_count);
+
+        // Do we need to add any new phantoms to the board?
+        while (game.phantoms.size() < phantom_count) {
+            Phantom p = Phantom();
+            p.roll_location();
+            game.phantoms.push_back(p);
+        }
     }
 
-    // Just in case...
-    if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
-
-    printf("Phantoms: %i\n", phantom_count);
-
-    // Do we need to add any new phantoms to the board?
-    while (game.phantoms.size() < phantom_count) {
-        Phantom p = Phantom();
-        p.roll_location();
-        game.phantoms.push_back(p);
-    }
-
+    #ifdef DEBUG
     printf("Phantoms: %i\n", game.phantoms.size());
+    #endif
 }
 
 
@@ -848,6 +858,17 @@ void show_scores() {
     Gfx::draw_number((score & 0x0F00) >> 8,  cx, 18, true);
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
+
+    // Show kills
+    Gfx::draw_word(WORD_KILLS, 198, 215);
+    score = Utils::bcd(game.level_kills);
+    cx = (score == 1) ? 206 : 202;
+    Gfx::draw_number(score, cx, 202, true);
+
+    Gfx::draw_word(WORD_HITS, 10, 215);
+    score = Utils::bcd(game.level_kills);
+    cx = (score == 1) ? 20 : 16;
+    Gfx::draw_number(score, cx, 202, true);
 
     // Add in the map
     Map::draw(0, true);
