@@ -20,12 +20,6 @@ extern tinymt32_t       tinymt_store;
 extern Game             game;
 extern Rect             rects[7];
 
-extern const uint16_t   phantom_sprites[];
-extern const uint8_t    phantom_sizes[];
-extern const uint8_t    word_sizes[];
-extern const uint16_t   word_sprites[];
-extern const uint8_t    CHARSET[128][6];
-
 
 /*
  *      GLOBALS
@@ -62,7 +56,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     // Set the background
     pen(0, 0, 0);
     frect(0, 0, 240, 240);
-    pen(40, 28, 0);
+    pen(15, 15, 0);
     frect(0, 40, 240, 160);
 
     #ifdef DEBUG
@@ -204,7 +198,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    pen(40, 0, 0);
+    pen(15, 0, 0);
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
@@ -220,7 +214,7 @@ void draw_floor_line(uint8_t frame_index) {
 void draw_teleporter(uint8_t frame_index) {
     Rect c = rects[frame_index];
     Rect b = rects[frame_index + 1];
-    pen(0, 40, 0);
+    pen(0, 15, 0);
     frect(c.x, b.y + b.height + 40, c.width, (c.y + c.height) - (b.y + b.height));
 
     /*
@@ -253,7 +247,7 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(0, 0, 40);
+    pen(0, 0, 15);
     frect(o.x, i.y + 40, i.x - o.x - 1, i.height);
     if (is_open) return;
 
@@ -279,7 +273,7 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(0, 0, 40);
+    pen(0, 0, 15);
     uint8_t xd = i.x + i.width;
     frect(xd + 1, i.y + 40, o.width + o.x - xd - 1, i.height);
     if (is_open) return;
@@ -299,7 +293,7 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    pen(0, 0, 40);
+    pen(0, 0, 15);
     frect(r.x, r.y + 40, r.width, r.height);
 }
 
@@ -308,7 +302,7 @@ void draw_far_wall(uint8_t frame_index) {
     Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
-    pen(0, 40, 0);
+    pen(15, 0, 15);
     rect(100, 119, 40, 2);
     rect(119, 100, 2, 40);
 }
@@ -316,14 +310,14 @@ void draw_reticule() {
 
 /**
     Draw a laser bolt.
-    
+
     - Parameters:
         - frame_index: The frame in which to place the bolt.
  */
  void draw_zap(uint8_t frame_index) {
     if (frame_index < 5) {
         uint16_t radius = radii[frame_index];
-        pen(40, 40, 40);
+        pen(15, 15, 15);
         fcircle(120, 120, radius);
     }
 }
@@ -337,11 +331,11 @@ void animate_turn(bool is_right) {
 /**
     Draw a Phantom in the specified frame - which determines
     its x and y co-ordinates in the frame.
-    
+
     - Parameters:
         - frame_index: The frame in which to place the Phantom.
         - count:       The number of Phantoms on screen.
- */      
+ */
 void draw_phantom(uint8_t frame_index, uint8_t* count) {
     Rect r = rects[frame_index];
     uint8_t dx = 120;
@@ -378,7 +372,7 @@ void draw_phantom(uint8_t frame_index, uint8_t* count) {
 
 /**
     Display a pre-rendered word graphic.
-    
+
     - Parameters:
         - index: The word's index in the `word_sizes` array.
         - x:     The target X co-ordinate.
@@ -394,7 +388,7 @@ void draw_word(uint8_t index, uint8_t x, uint8_t y) {
 
 /**
     Display a pre-rendered single-digit number graphic.
-    
+
     - Parameters:
         - index:     The word's index in the `word_sizes` array.
         - x:         The target X co-ordinate.

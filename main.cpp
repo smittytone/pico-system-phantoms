@@ -43,7 +43,7 @@ voice_t blip = voice(10, 10, 10, 10, 40, 2);
  */
 void init() {
     // Clear the display as soon as possible
-    pen(0, 40, 0);
+    pen(0, 15, 0);
     clear();
 
     #ifdef DEBUG
@@ -205,15 +205,15 @@ void draw() {
     switch(game.state) {
         case START_COUNT:
             // Update the on-screen countdown
-            pen(0, 0, 40);
+            pen(0, 0, 15);
             frect(223, 40, 17, 22);
 
-            pen(40, 30, 0);
+            pen(15, 15, 0);
             nx = (count_down == 1 ? 225 : 223);
             Gfx::draw_number(count_down, nx, 40, true);
             break;
         case SHOW_TEMP_MAP:
-            pen(0, 0, 40);
+            pen(0, 0, 15);
             clear();
             show_scores();
             break;
@@ -296,7 +296,7 @@ void start_new_game() {
 
     // Clear the screen, present the current map and
     // give the player a five-second countdown
-    pen(0, 0, 40);
+    pen(0, 0, 15);
     clear();
     Map::draw(0, false);
 
@@ -782,7 +782,7 @@ void death() {
     sleep_ms(50);
     //tone(2200, 500, 600);
 
-    pen(0, 40, 00);
+    pen(0, 15, 00);
     clear();
 
     text("YOU", 0, 40);

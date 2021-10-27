@@ -43,4 +43,14 @@ namespace Gfx {
 }
 
 
+/*
+ *      EXTERNALLY-DEFINED GLOBALS
+ */
+extern const uint16_t   phantom_sprites[];
+extern const uint8_t    phantom_sizes[];
+extern const uint8_t    word_sizes[];
+extern const uint16_t   word_sprites[];
+extern const uint8_t    CHARSET[128][6];
+
+
 #endif  // _GFX_UTILS_HEADER_
