@@ -152,6 +152,7 @@ void        do_teleport();
 void        reset_laser();
 
 void        death();
+void        phantom_killed();
 void        show_scores();
 uint8_t     fix_num_width(uint8_t value, uint8_t current);
 

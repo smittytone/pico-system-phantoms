@@ -250,11 +250,9 @@ void draw() {
             Gfx::draw_number(count_down, nx, 40, true);
             break;
         case SHOW_TEMP_MAP:
-            // Present a post-kill map
-            // TODO Draw only once, not on every pass
-            pen(0, 0, 15);
-            clear();
-            show_scores();
+            // We've already drawn the post kill map, so just exit
+        case PLAYER_IS_DEAD:
+            // We've already drawn the end-of-game map, so just exit
             break;
         default:
             // game.state == IN_PLAY
@@ -758,6 +756,9 @@ void fire_laser() {
 
             // Reset the laser
             reset_laser();
+
+            // Show the map
+            phantom_killed();
         }
 
         // Update phantoms list
@@ -846,6 +847,16 @@ void death() {
     //Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
 
     // Show the map
+    show_scores();
+}
+
+
+/**
+    Just show the map briefly after killing a Phantom
+ */
+void phantom_killed() {
+    pen(0, 0, 15);
+    clear();
     show_scores();
 }
 
