@@ -125,6 +125,7 @@ void update(uint32_t tick_ms) {
             if (tick_count == 100) {
                 tick_count = 0;
                 game.state = SHOW_TEMP_MAP;
+                phantom_killed();
 
                 // Take the dead phantom off the board
                 // (so it gets re-rolled in 'manage_phantoms()')
@@ -345,13 +346,14 @@ void start_new_game() {
     clear();
     Map::draw(0, false);
 
-    Gfx::draw_word(WORD_NEW, 0, 40);
-    Gfx::draw_word(WORD_GAME, 0, 52);
+    Gfx::draw_word(WORD_NEW, 0, 10, true);
+    Gfx::draw_word(WORD_GAME, 70, 10 , true);
 
-    Gfx::draw_word(WORD_LEVEL, 0, 168);
-    Gfx::draw_number(1, 18, 180, true);
+    uint8_t cx = fix_num_width(game.level, 230);
+    Gfx::draw_number(game.level, cx, 10, true);
+    Gfx::draw_word(WORD_LEVEL, cx - 80, 10, true);
 
-    Gfx::draw_number(5, 223, 40, true);
+    Gfx::draw_number(5, 114, 210, true);
 
     // Set the loop mode
     game.state = START_COUNT;
@@ -759,9 +761,6 @@ void fire_laser() {
 
             // Reset the laser
             reset_laser();
-
-            // Show the map
-            phantom_killed();
         }
 
         // Update phantoms list
@@ -847,10 +846,15 @@ void death() {
     clear();
 
     // Give instructions
-    //Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
+    Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
 
     // Show the map
     show_scores();
+
+    pen(0, 0, 15);
+    frect(36, 108, 168, 24);
+    Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
+
 }
 
 
@@ -873,7 +877,7 @@ void show_scores() {
     if (game.high_score < game.score) game.high_score = game.score;
 
     // Show the score
-    Gfx::draw_word(WORD_SCORE, 10, 5);
+    Gfx::draw_word(WORD_SCORE, 10, 5, false);
     uint32_t score = Utils::bcd(game.score);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
     cx += (((score & 0xF000) >> 12) == 1 ? 6 : 14);
@@ -884,8 +888,8 @@ void show_scores() {
     Gfx::draw_number(score & 0x000F, cx, 18, true);
 
     // Show the high score
-    Gfx::draw_word(WORD_HIGH, 162, 5);
-    Gfx::draw_word(WORD_SCORE, 192, 5);
+    Gfx::draw_word(WORD_HIGH, 162, 5, false);
+    Gfx::draw_word(WORD_SCORE, 192, 5, false);
     score = Utils::bcd(game.high_score);
     cx = (score & 0x000F == 1) ? 226 : 218;
     Gfx::draw_number(score & 0x000F, cx, 18, true);
@@ -899,15 +903,15 @@ void show_scores() {
     if (game.state != PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
-        Gfx::draw_word(WORD_KILLS, 198, 225);
+        Gfx::draw_word(WORD_KILLS, 198, 225, false);
         score = Utils::bcd(game.level_kills);
-        cx = (score == 1) ? 190 : 182;
+        cx = (score == 1) ? 188 : 180;
         Gfx::draw_number(score, cx, 215, true);
 
         // Show hits
-        Gfx::draw_word(WORD_HITS, 10, 225);
+        Gfx::draw_word(WORD_HITS, 10, 225, false);
         score = Utils::bcd(game.level_hits);
-        Gfx::draw_number(score, 39, 215, true);
+        Gfx::draw_number(score, 41, 215, true);
     }
 
     // Add in the map

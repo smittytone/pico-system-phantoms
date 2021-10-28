@@ -365,10 +365,10 @@ void draw(uint8_t y_delta, bool show_entities) {
                         frect(x + j * 8 + 6, y + i * 8 + 5, 2, 3);
                         break;
                     case DIRECTION_EAST:
-                        frect(x + j * 8 + 3, y + i * 8 + 4, 5, 2);
-                        frect(x + j * 8, y + i * 8, 4, 2);
-                        frect(x + j * 8, y + i * 8 + 6, 4, 2);
-                        frect(x + j * 8 + 3, y + i * 8 + 1, 2, 6);
+                        frect(x + j * 8, y + i * 8, 3, 2);
+                        frect(x + j * 8, y + i * 8 + 6, 3, 2);
+                        frect(x + j * 8 + 3, y + i * 8, 2, 8);
+                        frect(x + j * 8 + 5, y + i * 8 + 3, 3, 2);
                         break;
                     case DIRECTION_SOUTH:
                         frect(x + j * 8 + 3, y + i * 8 + 5, 2, 3);
@@ -377,10 +377,10 @@ void draw(uint8_t y_delta, bool show_entities) {
                         frect(x + j * 8 + 6, y + i * 8, 2, 3);
                         break;
                     default:
-                        frect(x + j * 8, y + i * 8 + 4, 5, 2);
-                        frect(x + j * 8 + 4, y + i * 8, 4, 2);
-                        frect(x + j * 8 + 4, y + i * 8 + 6, 4, 2);
-                        frect(x + j * 8 + 3, y + i * 8 + 1, 2, 6);
+                        frect(x + j * 8 + 5, y + i * 8, 3, 2);
+                        frect(x + j * 8 + 5, y + i * 8 + 6, 3, 2);
+                        frect(x + j * 8 + 3, y + i * 8, 2, 8);
+                        frect(x + j * 8, y + i * 8 + 3, 3, 2);
                        break;
                 }
             }

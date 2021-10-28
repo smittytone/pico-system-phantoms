@@ -1,5 +1,6 @@
 /*
  * Phantom Slayer
+ * Graphics Routines
  *
  * @version     1.1.0
  * @author      smittytone
@@ -26,7 +27,7 @@ extern uint8_t          dead_phantom;
  *      GLOBALS
  */
 const uint8_t           radii[5] = {20, 16, 12, 8, 4};
-buffer_t*               word_buffer = buffer(68, 50, (void *)word_sprites);
+buffer_t*               word_buffer = buffer(82, 70, (void *)word_sprites);
 buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprites);
 buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites);
 
@@ -54,24 +55,22 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
+    // Clear the screen
+    pen(0, 0, 0);
+    frect(0, 0, 240, 240);
+
     if (game.state == DO_TELEPORT_ONE) {
-        // Background: white
         // 3D View: red
-        pen(15, 15, 15);
-        frect(0, 0, 240, 240);
         pen(15, 0, 0);
         frect(0, 40, 240, 160);
     } else {
-        // Background: black
         // 3D View: yellow
-        pen(0, 0, 0);
-        frect(0, 0, 240, 240);
         pen(15, 15, 0);
         frect(0, 40, 240, 160);
     }
 
     #ifdef DEBUG
-    show_debug_info();
+    // show_debug_info();
     #endif
 
     switch(direction) {
@@ -388,11 +387,17 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
         - x:     The target X co-ordinate.
         - y:     The target Y co-ordinate.
  */
-void draw_word(uint8_t index, uint8_t x, uint8_t y) {
+void draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double) {
     uint8_t w_x = word_sizes[index * 3];
     uint8_t w_y = word_sizes[index * 3 + 1];
     uint8_t w_len = word_sizes[index * 3 + 2];
-    blit(word_buffer, w_x, w_y, w_len, 10, x, y);
+
+
+    if (do_double) {
+        blit(word_buffer, w_x, w_y, w_len, 10, x, y, (w_len << 1), 20);
+    } else {
+        blit(word_buffer, w_x, w_y, w_len, 10, x, y);
+    }
 }
 
 

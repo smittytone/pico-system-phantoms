@@ -41,7 +41,7 @@ namespace Gfx {
     void        animate_turn(bool is_right);
     void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count, bool is_zapped);
 
-    void        draw_word(uint8_t index, uint8_t x, uint8_t y);
+    void        draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double);
     void        draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double = false);
 
     void        show_debug_info();
