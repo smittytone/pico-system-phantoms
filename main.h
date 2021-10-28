@@ -49,6 +49,7 @@ extern "C" {
 #define MOVE_BACKWARD                                   2
 #define TURN_LEFT                                       3
 
+// Game states
 #define NOT_IN_PLAY                                     0
 #define IN_PLAY                                         1
 #define PLAYER_IS_DEAD                                  2

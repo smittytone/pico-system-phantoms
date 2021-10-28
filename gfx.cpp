@@ -411,9 +411,9 @@ void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
     if (number == 0) n_x = 0;
 
     if (do_double) {
-        blit(word_buffer, n_x, 40, n_len, 10, x, y, (n_len << 1), 20);
+        blit(word_buffer, n_x, 0, n_len, 10, x, y, (n_len << 1), 20);
     } else {
-        blit(word_buffer, n_x, 40, n_len, 10, x, y);
+        blit(word_buffer, n_x, 0, n_len, 10, x, y);
     }
 }
 

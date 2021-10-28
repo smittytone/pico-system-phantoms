@@ -21,14 +21,16 @@ const uint8_t phantom_sizes[] = {
 };
 
 const uint8_t word_sizes[] = {
-    0, 0, 38,       // SCORE
-    39, 0, 30,      // OVER
-    0, 10, 32,      // KILLS
-    0, 20, 26,      // HIGH
-    33, 10, 25,     // HITS
-    0, 30, 34,      // GAME
-    34, 30, 26,     // NEW
-    26, 20, 34      // LEVEL
+    00, 20, 38,     // SCORE
+    38, 30, 30,     // OVER
+    00, 10, 32,     // KILLS
+    38, 20, 25,     // HIGH
+    32, 10, 26,     // HITS
+    00, 30, 34,     // GAME
+    38, 60, 28,     // NEW
+    00, 00, 38      // LEVEL
+    00, 40, 76      // TAP ANY KEY
+    00, 50, 82      // YOU ARE DEAD
 };
 
 
