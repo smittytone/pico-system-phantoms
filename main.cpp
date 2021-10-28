@@ -159,7 +159,7 @@ void update(uint32_t tick_ms) {
                             game.state = PLAYER_IS_DEAD;
 
                             #ifdef DEBUG
-                            printf("PLAYER IS DEAD\n");
+                            printf("\nPLAYER IS DEAD\n");
                             #endif
                             return;
                         }
@@ -192,6 +192,10 @@ void update(uint32_t tick_ms) {
             } else if (key & 0x04) {
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
+            } else if (key & 0x08) {
+                // Lower radar range
+                game.audio_range--;
+                if (game.audio_range < 1) game.audio_range = 6;
             }
 
             // Check for firing
@@ -502,6 +506,7 @@ void update_world() {
         } else {
             // Player was killed
             game.state = PLAYER_IS_DEAD;
+            death();
 
             #ifdef DEBUG
             printf("PLAYER IS DEAD\n");
@@ -830,7 +835,7 @@ void manage_phantoms() {
  */
 void death() {
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
-    sleep_ms(50);
+    //sleep_ms(50);
     //tone(2200, 500, 600);
 
     // Clear the display
@@ -838,7 +843,7 @@ void death() {
     clear();
 
     // Give instructions
-    Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
+    //Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
 
     // Show the map
     show_scores();

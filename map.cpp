@@ -324,7 +324,7 @@ void draw(uint8_t y_delta, bool show_entities) {
 
     // Draw the map
     uint8_t x = 40;
-    uint8_t y = 40;
+    uint8_t y = 40 + y_delta;
     pen(15, 15, 0);
 
     for (uint8_t i = 0 ; i < 20 ; ++i) {
