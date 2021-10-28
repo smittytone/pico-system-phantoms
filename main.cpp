@@ -94,14 +94,19 @@ void update(uint32_t tick_ms) {
             // Flip between TELE_ONE and TELE_TWO
             // every 1/4 second for two seconds
             tick_count++;
-            if (tick_count == 25) {
+            if (tick_count == 10) {
                 tick_count = 0;
                 game.state = DO_TELEPORT_TWO;
+                if (now - tele_flash_time > 1000000) {
+                    // Half way through, switch co-ords
+                    game.player.x = game.start_x;
+                    game.player.y = game.start_y;
+                }
             }
             break;
         case DO_TELEPORT_TWO:
             tick_count++;
-            if (tick_count == 25) {
+            if (tick_count == 10) {
                 tick_count = 0;
                 game.state = now - tele_flash_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
             }
@@ -711,8 +716,6 @@ void check_senses() {
  */
 void do_teleport() {
     // Move the player to the stored square
-    game.player.x = game.start_x;
-    game.player.y = game.start_y;
     game.state = DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
 
