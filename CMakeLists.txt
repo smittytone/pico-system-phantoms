@@ -21,6 +21,7 @@ find_package(PICOSYSTEM REQUIRED)
 picosystem_executable(phantom-slayer
                       assets.cpp
                       gfx.cpp
+                      help.cpp
                       main.cpp
                       map.cpp
                       phantom.cpp

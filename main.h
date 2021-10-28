@@ -23,6 +23,7 @@
 #include <cstring>
 
 #include "gfx.h"
+#include "help.h"
 #include "map.h"
 #include "phantom.h"
 #include "tinymt32.h"
@@ -57,6 +58,7 @@ extern "C" {
 #define DO_TELEPORT_TWO                                 6
 #define SHOW_TEMP_MAP                                   7
 #define ZAP_PHANTOM                                     8
+#define SHOW_HELP                                       9
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000

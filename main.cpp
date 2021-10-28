@@ -103,7 +103,7 @@ void update(uint32_t tick_ms) {
             tick_count++;
             if (tick_count == 25) {
                 tick_count = 0;
-                game.state = now - tele_done_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
+                game.state = now - tele_flash_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
             }
             break;
         case SHOW_TEMP_MAP:
@@ -212,7 +212,7 @@ void update(uint32_t tick_ms) {
                     game.show_reticule = false;
                     reset_laser();
                     game.is_firing = true;
-                    
+
                     // Check if we've hit a Phantom
                     fire_laser();
                 }
@@ -227,7 +227,7 @@ void update(uint32_t tick_ms) {
 void draw() {
     uint8_t nx;
     switch(game.state) {
-        case HELP_PAGE:
+        case SHOW_HELP:
             // Display a help page
             Help::show_page(help_page_count);
             break;
@@ -239,7 +239,7 @@ void draw() {
             // Clear the number
             pen(0, 0, 15);
             frect(221, 40, 14, 21);
-            
+
             // Show the new number
             pen(15, 15, 0);
             nx = (count_down == 1 ? 225 : 221);
@@ -266,10 +266,10 @@ void draw() {
                 // Show the player's view
                 Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
             }
-            
+
             // Don't show gunnery if a Phantom has been hit
             if (game.state == ZAP_PHANTOM) return;
-            
+
             // Is the laser being fired?
             if (game.is_firing) Gfx::draw_zap(game.zap_frame);
 
@@ -381,7 +381,6 @@ void init_game() {
     game.tele_y = 0;
     game.start_x = 0;
     game.start_y = 0;
-    game.view_mode = 0;
 
     game.level = 0;
     game.score = 0;
@@ -503,11 +502,11 @@ void update_world() {
         } else {
             // Player was killed
             game.state = PLAYER_IS_DEAD;
-            
+
             #ifdef DEBUG
             printf("PLAYER IS DEAD\n");
             #endif
-            
+
             return;
         }
     }
@@ -713,7 +712,7 @@ void do_teleport() {
     game.player.y = game.start_y;
     game.state = DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
-    
+
     // Reset the laser if firing
     reset_laser();
 }
@@ -751,7 +750,7 @@ void fire_laser() {
             // Quickly show the map
             game.state = ZAP_PHANTOM;
             dead_phantom = n;
-            
+
             // Reset the laser
             reset_laser();
         }
@@ -833,11 +832,11 @@ void death() {
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     sleep_ms(50);
     //tone(2200, 500, 600);
-    
+
     // Clear the display
     pen(0, 0, 15);
     clear();
-    
+
     // Give instructions
     Gfx::draw_word(PHRASE_ANY_KEY, 10, 220);
 
@@ -877,24 +876,23 @@ void show_scores() {
     Gfx::draw_number((score & 0x0F00) >> 8,  cx, 18, true);
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
-    
+
     if (game.state != PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
         Gfx::draw_word(WORD_KILLS, 198, 225);
         score = Utils::bcd(game.level_kills);
-        cx = (score == 1) ? 206 : 202;
-        Gfx::draw_number(score, cx, 213, true);
+        cx = (score == 1) ? 190 : 182;
+        Gfx::draw_number(score, cx, 215, true);
 
         // Show hits
         Gfx::draw_word(WORD_HITS, 10, 225);
         score = Utils::bcd(game.level_hits);
-        cx = (score == 1) ? 20 : 16;
-        Gfx::draw_number(score, cx, 213, true);
+        Gfx::draw_number(score, 39, 215, true);
     }
-    
+
     // Add in the map
-    Map::draw(0, true);
+    Map::draw(4, true);
 }
 
 

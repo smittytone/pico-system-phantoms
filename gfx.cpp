@@ -186,13 +186,13 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    
+
     if (game.state == DO_TELEPORT_ONE) {
         pen(15, 15, 15);
     } else {
         pen(15, 0, 0);
     }
-    
+
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
@@ -297,13 +297,13 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    
+
     if (game.state == DO_TELEPORT_ONE) {
         pen(15, 15, 15);
     } else {
         pen(0, 0, 15);
     }
-    
+
     frect(r.x, r.y + 40, r.width, r.height);
 }
 
@@ -423,7 +423,7 @@ void show_debug_info() {
         draw_number(game.player.x, 0, 0);
     } else {
         draw_number(1, 0, 0);
-        draw_number(x - 10, 4, 0);
+        draw_number(game.player.x - 10, 4, 0);
     }
 
     if (game.player.y < 10) {
@@ -435,15 +435,7 @@ void show_debug_info() {
 
     draw_number(game.player.direction, 0, 24);
 
-    draw_number((phantom_count >> 4), 160, 0);
     draw_number((uint8_t)game.phantoms.size(), 170, 0);
-
-    if (far_frame < 10) {
-        draw_number(far_frame, 80, 0);
-    } else {
-        draw_number(1, 80, 0);
-        draw_number(far_frame - 10, 84, 0);
-    }
 
     draw_number(game.level, 80, 12);
     draw_number(game.kills, 80, 24);
