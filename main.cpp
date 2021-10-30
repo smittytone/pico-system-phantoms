@@ -19,6 +19,8 @@ uint8_t     count_down = 5;
 uint8_t     dead_phantom = ERROR_CONDITION;
 uint8_t     help_page_count = 0;
 
+int16_t     logo_y = -21;
+
 bool        chase_mode = false;
 bool        map_mode = false;
 bool        tele_state = false;
@@ -32,7 +34,8 @@ Rect        rects[7];
 
 Game        game;
 
-voice_t blip = voice(10, 10, 10, 10, 40, 2);
+voice_t blip = voice(10, 10, 10, 10);
+
 
 
 
@@ -52,13 +55,11 @@ void init() {
     // Set up the game
     setup();
 
-    // Display the intro animation
-    // play_intro();
-
-    //  Show help
+    // Start the game loop at the intro animation
     pen(0, 15, 0);
     clear();
-    game.state = OFFER_HELP;
+    game.state = ANIMATE_LOGO; //OFFER_HELP;
+    tele_flash_time = 0;
 
     // Start a new game -- the first
     // start_new_game();
@@ -73,7 +74,30 @@ void update(uint32_t tick_ms) {
     uint32_t now = time_us_32();
     uint8_t key = 0;
     switch (game.state) {
-        case PLAY_INTRO:
+        case ANIMATE_LOGO:
+            if (now - tele_flash_time > LOGO_ANIMATION_US) {
+                logo_y++;
+                if (logo_y > 100) {
+                    game.state = ANIMATE_CREDIT;
+                    logo_y = 275;
+                }
+                tele_flash_time = now;
+            }
+            break;
+        case ANIMATE_CREDIT:
+            if (now - tele_flash_time > LOGO_ANIMATION_US) {
+                logo_y--;
+                if (logo_y < 130) {
+                    game.state = LOGO_PAUSE;
+                }
+                tele_flash_time = now;
+            }
+            break;
+        case LOGO_PAUSE:
+            if (now - tele_flash_time > 5000000) {
+                game.state = OFFER_HELP;
+                tele_flash_time = 0;
+            }
             break;
         case OFFER_HELP:
             key = Utils::inkey();
@@ -255,6 +279,16 @@ void update(uint32_t tick_ms) {
 void draw() {
     uint8_t nx;
     switch(game.state) {
+        case ANIMATE_LOGO:
+            Gfx::animate_logo(logo_y);
+            play(blip, 80, 30, 100);
+            break;
+        case ANIMATE_CREDIT:
+            Gfx::animate_credit(logo_y);
+            play(blip, 300 - logo_y, 30, 100);
+            break;
+        case LOGO_PAUSE:
+            break;
         case OFFER_HELP:
             Help::show_offer();
             break;

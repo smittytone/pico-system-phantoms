@@ -61,12 +61,16 @@ extern "C" {
 #define ZAP_PHANTOM                                     8
 #define OFFER_HELP                                      9
 #define SHOW_HELP                                       10
+#define ANIMATE_LOGO                                    11
+#define ANIMATE_CREDIT                                  12
+#define LOGO_PAUSE                                      13
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
 #define LASER_RECHARGE_US                               2000000
 #define MAP_POST_KILL_SHOW_MS                           3000
 #define LASER_FIRE_US                                   200000
+#define LOGO_ANIMATION_US                               40000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
@@ -158,6 +162,7 @@ void        set_teleport_square();
 void        death();
 void        phantom_killed();
 void        show_scores();
+
 uint8_t     fix_num_width(uint8_t value, uint8_t current);
 
 void        beep();

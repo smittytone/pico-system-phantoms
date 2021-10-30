@@ -44,6 +44,9 @@ namespace Gfx {
     void        draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double);
     void        draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double = false);
 
+    void        animate_credit(int16_t y);
+    void        animate_logo(int16_t y);
+
     void        show_debug_info();
 }
 
@@ -56,7 +59,8 @@ extern const uint16_t   zapped_sprites[];
 extern const uint8_t    phantom_sizes[];
 extern const uint8_t    word_sizes[];
 extern const uint16_t   word_sprites[];
-extern const uint8_t    CHARSET[128][6];
+extern const uint16_t   logo_sprite[];
+extern const uint16_t   credit_sprite[];
 
 
 #endif  // _GFX_UTILS_HEADER_

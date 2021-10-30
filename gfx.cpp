@@ -30,6 +30,9 @@ const uint8_t           radii[5] = {20, 16, 12, 8, 4};
 buffer_t*               word_buffer = buffer(82, 70, (void *)word_sprites);
 buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprites);
 buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites);
+buffer_t*               logo_buffer = buffer(212, 20, (void *)logo_sprite);
+buffer_t*               credit_buffer = buffer(104, 34, (void *)credit_sprite);
+
 
 namespace Gfx {
 
@@ -467,6 +470,41 @@ void show_debug_info() {
     draw_number(game.level, 80, 12);
     draw_number(game.kills, 80, 24);
 }
+
+
+void animate_logo(int16_t y) {
+    if (y < -19) return;
+
+    uint8_t height = 21 + y;
+    if (height > 22) height = 22;
+    uint8_t top = 0;
+    if (y > 0) top = y - 1;
+    frect(14, top, 212, height);
+
+    uint8_t delta = 20 + y;
+    if (delta > 20) delta = 20;
+    if (y < 0) y = 0;
+    blit(logo_buffer, 0, 20 - delta, 212, delta, 14, y);
+
+
+}
+
+
+/*
+    Roll up the credit from the bottom.
+ */
+void animate_credit(int16_t y) {
+    if (y > 239) return;
+
+    uint8_t height = 241 - y;
+    if (height > 36) height = 36;
+    frect(68, y - 1, 104, height);
+
+    height = y - 240;
+    if (height > 34) height = 34;
+    blit(credit_buffer, 0, 0, 104, height, 68, y);
+}
+
 
 
 }   // namespace Gfx
