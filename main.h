@@ -59,7 +59,8 @@ extern "C" {
 #define DO_TELEPORT_TWO                                 6
 #define SHOW_TEMP_MAP                                   7
 #define ZAP_PHANTOM                                     8
-#define SHOW_HELP                                       9
+#define OFFER_HELP                                      9
+#define SHOW_HELP                                       10
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
@@ -98,6 +99,7 @@ typedef struct {
     std::vector<Phantom>    phantoms;
     uint32_t                phantom_speed;
     uint32_t                last_phantom_move;
+    int8_t                  crosshair_delta;
 
     Player                  player;
 
@@ -151,6 +153,7 @@ void        check_senses();
 void        fire_laser();
 void        do_teleport();
 void        reset_laser();
+void        set_teleport_square();
 
 void        death();
 void        phantom_killed();

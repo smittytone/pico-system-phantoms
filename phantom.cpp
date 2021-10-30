@@ -40,13 +40,16 @@ Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
 
 /*
     Move the Phantom.
-    
+
     - Returns: `true` if the player was caught,
                otherwise `false`.
  */
 bool Phantom::move() {
     // Only move phantoms that are in the maze
     if (x != ERROR_CONDITION) {
+        // Has the Phantom been zapped? Don't move it
+        if (hp == 0) return false;
+
         uint8_t new_x = x;
         uint8_t new_y = y;
         uint8_t new_direction = direction;

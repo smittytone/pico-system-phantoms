@@ -15,17 +15,17 @@
 /*
  *      CONSTANTS
  */
-#define MAX_HELP_PAGES          6
+#define MAX_HELP_PAGES          5
 
 
 /*
  *      PROTOTYPES
  */
 namespace Help {
+    void        init();
     void        show_page(uint16_t page_number);
+    void        show_offer();
 }
-
-
 
 
 #endif  // _HELP_PAGES_HEADER_

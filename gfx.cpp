@@ -297,13 +297,26 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
 
-    if (game.state == DO_TELEPORT_ONE) {
-        pen(15, 15, 15);
+    if (frame_index == 5) {
+        uint8_t ryd = r.y + r.height;
+        uint8_t rxd = r.x + r.width;
+        fpoly({r.x,     r.y + 39,
+               r.x + 4, r.y + 42,
+               r.x + 4, ryd + 37,
+               r.x,     ryd + 39});
+        fpoly({rxd,     r.y + 39,
+               rxd,     ryd + 39,
+               rxd - 4, ryd + 37,
+               rxd - 4, r.y + 42});
     } else {
-        pen(0, 0, 15);
-    }
+        if (game.state == DO_TELEPORT_ONE) {
+            pen(15, 15, 15);
+        } else {
+            pen(0, 0, 15);
+        }
 
-    frect(r.x, r.y + 40, r.width, r.height);
+        frect(r.x, r.y + 40, r.width, r.height);
+    }
 }
 
 
@@ -312,8 +325,8 @@ void draw_far_wall(uint8_t frame_index) {
  */
 void draw_reticule() {
     pen(15, 10, 0);
-    rect(100, 119, 40, 2);
-    rect(119, 100, 2, 40);
+    rect(100 + game.crosshair_delta, 119, 40, 2);
+    rect(119 + game.crosshair_delta, 100, 2, 40);
 }
 
 
@@ -351,12 +364,21 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
     uint8_t c = *count;
     uint8_t number_phantoms = (c >> 4);
     uint8_t current = c & 0x0F;
+    game.crosshair_delta = 0;
 
     // Space the phantoms sideways ccording to
     // the number of them on screen
     if (number_phantoms > 1) {
-        if (current == 2) dx = 120 - r.spot;
-        if (current == 1) dx = 120 + r.spot;
+        if (current == 2) {
+            dx = 120 - r.spot;
+            game.crosshair_delta = 0 - r.spot;
+        }
+
+        if (current == 1) {
+            dx = 120 + r.spot;
+            game.crosshair_delta = r.spot;
+        }
+
         *count = c - 1;
     }
 

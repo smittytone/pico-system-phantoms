@@ -55,8 +55,13 @@ void init() {
     // Display the intro animation
     // play_intro();
 
+    //  Show help
+    pen(0, 15, 0);
+    clear();
+    game.state = OFFER_HELP;
+
     // Start a new game -- the first
-    start_new_game();
+    // start_new_game();
 
     #ifdef DEBUG
     printf("INIT() DONE\n");
@@ -66,14 +71,26 @@ void init() {
 
 void update(uint32_t tick_ms) {
     uint32_t now = time_us_32();
+    uint8_t key = 0;
     switch (game.state) {
         case PLAY_INTRO:
+            break;
+        case OFFER_HELP:
+            key = Utils::inkey();
+            if (key == 0x01) {
+                Help::init();
+                Help::show_page(0);
+                help_page_count = 0;
+                game.state = SHOW_HELP;
+            } else if (key != 0) {
+                start_new_game();
+            }
             break;
         case SHOW_HELP:
             // Run through the help pages with
             // eack key press
             if (Utils::inkey() > 0) help_page_count++;
-            if (help_page_count > MAX_HELP_PAGES) start_new_game();
+            if (help_page_count == MAX_HELP_PAGES) start_new_game();
             break;
         case START_COUNT:
             // Count down five seconds before
@@ -138,7 +155,7 @@ void update(uint32_t tick_ms) {
             // NOTE Return as quickly as possible
 
             // Was a key tapped?
-            uint8_t key = Utils::inkey();
+            key = Utils::inkey();
 
             if ((key > 0x0F) && !game.show_reticule) {
                 // A move key has been pressed
@@ -202,6 +219,7 @@ void update(uint32_t tick_ms) {
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
+                beep();
             }
 
             // Check for firing
@@ -237,6 +255,9 @@ void update(uint32_t tick_ms) {
 void draw() {
     uint8_t nx;
     switch(game.state) {
+        case OFFER_HELP:
+            Help::show_offer();
+            break;
         case SHOW_HELP:
             // Display a help page
             Help::show_page(help_page_count);
@@ -248,12 +269,12 @@ void draw() {
             //      itself
             // Clear the number
             pen(0, 0, 15);
-            frect(221, 40, 14, 21);
+            frect(112, 210, 16, 20);
 
             // Show the new number
             pen(15, 15, 0);
-            nx = (count_down == 1 ? 225 : 221);
-            Gfx::draw_number(count_down, nx, 40, true);
+            nx = (count_down == 1 ? 118 : 114);
+            Gfx::draw_number(count_down, nx, 210, true);
             break;
         case SHOW_TEMP_MAP:
             // We've already drawn the post kill map, so just exit
@@ -346,14 +367,13 @@ void start_new_game() {
     clear();
     Map::draw(0, false);
 
-    Gfx::draw_word(WORD_NEW, 0, 10, true);
-    Gfx::draw_word(WORD_GAME, 70, 10 , true);
+    //Gfx::draw_word(WORD_NEW, 0, 10, true);
+    //Gfx::draw_word(WORD_GAME, 70, 10 , true);
 
-    uint8_t cx = fix_num_width(game.level, 230);
-    Gfx::draw_number(game.level, cx, 10, true);
-    Gfx::draw_word(WORD_LEVEL, cx - 80, 10, true);
+    Gfx::draw_number(game.level, 156, 10, true);
+    Gfx::draw_word(WORD_LEVEL, 72, 10, true);
 
-    Gfx::draw_number(5, 114, 210, true);
+    //Gfx::draw_number(5, 114, 210, true);
 
     // Set the loop mode
     game.state = START_COUNT;
@@ -401,6 +421,8 @@ void init_game() {
     game.zap_fire_time = 0;
     game.zap_frame = 0;
 
+    game.crosshair_delta = 0;
+
     #ifdef DEBUG
     printf("DONE INIT_GAME\n");
     #endif
@@ -432,17 +454,7 @@ void create_world() {
     game.map = Map::init(game.map);
 
     // Set the teleport
-    while (true) {
-        // Pick a random co-ordinate
-        uint8_t x = Utils::irandom(0, 20);
-        uint8_t y = Utils::irandom(0, 20);
-
-        if (Map::get_square_contents(x, y) == MAP_TILE_CLEAR) {
-            game.tele_x = x;
-            game.tele_y = y;
-            break;
-        }
-    }
+    set_teleport_square();
 
     // Place the player near the centre
     uint8_t x = 9;
@@ -723,6 +735,9 @@ void do_teleport() {
 
     // Reset the laser if firing
     reset_laser();
+
+    // Re-locate the teleport square
+    set_teleport_square();
 }
 
 
@@ -769,11 +784,32 @@ void fire_laser() {
 }
 
 
+/**
+    Reset the laser.
+ */
 void reset_laser() {
     game.is_firing = false;
     game.can_fire = false;
     game.zap_charge_time = time_us_32();
     game.zap_frame = 0;
+}
+
+
+/**
+    Randomly roll a teleport square.
+ */
+void set_teleport_square() {
+    while (true) {
+        // Pick a random co-ordinate
+        uint8_t x = Utils::irandom(0, 20);
+        uint8_t y = Utils::irandom(0, 20);
+
+        if (Map::get_square_contents(x, y) == MAP_TILE_CLEAR) {
+            game.tele_x = x;
+            game.tele_y = y;
+            break;
+        }
+    }
 }
 
 
@@ -852,7 +888,7 @@ void death() {
     show_scores();
 
     pen(0, 0, 15);
-    frect(36, 108, 168, 24);
+    frect(36, 106, 168, 28);
     Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
 
 }
