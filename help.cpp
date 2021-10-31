@@ -19,13 +19,13 @@ using namespace picosystem;
  *      HELP PAGE STRINGS
  */
 string help_page_0 =
-"Phantom Slayer is a chase game played in a\n"
+"PHANTOM SLAYER is a chase game played in a\n"
 "three-dimensional maze. Each maze is haunted\n"
 "by evil Phantoms which can destroy you with a\n"
 "single touch.\n\n"
-"Your mission - destroy them before they\n"
+"YOUR MISSION Destroy them before they\n"
 "destroy you!\n\n"
-"The graphics in Phantom Slayer are a\n"
+"The graphics in PHANTOM SLAYER are a\n"
 "three-dimensional representation.\n\n"
 "You are occasionally given the opportunity\n"
 "to view the maze from above, but usually you\n"
@@ -70,12 +70,12 @@ string help_page_2 =
 "automatically centered on the target.\n"
 "Once your pistol is armed, you cannot move or\n"
 "turn until it is fired.\n\n"
-"Important: it takes 2 seconds to recharge\n"
+"IMPORTANT It takes 2 seconds to recharge\n"
 "your pistol after it has been fired.\n"
 "The Phantom detector is an audio tone\n"
 "triggered by nearby Phantoms. You select\n"
 "the triggering distance by pressing the\n"
-"'X' and 'Y' keys.\n\n"
+"'X' (up) and 'Y' (down) keys.\n\n"
 "It is initially set at 4. The Phantom detector\n"
 "is triggered by Phantoms at the distance you\n"
 "set, regardless of intervening walls.\n\n"
@@ -100,7 +100,7 @@ string help_page_3 =
 "displayed.";
 
 string help_page_4 =
-"STRATEGY since it may take more than one hit\n"
+"STRATEGY Since it may take more than one hit\n"
 "to kill a Phantom, and your pistol takes time\n"
 "to recharge, you must learn to fire, turn and\n"
 "run from Phantoms.\n\n"

@@ -20,6 +20,8 @@ SHA-256 TO ADD
     1. Click **No active kit** to select your compiler, `GCC 10.3.1 arm-none-eabi`:<br />![Select a kit in VSCode](images/kits.png)
     1. Click **Build**:<br />![The VSCode Toolbar](images/vscode.png)
 * From the command line:
+    1. Install the Pico SDK.
+    1. Install the Picosystem SDK.
     1. `cd <YOUR_GIT_DIRECTORY>/pico-system-phantoms`
     1. `cmake -S . -B build/`
     1. `cmake --build build --clean-first`
