@@ -21,22 +21,20 @@ uint8_t     help_page_count = 0;
 
 int16_t     logo_y = -21;
 
-bool        chase_mode = false;
-bool        map_mode = false;
-bool        tele_state = false;
-
 uint32_t    tele_flash_time = 0;
 uint32_t    tick_count = 0;
 
 tinymt32_t  tinymt_store;
+
+bool        chase_mode = false;
+bool        map_mode = false;
+bool        tele_state = false;
 
 Rect        rects[7];
 
 Game        game;
 
 voice_t blip = voice(10, 10, 10, 10);
-
-
 
 
 /*
@@ -52,17 +50,10 @@ void init() {
     stdio_init_all();
     #endif
 
-    // Set up the game
-    setup();
-
-    // Start the game loop at the intro animation
-    pen(0, 15, 0);
-    clear();
-    game.state = ANIMATE_LOGO; //OFFER_HELP;
-    tele_flash_time = 0;
-
-    // Start a new game -- the first
-    // start_new_game();
+    // Set up game device
+    // NOTE This is all the stuff that is per session,
+    //      not per game, or per level
+    setup_device();
 
     #ifdef DEBUG
     printf("INIT() DONE\n");
@@ -169,10 +160,12 @@ void update(uint32_t tick_ms) {
                 phantom_killed();
 
                 // Take the dead phantom off the board
-                // (so it gets re-rolled in 'manage_phantoms()')
+                // (so it gets re-rolled in `manage_phantoms()`)
+                // NOTE `manage_phantoms()` calls `start_new_level()`
+                //      if necessary
                 game.phantoms.erase(game.phantoms.begin() + dead_phantom);
-                manage_phantoms();
                 dead_phantom = ERROR_CONDITION;
+                manage_phantoms();
             }
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -281,11 +274,11 @@ void draw() {
     switch(game.state) {
         case ANIMATE_LOGO:
             Gfx::animate_logo(logo_y);
-            play(blip, 80, 30, 100);
+            //play(blip, 80, 30, 100);
             break;
         case ANIMATE_CREDIT:
             Gfx::animate_credit(logo_y);
-            play(blip, 300 - logo_y, 30, 100);
+            //play(blip, 300 - logo_y, 30, 100);
             break;
         case LOGO_PAUSE:
             break;
@@ -307,8 +300,7 @@ void draw() {
 
             // Show the new number
             pen(15, 15, 0);
-            nx = (count_down == 1 ? 118 : 114);
-            Gfx::draw_number(count_down, nx, 210, true);
+            Gfx::draw_number(count_down, (count_down == 1 ? 118 : 114), 210, true);
             break;
         case SHOW_TEMP_MAP:
             // We've already drawn the post kill map, so just exit
@@ -316,7 +308,6 @@ void draw() {
             // We've already drawn the end-of-game map, so just exit
             break;
         default:
-            // game.state == IN_PLAY
             // Render the screen
             if (chase_mode) {
                 // Show the first Phantom's view
@@ -345,13 +336,21 @@ void draw() {
 /*
  *      INITIALISATION FUNCTIONS
  */
-void setup() {
+void setup_device() {
+    // Set the LCD backlight
+    // TODO Make this controllable during the game
+    backlight(100);
+
+    // Clear the screen (green)
+    pen(0, 15, 0);
+    clear();
+
     // Use one of the Pico's other analog inputs
     // to seed the random number generator
     adc_init();
     adc_gpio_init(28);
     adc_select_input(2);
-    srand(picosystem::battery() * 100);
+    std::srand(picosystem::battery() * 100);
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
@@ -380,36 +379,35 @@ void setup() {
         rects[c++] = a_rect;
     }
 
-    // Set the LCD backlight
-    backlight(90);
+    // Start the game loop at the intro animation
+    game.state = ANIMATE_LOGO;
+    game.high_score = 0;
+    tele_flash_time = 0;
 }
 
 
 /*
     Start a new game by re-initialising the game state,
-    and setting up a new maze.
+    and setting up a new maze. Called at the start of the
+    first game and subsequently when the player dies.
  */
 void start_new_game() {
-    // Reset the settings and roll the world
+    // Reset the settings
     init_game();
     init_phantoms();
-    create_world();
+    start_new_level(true);
 
-    // Clear the screen, present the current map and
-    // give the player a five-second countdown
+    // Clear the screen (blue), present the current map
+    // and give the player a five-second countdown before
+    // entering the maze
     pen(0, 0, 15);
     clear();
     Map::draw(0, false);
 
-    //Gfx::draw_word(WORD_NEW, 0, 10, true);
-    //Gfx::draw_word(WORD_GAME, 70, 10 , true);
-
     Gfx::draw_number(game.level, 156, 10, true);
     Gfx::draw_word(WORD_LEVEL, 72, 10, true);
 
-    //Gfx::draw_number(5, 114, 210, true);
-
-    // Set the loop mode
+    // Set the game mode
     game.state = START_COUNT;
 }
 
@@ -421,7 +419,7 @@ void start_new_game() {
     NOTE Phantom data is separated out into `init_phantoms()`.
  */
 void init_game() {
-    // If these demo/test modes are both set,
+    // If either of these demo/test modes are both set,
     // chase mode takes priority
     chase_mode = false;
     map_mode = false;
@@ -439,13 +437,12 @@ void init_game() {
     game.can_fire = true;
     game.is_firing = false;
 
-    game.state = PLAY_INTRO;
     game.tele_x = 0;
     game.tele_y = 0;
     game.start_x = 0;
     game.start_y = 0;
 
-    game.level = 0;
+    game.level = 1;
     game.score = 0;
     game.kills = 0;
     game.level_kills = 0;
@@ -480,15 +477,9 @@ void init_phantoms() {
     each level. A level jump is triggered when all the
     current phantoms have been dispatched.
  */
-void create_world() {
-    // Reset the game
-    game.level++;
-
+void start_new_level(bool is_first) {
     // Initialise the current map
     game.map = Map::init(game.map);
-
-    // Set the teleport
-    set_teleport_square();
 
     // Place the player near the centre
     uint8_t x = 9;
@@ -506,11 +497,49 @@ void create_world() {
     game.start_x = x;
     game.start_y = y;
 
-    // Reset the the phantoms data
-    init_phantoms();
+    // Set the teleport
+    set_teleport_square();
 
-    // Add the first phantom to the map, everywhere but empty
-    // or where the player
+    if (is_first) {
+        // Add the first phantom to the map, everywhere but empty
+        // or where the player
+        roll_first_phantom();
+    }
+
+    /* TEST DATA
+    game.player.x = 0;
+    game.player.y = 0;
+    game.player.direction = DIRECTION_EAST;
+     */
+
+    #ifdef DEBUG
+    printf("DONE CREATE_WORLD\n");
+    #endif
+}
+
+
+/**
+    Randomly roll a teleport square.
+ */
+void set_teleport_square() {
+    while (true) {
+        // Pick a random co-ordinate
+        uint8_t x = Utils::irandom(0, 20);
+        uint8_t y = Utils::irandom(0, 20);
+
+        if (Map::get_square_contents(x, y) == MAP_TILE_CLEAR && x != game.player.x && y != game.player.y) {
+            game.tele_x = x;
+            game.tele_y = y;
+            break;
+        }
+    }
+}
+
+
+/**
+    Randomly roll a level's first Phantom
+ */
+void roll_first_phantom() {
     Phantom p = Phantom(0,0);
     while (true) {
         // Pick a random co-ordinate
@@ -528,26 +557,15 @@ void create_world() {
     }
 
     game.phantoms.push_back(p);
-
-    /* TEST DATA
-    game.player.x = 0;
-    game.player.y = 0;
-    game.player.direction = DIRECTION_EAST;
-     */
-
-    #ifdef DEBUG
-    printf("DONE CREATE_WORLD\n");
-    #endif
 }
 
 
 /**
     Update the world at the end of the move cycle.
-
     Called from the main `update()` callback.
  */
 void update_world() {
-    // Move the Phantoms periodically -- this is how
+    // Move the Phantom(s) periodically -- this is how
     // we increase their speed as the game progresses
     uint32_t now = time_us_32();
     if (now - game.last_phantom_move > game.phantom_speed) {
@@ -581,6 +599,57 @@ void update_world() {
             game.zap_frame++;
             game.zap_fire_time = now;
         }
+    }
+}
+
+
+/**
+    Check whether we need to increase the number of phantoms
+    on the board or increase their speed -- all caused by a
+    level-up. We up the level if all the level's phantoms have
+    been zapped.
+ */
+void manage_phantoms() {
+    bool level_up = false;
+    size_t phantom_count = 0;
+
+    // If we're on levels 1 and 2, we only have that number of
+    // Phantoms. From 3 and up, there are aways three in the maze
+    if (game.level < MAX_PHANTOMS) {
+        if (game.level_kills == game.level) {
+            game.level_kills = 0;
+            game.level_hits = 0;
+            game.level++;
+            level_up = true;
+            phantom_count = game.level;
+        }
+    } else {
+        if (game.level_kills == MAX_PHANTOMS) {
+            game.level_kills = 0;
+            game.level_hits = 0;
+            game.level++;
+            level_up = true;
+            phantom_count = MAX_PHANTOMS;
+        }
+    }
+
+    // Did we level-up? Is so, update the phantom movement speed
+    if (level_up) {
+        uint8_t index = (game.level - 1) * 4;
+        game.phantom_speed = ((PHANTOM_MOVE_TIME_US << level_data[index + 2]) >> level_data[index + 3]);
+
+        // Just in case...
+        if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
+
+        // Do we need to add any new phantoms to the board?
+        while (game.phantoms.size() < phantom_count) {
+            Phantom p = Phantom();
+            p.roll_location();
+            game.phantoms.push_back(p);
+        }
+
+        // Create a new level
+        start_new_level(false);
     }
 }
 
@@ -706,32 +775,26 @@ uint8_t count_facing_phantoms(uint8_t range) {
 
 /**
     Tell all of the current Phantoms to move.
+
+    - Returns: `true` if a Phantom caught the Player,
+               otherwise `false`.
 */
 bool move_phantoms() {
     size_t number = game.phantoms.size();
     if (number > 0) {
         for (size_t i = 0 ; i < number ; ++i) {
-            Phantom &p = game.phantoms.at(i);
-            if (p.move() == true) return true;
-
             #ifdef DEBUG
             printf("Moving Phantom %i of %i\n", i, number);
             #endif
+
+            Phantom &p = game.phantoms.at(i);
+            if (p.move() == true) return true;
         }
     }
 
     return false;
 }
 
-
-void beep() {
-    play(blip, 1800, 30, 100);
-}
-
-
-/*
- *      ACTIONS
- */
 
 /**
     Scan around the player for nearby Phantoms.
@@ -759,6 +822,15 @@ void check_senses() {
 }
 
 
+void beep() {
+    play(blip, 4000, 50, 100);
+}
+
+
+/*
+ *      ACTIONS
+ */
+
 /**
     Jump back to the teleport square if the player has walked over it.
  */
@@ -767,7 +839,7 @@ void do_teleport() {
     game.state = DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
 
-    // Reset the laser if firing
+    // Reset the laser if it's firing
     reset_laser();
 
     // Re-locate the teleport square
@@ -796,7 +868,7 @@ void fire_laser() {
         // Did that kill it?
         if (p.hp == 0) {
             // Yes! One dead Phantom...
-            game.score += 8;
+            game.score += 10;
             game.level_kills++;
             game.kills++;
 
@@ -811,91 +883,18 @@ void fire_laser() {
             // Reset the laser
             reset_laser();
         }
-
-        // Update phantoms list
-        //manage_phantoms();
     }
 }
 
 
 /**
-    Reset the laser.
+    Reset the laser after firing.
  */
 void reset_laser() {
     game.is_firing = false;
     game.can_fire = false;
     game.zap_charge_time = time_us_32();
     game.zap_frame = 0;
-}
-
-
-/**
-    Randomly roll a teleport square.
- */
-void set_teleport_square() {
-    while (true) {
-        // Pick a random co-ordinate
-        uint8_t x = Utils::irandom(0, 20);
-        uint8_t y = Utils::irandom(0, 20);
-
-        if (Map::get_square_contents(x, y) == MAP_TILE_CLEAR) {
-            game.tele_x = x;
-            game.tele_y = y;
-            break;
-        }
-    }
-}
-
-
-/**
-    Check whether we need to increase the number of phantoms
-    on the board or increase their speed -- all caused by a
-    level-up. We up the level if all the level's phantoms have
-    been zapped.
- */
-void manage_phantoms() {
-    bool level_up = false;
-    size_t phantom_count = 0;
-
-    // If we're on levels 1 and 2, we only have that number of
-    // Phantoms. From 3 and up, there are aways three in the maze
-    if (game.level < MAX_PHANTOMS) {
-        if (game.level_kills == game.level) {
-            game.level_kills = 0;
-            game.level_hits = 0;
-            game.level++;
-            level_up = true;
-            phantom_count = game.level;
-        }
-    } else {
-        if (game.level_kills == MAX_PHANTOMS) {
-            game.level_kills = 0;
-            game.level_hits = 0;
-            level_up = true;
-            game.level++;
-            phantom_count = MAX_PHANTOMS;
-        }
-    }
-
-    // Did we level-up? Is so, update the phantom movement speed
-    if (level_up) {
-        uint8_t index = (game.level - 1) * 4;
-        game.phantom_speed = ((PHANTOM_MOVE_TIME_US << level_data[index + 2]) >> level_data[index + 3]);
-
-        // Just in case...
-        if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
-
-        // Do we need to add any new phantoms to the board?
-        while (game.phantoms.size() < phantom_count) {
-            Phantom p = Phantom();
-            p.roll_location();
-            game.phantoms.push_back(p);
-        }
-    }
-
-    #ifdef DEBUG
-    printf("Phantoms: %i\n", game.phantoms.size());
-    #endif
 }
 
 
@@ -911,7 +910,7 @@ void death() {
     //sleep_ms(50);
     //tone(2200, 500, 600);
 
-    // Clear the display
+    // Clear the display (blue)
     pen(0, 0, 15);
     clear();
 
@@ -989,6 +988,10 @@ void show_scores() {
 }
 
 
+/*
+    Return the delta when presenting a number.
+    Lower for 1, bigger for 0, 2-9
+ */
 uint8_t fix_num_width(uint8_t value, uint8_t current) {
     return (current - (value == 1 ? 6 : 14));
 }

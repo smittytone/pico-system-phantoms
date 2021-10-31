@@ -50,20 +50,22 @@ extern "C" {
 #define TURN_LEFT                                       3
 
 // Game states
-#define NOT_IN_PLAY                                     0
-#define IN_PLAY                                         1
-#define PLAYER_IS_DEAD                                  2
-#define START_COUNT                                     3
-#define PLAY_INTRO                                      4
-#define DO_TELEPORT_ONE                                 5
-#define DO_TELEPORT_TWO                                 6
-#define SHOW_TEMP_MAP                                   7
-#define ZAP_PHANTOM                                     8
-#define OFFER_HELP                                      9
-#define SHOW_HELP                                       10
-#define ANIMATE_LOGO                                    11
-#define ANIMATE_CREDIT                                  12
-#define LOGO_PAUSE                                      13
+enum {
+    NOT_IN_PLAY,
+    ANIMATE_LOGO,
+    ANIMATE_CREDIT,
+    LOGO_PAUSE,
+    OFFER_HELP,
+    SHOW_HELP,
+    START_COUNT,
+    IN_PLAY,
+    DO_TELEPORT_ONE,
+    DO_TELEPORT_TWO,
+    ZAP_PHANTOM,
+    SHOW_TEMP_MAP,
+    PLAYER_IS_DEAD
+};
+
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
@@ -139,13 +141,16 @@ typedef struct {
 /*
  *      PROTOTYPES
  */
-void        setup();
+void        setup_device();
 void        start_new_game();
 void        init_game();
 void        init_phantoms();
-void        create_world();
+void        start_new_level(bool is_first);
+void        set_teleport_square();
+void        roll_first_phantom();
 
 void        update_world();
+void        check_senses();
 bool        move_phantoms();
 void        manage_phantoms();
 
@@ -153,16 +158,13 @@ uint8_t     get_direction(uint8_t key_pressed);
 uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
 
-void        check_senses();
 void        fire_laser();
-void        do_teleport();
 void        reset_laser();
-void        set_teleport_square();
+void        do_teleport();
 
 void        death();
 void        phantom_killed();
 void        show_scores();
-
 uint8_t     fix_num_width(uint8_t value, uint8_t current);
 
 void        beep();

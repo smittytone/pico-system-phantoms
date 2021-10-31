@@ -164,7 +164,6 @@ uint8_t init(uint8_t last_map) {
     /* TEST VALUE
     map = 1;
     */
-    map = 1;
 
     switch(map) {
         case 0:
