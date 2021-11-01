@@ -804,13 +804,13 @@ void check_senses() {
     int8_t dx = game.player.x - game.audio_range;
     int8_t dy = game.player.y - game.audio_range;
 
-    for (int8_t i = dx ; i < dx + (game.audio_range << 1) ; ++i) {
-        if (i < 0) continue;
-        if (i > MAP_MAX) break;
-        for (int8_t j = dy ; j < dy + (game.audio_range << 1) ; ++j) {
-            if (j < 0) continue;
-            if (j > MAP_MAX) break;
-            if (Map::phantom_on_square(i, j) != ERROR_CONDITION) {
+    for (int8_t x = dx ; x < dx + (game.audio_range << 1) ; ++x) {
+        if (x < 0) continue;
+        if (x > MAP_MAX) break;
+        for (int8_t y = dy ; y < dy + (game.audio_range << 1) ; ++y) {
+            if (y < 0) continue;
+            if (y > MAP_MAX) break;
+            if (Map::phantom_on_square((uint8_t)x, (uint8_t)y) != ERROR_CONDITION) {
                 // There's a Phantom in range, so sound a tone
                 beep();
 

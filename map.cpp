@@ -492,7 +492,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
     for (size_t i = 0 ; i < game.phantoms.size() ; i++) {
         Phantom &p = game.phantoms.at(i);
-        if (x == p.x && y == p.y) return (uint8_t)i;
+        if (x == p.x && y == p.y) return (uint8_t)(i & 0x0F);
     }
 
     return ERROR_CONDITION;
