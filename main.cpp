@@ -34,7 +34,8 @@ Rect        rects[7];
 
 Game        game;
 
-voice_t blip = voice(10, 10, 10, 10);
+voice_t blip = voice(10, 0, 40, 40);
+voice_t piano = voice(0, 0, 50, 0);
 
 
 /*
@@ -189,10 +190,6 @@ void update(uint32_t tick_ms) {
                     if (game.player.direction == DIRECTION_WEST) nx += (dir == MOVE_FORWARD ? -1 : 1);
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
-                        #ifdef DEBUG
-                        printf("%i,%i\n", nx, ny);
-                        #endif
-
                         // Has the player walked up to a Phantom?
                         if (Map::phantom_on_square(nx, ny) != ERROR_CONDITION) {
                             // Yes -- so the player is dead!
@@ -275,11 +272,11 @@ void draw() {
     switch(game.state) {
         case ANIMATE_LOGO:
             Gfx::animate_logo(logo_y);
-            //play(blip, 80, 30, 100);
+            play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
             break;
         case ANIMATE_CREDIT:
             Gfx::animate_credit(logo_y);
-            //play(blip, 300 - logo_y, 30, 100);
+            play(piano, 2000 + (300 - logo_y) * 100, 30);
             break;
         case LOGO_PAUSE:
             break;
@@ -454,6 +451,7 @@ void init_game() {
     game.zap_frame = 0;
 
     game.crosshair_delta = 0;
+    game.audio_range = 4;
 
     #ifdef DEBUG
     printf("DONE INIT_GAME\n");
@@ -784,10 +782,6 @@ bool move_phantoms() {
     size_t number = game.phantoms.size();
     if (number > 0) {
         for (size_t i = 0 ; i < number ; ++i) {
-            #ifdef DEBUG
-            printf("Moving Phantom %i of %i\n", i, number);
-            #endif
-
             Phantom &p = game.phantoms.at(i);
             if (p.move() == true) return true;
         }
@@ -801,18 +795,22 @@ bool move_phantoms() {
     Scan around the player for nearby Phantoms.
  */
 void check_senses() {
-    int8_t dx = game.player.x - game.audio_range;
-    int8_t dy = game.player.y - game.audio_range;
 
-    for (int8_t x = dx ; x < dx + (game.audio_range << 1) ; ++x) {
+    int dx = game.player.x - game.audio_range;
+    int dy = game.player.y - game.audio_range;
+
+    for (int x = dx ; x < (dx + (game.audio_range << 1)) ; x++) {
         if (x < 0) continue;
         if (x > MAP_MAX) break;
-        for (int8_t y = dy ; y < dy + (game.audio_range << 1) ; ++y) {
+        for (int y = dy ; y < (dy + (game.audio_range << 1)) ; y++) {
             if (y < 0) continue;
             if (y > MAP_MAX) break;
-            if (Map::phantom_on_square((uint8_t)x, (uint8_t)y) != ERROR_CONDITION) {
+            uint8_t nabbed = Map::phantom_on_square(x, y);
+            if (nabbed != ERROR_CONDITION) {
                 // There's a Phantom in range, so sound a tone
+                led(100, 100, 0);
                 beep();
+                led(0, 0, 0);
 
                 // Only play one beep, no matter
                 // how many nearby phantoms there are
@@ -824,7 +822,8 @@ void check_senses() {
 
 
 void beep() {
-    play(blip, 4000, 50, 100);
+
+    play(blip, 200, 50);
 }
 
 

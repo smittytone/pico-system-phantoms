@@ -60,10 +60,6 @@ bool Phantom::move() {
         uint8_t *p_x = &new_x;
         uint8_t *p_y = &new_y;
 
-        #ifdef DEBUG
-        printf("Phantom (%i) @ %i,%i ", hp, x, y);
-        #endif
-
         // Get distance to player
         int8_t dx = x - game.player.x;
         int8_t dy = y - game.player.y;
@@ -220,10 +216,6 @@ bool Phantom::move() {
         x = new_x;
         y = new_y;
         direction = new_direction;
-
-        #ifdef DEBUG
-        printf("moved to %i,%i (%i,%i)\n", x, y, new_x, new_y);
-        #endif
     }
 
     return false;
