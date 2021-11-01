@@ -21,7 +21,11 @@ extern tinymt32_t   tinymt_store;
 
 
 /*
- *      CLASS
+    Constructor.
+
+    - Parameters:
+        - start_x: Inital X co-ordinate. Default: off the board.
+        - start_y: Inital Y co-ordinate. Default: off the board.
  */
 Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
     uint8_t level_index = (game.level - 1) * 4;

@@ -11,6 +11,9 @@
 #define _GFX_UTILS_HEADER_
 
 
+/*
+ *      CONSTANTS
+ */
 #define WORD_SCORE              0
 #define WORD_OVER               1
 #define WORD_KILLS              2

@@ -1,7 +1,7 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.0.0
+ * @version     1.1.0
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -9,6 +9,7 @@
  */
 #ifndef _PHANTOM_SLAYER_MAIN_HEADER_
 #define _PHANTOM_SLAYER_MAIN_HEADER_
+
 
 /*
  * C++ HEADERS
@@ -65,7 +66,6 @@ enum {
     SHOW_TEMP_MAP,
     PLAYER_IS_DEAD
 };
-
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
@@ -168,12 +168,6 @@ void        show_scores(bool show_tele = false);
 uint8_t     fix_num_width(uint8_t value, uint8_t current);
 
 void        beep();
-
-
-/*
- *      GLOBALS
- */
-
 
 
 #ifdef __cplusplus

@@ -506,5 +506,4 @@ void animate_credit(int16_t y) {
 }
 
 
-
 }   // namespace Gfx

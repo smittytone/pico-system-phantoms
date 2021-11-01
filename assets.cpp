@@ -21,6 +21,7 @@ const uint8_t phantom_sizes[] = {
     64, 18          // Frame 5
 };
 
+
 // Values: x, y, width
 const uint8_t word_sizes[] = {
     00, 20, 38,     // SCORE
