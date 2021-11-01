@@ -32,7 +32,7 @@ string help_page_0 =
 "must operate from inside it. Look into your\n"
 "monitor as though you were looking down a\n"
 "hallway. To move forward one step, press the\n"
-"up arrow. Rhe right and left arrows turn you\n"
+"up arrow. The right and left arrows turn you\n"
 "to the right and left. The down arrow moves\n"
 "you one step backwards.\n\n"
 "Moving and turning produce smoothly moving\n"
@@ -93,7 +93,7 @@ string help_page_3 =
 "it disappears and a new one is generated\n"
 "somewhere else in the maze. The green square\n"
 "is not shown in the maze map, except at the\n"
-"end of the game. At the start of each game.\n\n"
+"end of the game.\n\n"
 "You score 2 points for each hit and 10 points\n"
 "for each 'kill'. At the end of each game (i.e.\n"
 "at your death) the map and the score are\n"
@@ -176,9 +176,9 @@ void show_offer() {
     text("INSTRUCTIONS?");
 
     // Call to action
-    cursor(63, 200);
+    cursor(78, 200);
     text("PRESS 'A' FOR HELP,");
-    cursor(48, 210);
+    cursor(52, 210);
     text("OR ANY OTHER KEY TO PLAY");
 }
 

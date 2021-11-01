@@ -157,7 +157,8 @@ void update(uint32_t tick_ms) {
             if (tick_count == 100) {
                 tick_count = 0;
                 game.state = SHOW_TEMP_MAP;
-                phantom_killed();
+                uint8_t phantom_count = game.phantoms.size() - 1;
+                phantom_killed(phantom_count == 0);
 
                 // Take the dead phantom off the board
                 // (so it gets re-rolled in `manage_phantoms()`)
@@ -918,7 +919,7 @@ void death() {
     Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
 
     // Show the map
-    show_scores();
+    show_scores(true);
 
     pen(0, 0, 15);
     frect(36, 106, 168, 28);
@@ -930,10 +931,10 @@ void death() {
 /**
     Just show the map briefly after killing a Phantom
  */
-void phantom_killed() {
+void phantom_killed(bool is_last) {
     pen(0, 0, 15);
     clear();
-    show_scores();
+    show_scores(is_last);
 }
 
 
@@ -941,7 +942,7 @@ void phantom_killed() {
     Code used in a couple of 'show map' locations
     Show the current score alongside the map.
  */
-void show_scores() {
+void show_scores(bool show_tele) {
     uint8_t cx = 10;
     if (game.high_score < game.score) game.high_score = game.score;
 
@@ -984,7 +985,7 @@ void show_scores() {
     }
 
     // Add in the map
-    Map::draw(4, true);
+    Map::draw(4, true, show_tele);
 }
 
 

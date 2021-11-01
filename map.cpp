@@ -316,7 +316,7 @@ uint8_t init(uint8_t last_map) {
         - y_delta:       Offset in the y-axis.
         - show_entities: Display phantoms.
  */
-void draw(uint8_t y_delta, bool show_entities) {
+void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     // Set the map background (blue)
     pen(0, 0, 15);
     frect(0, 40, 240, 160);
@@ -335,7 +335,7 @@ void draw(uint8_t y_delta, bool show_entities) {
             if (pixel != MAP_TILE_WALL) {
                 pen(15, 15, 0);
 
-                if (i == game.tele_y && j == game.tele_x) {
+                if (i == game.tele_y && j == game.tele_x && show_tele) {
                     // Show the teleport square in green
                     pen(0, 15, 0);
                 }

@@ -163,8 +163,8 @@ void        reset_laser();
 void        do_teleport();
 
 void        death();
-void        phantom_killed();
-void        show_scores();
+void        phantom_killed(bool is_last = false);
+void        show_scores(bool show_tele = false);
 uint8_t     fix_num_width(uint8_t value, uint8_t current);
 
 void        beep();
