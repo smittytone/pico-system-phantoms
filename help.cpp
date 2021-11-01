@@ -178,7 +178,7 @@ void show_offer() {
     // Call to action
     cursor(78, 200);
     text("PRESS 'A' FOR HELP,");
-    cursor(52, 210);
+    cursor(53, 210);
     text("OR ANY OTHER KEY TO PLAY");
 }
 

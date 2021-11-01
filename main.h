@@ -72,7 +72,7 @@ enum {
 #define LASER_RECHARGE_US                               2000000
 #define MAP_POST_KILL_SHOW_MS                           3000
 #define LASER_FIRE_US                                   200000
-#define LOGO_ANIMATION_US                               40000
+#define LOGO_ANIMATION_US                               9000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
