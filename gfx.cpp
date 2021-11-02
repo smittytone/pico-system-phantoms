@@ -33,6 +33,9 @@ buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites)
 buffer_t*               logo_buffer = buffer(212, 20, (void *)logo_sprite);
 buffer_t*               credit_buffer = buffer(104, 34, (void *)credit_sprite);
 
+buffer_t*               side_buffer = buffer(240, 240);
+buffer_t*               front_buffer = buffer(240, 240);
+
 
 namespace Gfx {
 
@@ -348,8 +351,20 @@ void draw_reticule() {
 }
 
 
-void animate_turn(bool is_right) {
-
+void animate_turn() {
+    // Draw the side view - the view the player will see next -
+    // to the side buffer
+    
+    // Copy the front view from the current screen
+    target(front_buffer);
+    blit(SCREEN, 0, 0, 240, 240, 0 , 0);
+    
+    // Draw the side view
+    target(side_buffer);
+    draw_screen(game.player.x, player.y, game.player.direction);
+    
+    // Reset back to the main display
+    target(SCREEN);
 }
 
 

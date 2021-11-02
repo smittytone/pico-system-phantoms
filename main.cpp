@@ -20,6 +20,7 @@ uint8_t     dead_phantom = ERROR_CONDITION;
 uint8_t     help_page_count = 0;
 
 int16_t     logo_y = -21;
+uint16_t    anim_x = 0;
 
 uint32_t    tele_flash_time = 0;
 uint32_t    tick_count = 0;
@@ -169,6 +170,12 @@ void update(uint32_t tick_ms) {
                 dead_phantom = ERROR_CONDITION;
                 manage_phantoms();
             }
+        case ANIMATE_RIGHT_TURN:
+        case ANIMATE_LEFT_TURN:
+            anim_x + 48;
+            if (anim_x >= 240) {
+                game.state = IN_PLAY;
+            }
         default:
             // The game is afoot! game.state = IN_PLAY
             // NOTE Return as quickly as possible
@@ -212,14 +219,22 @@ void update(uint32_t tick_ms) {
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_NORTH;
 
                     // Animate the turn now
-                    //if (!chase_mode && !map_mode) Gfx::animate_turn(false);
+                    if (!chase_mode && !map_mode) {
+                        anim_x = 0;
+                        game.state = ANIMATE_RIGHT_TURN;
+                        Gfx::animate_turn();
+                    }
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
                     game.player.direction--;
                     if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_WEST;
 
                     // Animate the turn now
-                    //if (!chase_mode && !map_mode) Gfx::animate_turn(true);
+                    if (!chase_mode && !map_mode) {
+                        anim_x = 0;
+                        game.state = ANIMATE_LEFT_TURN;
+                        Gfx::animate_turn();
+                    }
                 }
             } else if ((key & 0x02) && !game.show_reticule) {
                 // Player can only teleport if they have walked over the
@@ -305,6 +320,12 @@ void draw() {
         case PLAYER_IS_DEAD:
             // We've already drawn the end-of-game map, so just exit
             break;
+        case ANIMATE_RIGHT_TURN:
+            blit(front_buffer, anim_x, 0, 240 - anim_x, 240, 0, 0);
+            blit(side_buffer, 0, 0, anim_x, 240, 240 - anim_x, 0);
+        case ANIMATE_LEFT_TURN:
+            blit(front_buffer, 0, 0, 240 - anim_x, 240, anim_x, 0);
+            blit(side_buffer, 240 - anim_x, 0, anim_x, 240, 0, 0);
         default:
             // Render the screen
             if (chase_mode) {

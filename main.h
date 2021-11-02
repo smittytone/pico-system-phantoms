@@ -64,7 +64,9 @@ enum {
     DO_TELEPORT_TWO,
     ZAP_PHANTOM,
     SHOW_TEMP_MAP,
-    PLAYER_IS_DEAD
+    PLAYER_IS_DEAD,
+    ANIMATE_RIGHT_TURN,
+    ANIMATE_LEFT_TURN
 };
 
 // Timer limits

@@ -41,7 +41,7 @@ namespace Gfx {
 
     void        draw_reticule();
     void        draw_zap(uint8_t frame);
-    void        animate_turn(bool is_right);
+    void        animate_turn();
     void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count, bool is_zapped);
 
     void        draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double);
