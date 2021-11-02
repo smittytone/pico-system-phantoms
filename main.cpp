@@ -243,8 +243,15 @@ void update(uint32_t tick_ms) {
                     do_teleport();
                 }
             } else if (key & 0x04) {
+                #ifdef DEBUG
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
+                #endif
+                
+                // Lower radar range
+                game.audio_range++;
+                if (game.audio_range > 6) game.audio_range = 1;
+                beep();
             } else if (key & 0x08) {
                 // Lower radar range
                 game.audio_range--;
@@ -323,9 +330,11 @@ void draw() {
         case ANIMATE_RIGHT_TURN:
             blit(front_buffer, anim_x, 0, 240 - anim_x, 240, 0, 0);
             blit(side_buffer, 0, 0, anim_x, 240, 240 - anim_x, 0);
+            break;
         case ANIMATE_LEFT_TURN:
             blit(front_buffer, 0, 0, 240 - anim_x, 240, anim_x, 0);
             blit(side_buffer, 240 - anim_x, 0, anim_x, 240, 0, 0);
+            break;
         default:
             // Render the screen
             if (chase_mode) {

@@ -351,10 +351,11 @@ void draw_reticule() {
 }
 
 
+/**
+    Draw the side view - the view the player will see next -
+    to the side buffer.
+ */
 void animate_turn() {
-    // Draw the side view - the view the player will see next -
-    // to the side buffer
-    
     // Copy the front view from the current screen
     target(front_buffer);
     blit(SCREEN, 0, 0, 240, 240, 0 , 0);
