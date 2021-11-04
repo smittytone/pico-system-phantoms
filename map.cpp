@@ -323,13 +323,12 @@ uint8_t init(uint8_t last_map) {
  */
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     // Set the map background (blue)
-    pen(0, 0, 15);
+    pen(BLUE);
     frect(0, 40, 240, 160);
 
     // Draw the map
     uint8_t x = 40;
     uint8_t y = 40 + y_delta;
-    pen(15, 15, 0);
 
     for (uint8_t i = 0 ; i < 20 ; ++i) {
         uint8_t *line = current_map[i];
@@ -338,11 +337,11 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
-                pen(15, 15, 0);
+                pen(YELLOW);
 
                 if (i == game.tele_y && j == game.tele_x && show_tele) {
                     // Show the teleport square in green
-                    pen(0, 15, 0);
+                    pen(GREEN);
                 }
 
                 if (show_entities) {
@@ -350,7 +349,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
                     for (size_t k = 0 ; k < game.phantoms.size() ; ++k) {
                         Phantom &p = game.phantoms.at(k);
                         if (j == p.x && i == p.y) {
-                            pen(15, 0, 0);
+                            pen(RED);
                         }
                     }
                 }
@@ -360,7 +359,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
             // Show the player as an arrow at the current square
             if (j == game.player.x && i == game.player.y) {
-                pen(15, 0, 0);
+                pen(RED);
                 switch(game.player.direction) {
                     case DIRECTION_NORTH:
                         frect(x + j * 8 + 3, y + i * 8, 2, 3);

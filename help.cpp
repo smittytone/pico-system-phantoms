@@ -141,11 +141,11 @@ void init() {
  */
 void show_page(uint16_t page_number) {
     // CLS
-    pen(0, 15, 0);
+    pen(GREEN);
     clear();
 
     // Game title
-    pen(0, 0, 0);
+    pen(CLEAR);
     cursor(80, 10);
     text("PHANTOM SLAYER");
 
@@ -164,11 +164,11 @@ void show_page(uint16_t page_number) {
  */
 void show_offer() {
     // CLS
-    pen(0, 15, 0);
+    pen(GREEN);
     clear();
 
     // Game title
-    pen(0, 0, 0);
+    pen(CLEAR);
     cursor(80, 20);
     text("PHANTOM SLAYER");
 

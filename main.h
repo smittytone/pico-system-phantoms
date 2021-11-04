@@ -89,6 +89,14 @@ enum {
 #define PHANTOM_SOUTH                                   4
 #define PHANTOM_WEST                                    8
 
+#define GREEN                                           0xF0F0
+#define BLUE                                            0x0FF0
+#define RED                                             0x00FF
+#define WHITE                                           0xFFFF
+#define YELLOW                                          0xF0FF
+#define ORANGE                                          0xA0FF
+#define CLEAR                                           0x0000
+
 
 /*
  * STRUCTURE DEFINITIONS

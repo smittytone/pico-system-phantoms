@@ -33,8 +33,8 @@ buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites)
 buffer_t*               logo_buffer = buffer(212, 20, (void *)logo_sprite);
 buffer_t*               credit_buffer = buffer(104, 34, (void *)credit_sprite);
 
-buffer_t*               side_buffer = buffer(240, 240);
-buffer_t*               front_buffer = buffer(240, 240);
+uint8_t                 data_1[240 * 240 * 2] = {};
+buffer_t*               side_buffer = buffer(240, 240, (void *)data_1);
 
 
 namespace Gfx {
@@ -62,12 +62,12 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     uint8_t i = 0;
 
     // Clear the screen
-    pen(0, 0, 0);
+    pen(CLEAR);
     frect(0, 0, 240, 240);
 
     if (game.state == DO_TELEPORT_ONE) {
         // 3D View: red
-        pen(15, 0, 0);
+        pen(RED);
         frect(0, 40, 240, 160);
     } else {
         // 3D View: yellow
@@ -193,9 +193,9 @@ void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
 
     if (game.state == DO_TELEPORT_ONE) {
-        pen(15, 15, 15);
+        pen(WHITE);
     } else {
-        pen(15, 0, 0);
+        pen(RED);
     }
 
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
@@ -213,7 +213,7 @@ void draw_floor_line(uint8_t frame_index) {
 void draw_teleporter(uint8_t frame_index) {
     Rect c = rects[frame_index];
     Rect b = rects[frame_index + 1];
-    pen(0, 15, 0);
+    pen(GREEN);
     frect(c.x, b.y + b.height + 40, c.width, (c.y + c.height) - (b.y + b.height));
 
     /*
@@ -247,9 +247,9 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
     if (game.state == DO_TELEPORT_ONE) {
-        pen(15, 15, 15);
+        pen(WHITE);
     } else {
-        pen(0, 0, 15);
+        pen(BLUE);
     }
 
     frect(o.x, i.y + 40, i.x - o.x - 1, i.height);
@@ -278,9 +278,9 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
     if (game.state == DO_TELEPORT_ONE) {
-        pen(15, 15, 15);
+        pen(WHITE);
     } else {
-        pen(0, 0, 15);
+        pen(BLUE);
     }
 
     uint8_t xd = i.x + i.width;
@@ -316,9 +316,9 @@ void draw_far_wall(uint8_t frame_index) {
                rxd - 4, r.y + 42});
     } else {
         if (game.state == DO_TELEPORT_ONE) {
-            pen(15, 15, 15);
+            pen(WHITE);
         } else {
-            pen(0, 0, 15);
+            pen(BLUE);
         }
 
         frect(r.x, r.y + 40, r.width, r.height);
@@ -330,7 +330,7 @@ void draw_far_wall(uint8_t frame_index) {
     Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
-    pen(15, 10, 0);
+    pen(ORANGE);
     rect(100 + game.crosshair_delta, 119, 40, 2);
     rect(119 + game.crosshair_delta, 100, 2, 40);
 }
@@ -345,7 +345,7 @@ void draw_reticule() {
  void draw_zap(uint8_t frame_index) {
     if (frame_index < 5) {
         uint16_t radius = radii[frame_index];
-        pen(15, 10, 0);
+        pen(ORANGE);
         fcircle(120, 120, radius);
     }
 }
@@ -357,15 +357,20 @@ void draw_reticule() {
  */
 void animate_turn() {
     // Copy the front view from the current screen
-    target(front_buffer);
-    blit(SCREEN, 0, 0, 240, 240, 0 , 0);
-    
+    //target(front_buffer);
+    //blit(SCREEN, 0, 0, 240, 240, 0 , 0);
+
     // Draw the side view
     target(side_buffer);
-    draw_screen(game.player.x, player.y, game.player.direction);
-    
+    pen(WHITE);
+    clear();
+    //draw_screen(game.player.x, game.player.y, game.player.direction);
+    color_t c = side_buffer->data[10 * 240 + 10];
+    printf("%i\n",c);
+
     // Reset back to the main display
     target(SCREEN);
+    printf("TURNED\n");
 }
 
 

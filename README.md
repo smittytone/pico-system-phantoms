@@ -1,4 +1,4 @@
-# Phantom Slayer for the Pimoroni Picosystem
+# Phantom Slayer for the Pimoroni PicoSystem
 
 A retro-style 3D arcade game written in C++.
 
@@ -8,11 +8,11 @@ For more details on the game [see this page](https://smittytone.net/pico-phantom
 
 #### Requirements
 
-* [Pimoroni Picosystem](https://shop.pimoroni.com/products/picosystem).
+* [Pimoroni PicoSystem](https://shop.pimoroni.com/products/picosystem).
 
 ### The Code
 
-Build from source code, or copy `phantoms.uf2` to your Picosystem. Please check the SHA 256:
+Build from source code, or copy `phantoms.uf2` to your PicoSystem. Please check the SHA 256:
 
 ```
 SHA-256 TO ADD
@@ -20,7 +20,7 @@ SHA-256 TO ADD
 
 ### Build the Code
 
-This code requires the installation of the [Pico SDK](https://github.com/raspberrypi/pico-sdk) and the [Picosystem SDK](https://github.com/pimoroni/picosystem).
+This code requires the installation of the [Pico SDK](https://github.com/raspberrypi/pico-sdk) and the [PicoSystem SDK](https://github.com/pimoroni/picosystem).
 
 * Use Visual Studio Code with the [CMake](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) and [CMakeTools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) extensions:
     1. Click **No active kit** to select your compiler, `GCC 10.3.1 arm-none-eabi`:<br />![Select a kit in VSCode](images/kits.png)

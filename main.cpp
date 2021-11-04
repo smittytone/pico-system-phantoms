@@ -38,13 +38,16 @@ Game        game;
 voice_t blip = voice(10, 0, 40, 40);
 voice_t piano = voice(0, 0, 50, 0);
 
+extern buffer_t*               side_buffer;
+//extern buffer_t*               front_buffer;
+
 
 /*
  *  PICOSYSTEM CALLBACKS
  */
 void init() {
     // Clear the display as soon as possible
-    pen(0, 15, 0);
+    pen(GREEN);
     clear();
 
     #ifdef DEBUG
@@ -154,13 +157,22 @@ void update(uint32_t tick_ms) {
                 game.state = IN_PLAY;
             }
             break;
+        case ANIMATE_RIGHT_TURN:
+        case ANIMATE_LEFT_TURN:
+            tick_count++;
+            if (tick_count == 10) {
+                anim_x += 48;
+                tick_count = 0;
+                if (anim_x >= 240) game.state = IN_PLAY;
+            }
+            break;
         case ZAP_PHANTOM:
             tick_count++;
             if (tick_count == 100) {
                 tick_count = 0;
                 game.state = SHOW_TEMP_MAP;
-                uint8_t phantom_count = game.phantoms.size() - 1;
-                phantom_killed(phantom_count == 0);
+                uint8_t phantom_count = game.phantoms.size();
+                phantom_killed(phantom_count == 1);
 
                 // Take the dead phantom off the board
                 // (so it gets re-rolled in `manage_phantoms()`)
@@ -169,12 +181,6 @@ void update(uint32_t tick_ms) {
                 game.phantoms.erase(game.phantoms.begin() + dead_phantom);
                 dead_phantom = ERROR_CONDITION;
                 manage_phantoms();
-            }
-        case ANIMATE_RIGHT_TURN:
-        case ANIMATE_LEFT_TURN:
-            anim_x + 48;
-            if (anim_x >= 240) {
-                game.state = IN_PLAY;
             }
         default:
             // The game is afoot! game.state = IN_PLAY
@@ -221,8 +227,8 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         anim_x = 0;
-                        game.state = ANIMATE_RIGHT_TURN;
-                        Gfx::animate_turn();
+                        //game.state = ANIMATE_RIGHT_TURN;
+                        //Gfx::animate_turn();
                     }
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
@@ -232,8 +238,8 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         anim_x = 0;
-                        game.state = ANIMATE_LEFT_TURN;
-                        Gfx::animate_turn();
+                        //game.state = ANIMATE_LEFT_TURN;
+                        //Gfx::animate_turn();
                     }
                 }
             } else if ((key & 0x02) && !game.show_reticule) {
@@ -247,7 +253,7 @@ void update(uint32_t tick_ms) {
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
                 #endif
-                
+
                 // Lower radar range
                 game.audio_range++;
                 if (game.audio_range > 6) game.audio_range = 1;
@@ -294,11 +300,11 @@ void draw() {
     switch(game.state) {
         case ANIMATE_LOGO:
             Gfx::animate_logo(logo_y);
-            play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
+            //play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
             break;
         case ANIMATE_CREDIT:
             Gfx::animate_credit(logo_y);
-            play(piano, 2000 + (300 - logo_y) * 100, 30);
+            //play(piano, 2000 + (300 - logo_y) * 100, 30);
             break;
         case LOGO_PAUSE:
             break;
@@ -315,11 +321,11 @@ void draw() {
             //      we only need to update the countdown
             //      itself
             // Clear the number
-            pen(0, 0, 15);
+            pen(BLUE);
             frect(112, 210, 16, 20);
 
             // Show the new number
-            pen(15, 15, 0);
+            pen(YELLOW);
             Gfx::draw_number(count_down, (count_down == 1 ? 118 : 114), 210, true);
             break;
         case SHOW_TEMP_MAP:
@@ -328,12 +334,13 @@ void draw() {
             // We've already drawn the end-of-game map, so just exit
             break;
         case ANIMATE_RIGHT_TURN:
-            blit(front_buffer, anim_x, 0, 240 - anim_x, 240, 0, 0);
-            blit(side_buffer, 0, 0, anim_x, 240, 240 - anim_x, 0);
+            //blit(SCREEN, anim_x, 0, 240 - anim_x, 240, 0, 0);
+            blit(side_buffer, 0, 39, anim_x, 162, 240 - anim_x, 0);
+            printf("%i\n", anim_x);
             break;
         case ANIMATE_LEFT_TURN:
-            blit(front_buffer, 0, 0, 240 - anim_x, 240, anim_x, 0);
-            blit(side_buffer, 240 - anim_x, 0, anim_x, 240, 0, 0);
+            //blit(SCREEN, 0, 0, 240 - anim_x, 240, anim_x, 0);
+            blit(side_buffer, 240 - anim_x, 39, anim_x, 162, 0, 0);
             break;
         default:
             // Render the screen
@@ -370,7 +377,7 @@ void setup_device() {
     backlight(100);
 
     // Clear the screen (green)
-    pen(0, 15, 0);
+    pen(GREEN);
     clear();
 
     // Use one of the Pico's other analog inputs
@@ -411,6 +418,10 @@ void setup_device() {
     game.state = ANIMATE_LOGO;
     game.high_score = 0;
     tele_flash_time = 0;
+
+    #ifdef DEBUG
+    printf("DONE SETUP\n");
+    #endif
 }
 
 
@@ -428,7 +439,7 @@ void start_new_game() {
     // Clear the screen (blue), present the current map
     // and give the player a five-second countdown before
     // entering the maze
-    pen(0, 0, 15);
+    pen(BLUE);
     clear();
     Map::draw(0, false);
 
@@ -437,6 +448,10 @@ void start_new_game() {
 
     // Set the game mode
     game.state = START_COUNT;
+
+    #ifdef DEBUG
+    printf("DONE START_NEW_GAME\n");
+    #endif
 }
 
 
@@ -497,6 +512,10 @@ void init_phantoms() {
     game.phantoms.clear();
     game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
     game.last_phantom_move = 0;
+
+    #ifdef DEBUG
+    printf("DONE INIT_PHANTOMS\n");
+    #endif
 }
 
 
@@ -941,7 +960,7 @@ void death() {
     //tone(2200, 500, 600);
 
     // Clear the display (blue)
-    pen(0, 0, 15);
+    pen(BLUE);
     clear();
 
     // Give instructions
@@ -950,7 +969,7 @@ void death() {
     // Show the map
     show_scores(true);
 
-    pen(0, 0, 15);
+    pen(BLUE);
     frect(36, 106, 168, 28);
     Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
 
@@ -961,7 +980,7 @@ void death() {
     Just show the map briefly after killing a Phantom
  */
 void phantom_killed(bool is_last) {
-    pen(0, 0, 15);
+    pen(BLUE);
     clear();
     show_scores(is_last);
 }
