@@ -361,6 +361,7 @@ void animate_turn() {
     //blit(SCREEN, 0, 0, 240, 240, 0 , 0);
 
     // Draw the side view
+    blend(COPY);
     target(side_buffer);
     pen(WHITE);
     clear();

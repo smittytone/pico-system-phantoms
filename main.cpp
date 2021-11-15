@@ -163,7 +163,10 @@ void update(uint32_t tick_ms) {
             if (tick_count == 10) {
                 anim_x += 48;
                 tick_count = 0;
-                if (anim_x >= 240) game.state = IN_PLAY;
+                if (anim_x >= 240) {
+                    game.state = IN_PLAY;
+                    blend(ALPHA);
+                }
             }
             break;
         case ZAP_PHANTOM:
@@ -227,8 +230,8 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         anim_x = 0;
-                        //game.state = ANIMATE_RIGHT_TURN;
-                        //Gfx::animate_turn();
+                        game.state = ANIMATE_RIGHT_TURN;
+                        Gfx::animate_turn();
                     }
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
@@ -238,8 +241,8 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         anim_x = 0;
-                        //game.state = ANIMATE_LEFT_TURN;
-                        //Gfx::animate_turn();
+                        game.state = ANIMATE_LEFT_TURN;
+                        Gfx::animate_turn();
                     }
                 }
             } else if ((key & 0x02) && !game.show_reticule) {
