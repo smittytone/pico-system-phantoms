@@ -35,14 +35,14 @@ Rect        rects[7];
 
 Game        game;
 
-voice_t blip = voice(10, 0, 40, 40);
-voice_t piano = voice(0, 0, 50, 0);
+voice_t     blip = voice(10, 0, 40, 40);
+voice_t     piano = voice(0, 0, 50, 0);
 
 
 /*
  *  EXTERNALLY-DEFINED GLOBALS
  */
-extern buffer_t* side_buffer;
+extern      buffer_t* side_buffer;
 
 
 /*
@@ -62,10 +62,6 @@ void init() {
     // NOTE This is all the stuff that is per session,
     //      not per game, or per level
     setup_device();
-
-    #ifdef DEBUG
-    printf("INIT() DONE\n");
-    #endif
 }
 
 
@@ -93,7 +89,7 @@ void update(uint32_t tick_ms) {
             }
             break;
         case LOGO_PAUSE:
-            if (now - tele_flash_time > 5000000) {
+            if (now - tele_flash_time > LOGO_PAUSE_TIME) {
                 game.state = OFFER_HELP;
                 tele_flash_time = 0;
             }
@@ -435,10 +431,6 @@ void setup_device() {
     // TODO Make this controllable during the game
     backlight(100);
 
-    // Clear the screen (green)
-    pen(GREEN);
-    clear();
-
     // Use one of the Pico's other analog inputs
     // to seed the random number generator
     adc_init();
@@ -475,11 +467,9 @@ void setup_device() {
 
     // Start the game loop at the intro animation
     game.state = ANIMATE_LOGO;
-    game.high_score = 0;
-    tele_flash_time = 0;
 
     #ifdef DEBUG
-    printf("DONE SETUP\n");
+    printf("DONE SETUP_DEVICE\n");
     #endif
 }
 
@@ -535,10 +525,6 @@ void init_game() {
     game.player.y = 0;
     game.player.direction = 0;
 
-    game.show_reticule = false;
-    game.can_fire = true;
-    game.is_firing = false;
-
     game.tele_x = 0;
     game.tele_y = 0;
     game.start_x = 0;
@@ -547,6 +533,26 @@ void init_game() {
     game.level = 1;
     game.score = 0;
     game.kills = 0;
+    game.high_score = 0;
+
+    game.crosshair_delta = 0;
+    game.audio_range = 4;
+
+    #ifdef DEBUG
+    printf("DONE INIT_GAME()\n");
+    #endif
+}
+
+
+/*
+    Reset the main game control structure values
+    for the start of a level.
+ */
+void init_level() {
+    game.show_reticule = false;
+    game.can_fire = true;
+    game.is_firing = false;
+
     game.level_kills = 0;
     game.level_hits = 0;
 
@@ -554,11 +560,8 @@ void init_game() {
     game.zap_fire_time = 0;
     game.zap_frame = 0;
 
-    game.crosshair_delta = 0;
-    game.audio_range = 4;
-
     #ifdef DEBUG
-    printf("DONE INIT_GAME\n");
+    printf("DONE INIT_LEVEL()\n");
     #endif
 }
 
@@ -573,7 +576,7 @@ void init_phantoms() {
     game.last_phantom_move = 0;
 
     #ifdef DEBUG
-    printf("DONE INIT_PHANTOMS\n");
+    printf("DONE INIT_PHANTOMS()\n");
     #endif
 }
 
@@ -587,6 +590,7 @@ void init_phantoms() {
 void start_new_level(bool is_first) {
     // Initialise the current map
     game.map = Map::init(game.map);
+    init_level();
 
     // Place the player near the centre
     uint8_t x = 9;
@@ -620,7 +624,7 @@ void start_new_level(bool is_first) {
      */
 
     #ifdef DEBUG
-    printf("DONE CREATE_WORLD\n");
+    printf("DONE START_NEW_LEVEL()\n");
     #endif
 }
 
@@ -724,16 +728,12 @@ void manage_phantoms() {
     // Phantoms. From 3 and up, there are aways three in the maze
     if (game.level < MAX_PHANTOMS) {
         if (game.level_kills == game.level) {
-            game.level_kills = 0;
-            game.level_hits = 0;
             game.level++;
             level_up = true;
             phantom_count = game.level;
         }
     } else {
         if (game.level_kills == MAX_PHANTOMS) {
-            game.level_kills = 0;
-            game.level_hits = 0;
             game.level++;
             level_up = true;
             phantom_count = MAX_PHANTOMS;

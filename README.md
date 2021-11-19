@@ -53,5 +53,6 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 * 1.1.1 *Unreleased*
     * Bug fixes:
         * Phantoms' health could become huge -- fixed.
+        * Dead phantoms could move -- fixed.
 * 1.1.0 *19 November 2021*
     * Initial release.

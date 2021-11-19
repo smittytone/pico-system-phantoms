@@ -75,6 +75,7 @@ enum {
 #define MAP_POST_KILL_SHOW_MS                           3000
 #define LASER_FIRE_US                                   200000
 #define LOGO_ANIMATION_US                               9000
+#define LOGO_PAUSE_TIME                                 5000000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
@@ -89,6 +90,7 @@ enum {
 #define PHANTOM_SOUTH                                   4
 #define PHANTOM_WEST                                    8
 
+// Colours
 #define GREEN                                           0xF0F0
 #define BLUE                                            0x0FF0
 #define RED                                             0x00FF
@@ -98,6 +100,7 @@ enum {
 #define CLEAR                                           0x0000
 #define BLACK                                           0x00F0
 
+// Turn animation screen slice size
 #define SLICE                                           16
 
 
@@ -158,6 +161,7 @@ void        setup_device();
 void        start_new_game();
 void        init_game();
 void        init_phantoms();
+void        init_level();
 void        start_new_level(bool is_first);
 void        set_teleport_square();
 void        roll_first_phantom();

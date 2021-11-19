@@ -52,7 +52,7 @@ bool Phantom::move() {
     // Only move phantoms that are in the maze
     if (x != ERROR_CONDITION) {
         // Has the Phantom been zapped? Don't move it
-        if (hp == 0) return false;
+        if (hp < 1) return false;
 
         uint8_t new_x = x;
         uint8_t new_y = y;
