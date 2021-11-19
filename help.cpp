@@ -145,7 +145,7 @@ void show_page(uint16_t page_number) {
     clear();
 
     // Game title
-    pen(CLEAR);
+    pen(BLACK);
     cursor(80, 10);
     text("PHANTOM SLAYER");
 
@@ -168,7 +168,7 @@ void show_offer() {
     clear();
 
     // Game title
-    pen(CLEAR);
+    pen(BLACK);
     cursor(80, 20);
     text("PHANTOM SLAYER");
 

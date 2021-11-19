@@ -20,6 +20,7 @@
         "system_error": "cpp",
         "tuple": "cpp",
         "locale": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "array": "cpp"
     }
 }

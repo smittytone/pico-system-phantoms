@@ -20,7 +20,7 @@ uint8_t     dead_phantom = ERROR_CONDITION;
 uint8_t     help_page_count = 0;
 
 int16_t     logo_y = -21;
-uint16_t    anim_x = 0;
+int32_t     anim_x = 0;
 
 uint32_t    tele_flash_time = 0;
 uint32_t    tick_count = 0;
@@ -38,8 +38,11 @@ Game        game;
 voice_t blip = voice(10, 0, 40, 40);
 voice_t piano = voice(0, 0, 50, 0);
 
-extern buffer_t*               side_buffer;
-//extern buffer_t*               front_buffer;
+
+/*
+ *  EXTERNALLY-DEFINED GLOBALS
+ */
+extern buffer_t* side_buffer;
 
 
 /*
@@ -102,6 +105,7 @@ void update(uint32_t tick_ms) {
                 Help::show_page(0);
                 help_page_count = 0;
                 game.state = SHOW_HELP;
+                beep();
             } else if (key != 0) {
                 start_new_game();
             }
@@ -109,14 +113,22 @@ void update(uint32_t tick_ms) {
         case SHOW_HELP:
             // Run through the help pages with
             // eack key press
-            if (Utils::inkey() > 0) help_page_count++;
+            if (Utils::inkey() > 0) {
+                help_page_count++;
+                beep();
+            }
+
             if (help_page_count == MAX_HELP_PAGES) start_new_game();
             break;
         case START_COUNT:
             // Count down five seconds before
             // actually starting the game
             tick_count++;
-            if (tick_count % 100 == 0) count_down--;
+            if (tick_count % 100 == 0) {
+                count_down--;
+                beep();
+            }
+
             if (count_down == 0) {
                 tick_count = 0;
                 game.state = IN_PLAY;
@@ -159,14 +171,10 @@ void update(uint32_t tick_ms) {
             break;
         case ANIMATE_RIGHT_TURN:
         case ANIMATE_LEFT_TURN:
-            tick_count++;
-            if (tick_count == 10) {
-                anim_x += 48;
-                tick_count = 0;
-                if (anim_x >= 240) {
-                    game.state = IN_PLAY;
-                    blend(ALPHA);
-                }
+            //anim_x += SLICE;
+            if (anim_x > 240) {
+                game.state = IN_PLAY;
+                blend(ALPHA);
             }
             break;
         case ZAP_PHANTOM:
@@ -221,6 +229,10 @@ void update(uint32_t tick_ms) {
                         // Set the new square for rendering later
                         game.player.x = nx;
                         game.player.y = ny;
+
+                        #ifdef DEBUG
+                        printf("MOVED PLAYER\n");
+                        #endif
                     }
                 } else if (dir == TURN_RIGHT) {
                     // Turn player right
@@ -229,9 +241,14 @@ void update(uint32_t tick_ms) {
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
-                        anim_x = 0;
+                        #ifdef DEBUG
+                        printf("TURNED PLAYER RIGHT\n");
+                        #endif
+
+                        anim_x = -SLICE;
                         game.state = ANIMATE_RIGHT_TURN;
                         Gfx::animate_turn();
+                        return;
                     }
                 } else if (dir == TURN_LEFT) {
                     // Turn player left
@@ -240,15 +257,24 @@ void update(uint32_t tick_ms) {
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
-                        anim_x = 0;
+                        #ifdef DEBUG
+                        printf("TURNED PLAYER LEFT\n");
+                        #endif
+
+                        anim_x = -SLICE;
                         game.state = ANIMATE_LEFT_TURN;
                         Gfx::animate_turn();
+                        return;
                     }
                 }
             } else if ((key & 0x02) && !game.show_reticule) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
+                    #ifdef DEBUG
+                    printf("PLAYER TELEPORTING\n");
+                    #endif
+
                     do_teleport();
                 }
             } else if (key & 0x04) {
@@ -261,11 +287,19 @@ void update(uint32_t tick_ms) {
                 game.audio_range++;
                 if (game.audio_range > 6) game.audio_range = 1;
                 beep();
+
+                #ifdef DEBUG
+                printf("RADAR RANGE %i\n", game.audio_range);
+                #endif
             } else if (key & 0x08) {
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
                 beep();
+
+                #ifdef DEBUG
+                printf("RADAR RANGE %i\n", game.audio_range);
+                #endif
             }
 
             // Check for firing
@@ -276,6 +310,10 @@ void update(uint32_t tick_ms) {
                     // Button A pressed
                     if (!game.show_reticule) {
                         game.show_reticule = true;
+
+                        #ifdef DEBUG
+                        printf("READY TO FIRE\n");
+                        #endif
                     }
                 }
             } else {
@@ -289,6 +327,10 @@ void update(uint32_t tick_ms) {
 
                     // Check if we've hit a Phantom
                     fire_laser();
+
+                    #ifdef DEBUG
+                        printf("FIRED\n");
+                    #endif
                 }
             }
 
@@ -300,6 +342,7 @@ void update(uint32_t tick_ms) {
 
 void draw() {
     uint8_t nx;
+    buffer_t* scrn = SCREEN;
     switch(game.state) {
         case ANIMATE_LOGO:
             Gfx::animate_logo(logo_y);
@@ -337,13 +380,26 @@ void draw() {
             // We've already drawn the end-of-game map, so just exit
             break;
         case ANIMATE_RIGHT_TURN:
-            //blit(SCREEN, anim_x, 0, 240 - anim_x, 240, 0, 0);
-            blit(side_buffer, 0, 39, anim_x, 162, 240 - anim_x, 0);
-            printf("%i\n", anim_x);
+            anim_x += SLICE;
+            if (anim_x > 240 - SLICE) break;
+
+            // Blit screen left by one slice
+            //   src          sx      sy  sw           sh   dx           dy
+            Gfx::alt_blit(SCREEN, SLICE, 40, 240 - SLICE, 160, 0, 40);
+
+            // Blit side slice to last slice of screen
+            Gfx::alt_blit(side_buffer, anim_x, 40, SLICE, 160, 240 - SLICE, 40);
             break;
         case ANIMATE_LEFT_TURN:
-            //blit(SCREEN, 0, 0, 240 - anim_x, 240, anim_x, 0);
-            blit(side_buffer, 240 - anim_x, 39, anim_x, 162, 0, 0);
+            anim_x += SLICE;
+            if (anim_x > 240) break;
+
+            for (int32_t x = 240 - (SLICE * 2) ; x >= 0 ; x -= SLICE) {
+                Gfx::alt_blit(SCREEN, x, 40, SLICE, 160, x + SLICE, 40);
+            }
+
+            // Blit side slice to last slice of screen
+            Gfx::alt_blit(side_buffer, 240 - anim_x, 40, SLICE, 160, 0, 40);
             break;
         default:
             // Render the screen
@@ -388,11 +444,11 @@ void setup_device() {
     adc_init();
     adc_gpio_init(28);
     adc_select_input(2);
-    std::srand(picosystem::battery() * 100);
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, adc_read());
+    tinymt32_init(&tinymt_store, picosystem::battery() * 100);
+    std::srand(picosystem::battery() * 100);
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -860,8 +916,9 @@ void check_senses() {
             uint8_t nabbed = Map::phantom_on_square(x, y);
             if (nabbed != ERROR_CONDITION) {
                 // There's a Phantom in range, so sound a tone
-                led(100, 100, 0);
+                led(100, 0, 0);
                 beep();
+                sleep_ms(200);
                 led(0, 0, 0);
 
                 // Only play one beep, no matter
@@ -874,7 +931,6 @@ void check_senses() {
 
 
 void beep() {
-
     play(blip, 200, 50);
 }
 
@@ -1024,15 +1080,15 @@ void show_scores(bool show_tele) {
     if (game.state != PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
-        Gfx::draw_word(WORD_KILLS, 198, 225, false);
+        Gfx::draw_word(WORD_KILLS, 198, 228, false);
         score = Utils::bcd(game.level_kills);
-        cx = (score == 1) ? 188 : 180;
-        Gfx::draw_number(score, cx, 215, true);
+        cx = (score == 1) ? 226 : 220;
+        Gfx::draw_number(score, cx, 204, true);
 
         // Show hits
-        Gfx::draw_word(WORD_HITS, 10, 225, false);
+        Gfx::draw_word(WORD_HITS, 10, 228, false);
         score = Utils::bcd(game.level_hits);
-        Gfx::draw_number(score, 41, 215, true);
+        Gfx::draw_number(score, 10, 204, true);
     }
 
     // Add in the map

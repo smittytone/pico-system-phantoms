@@ -96,6 +96,9 @@ enum {
 #define YELLOW                                          0xF0FF
 #define ORANGE                                          0xA0FF
 #define CLEAR                                           0x0000
+#define BLACK                                           0x00F0
+
+#define SLICE                                           16
 
 
 /*

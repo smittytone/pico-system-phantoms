@@ -11,6 +11,8 @@
 #define _GFX_UTILS_HEADER_
 
 
+using namespace picosystem;
+
 /*
  *      CONSTANTS
  */
@@ -51,6 +53,8 @@ namespace Gfx {
     void        animate_logo(int16_t y);
 
     void        show_debug_info();
+
+    void        alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy);
 }
 
 

@@ -32,9 +32,8 @@ buffer_t*               phantom_buffer = buffer(173, 150, (void *)phantom_sprite
 buffer_t*               zapped_buffer = buffer(173, 150, (void *)zapped_sprites);
 buffer_t*               logo_buffer = buffer(212, 20, (void *)logo_sprite);
 buffer_t*               credit_buffer = buffer(104, 34, (void *)credit_sprite);
-
-uint8_t                 data_1[240 * 240 * 2] = {};
-buffer_t*               side_buffer = buffer(240, 240, (void *)data_1);
+color_t                 side_data[240 * 240] __attribute__ ((aligned (4))) = {0};
+buffer_t*               side_buffer = buffer(240, 240, side_data);
 
 
 namespace Gfx {
@@ -62,8 +61,8 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     uint8_t i = 0;
 
     // Clear the screen
-    pen(CLEAR);
-    frect(0, 0, 240, 240);
+    pen(BLACK);
+    clear();
 
     if (game.state == DO_TELEPORT_ONE) {
         // 3D View: red
@@ -74,10 +73,6 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
         pen(15, 15, 0);
         frect(0, 40, 240, 160);
     }
-
-    #ifdef DEBUG
-    // show_debug_info();
-    #endif
 
     switch(direction) {
         case DIRECTION_NORTH:
@@ -352,30 +347,6 @@ void draw_reticule() {
 
 
 /**
-    Draw the side view - the view the player will see next -
-    to the side buffer.
- */
-void animate_turn() {
-    // Copy the front view from the current screen
-    //target(front_buffer);
-    //blit(SCREEN, 0, 0, 240, 240, 0 , 0);
-
-    // Draw the side view
-    blend(COPY);
-    target(side_buffer);
-    pen(WHITE);
-    clear();
-    //draw_screen(game.player.x, game.player.y, game.player.direction);
-    color_t c = side_buffer->data[10 * 240 + 10];
-    printf("%i\n",c);
-
-    // Reset back to the main display
-    target(SCREEN);
-    printf("TURNED\n");
-}
-
-
-/**
     Draw a Phantom in the specified frame - which determines
     its x and y co-ordinates in the frame.
 
@@ -507,8 +478,6 @@ void animate_logo(int16_t y) {
     if (delta > 20) delta = 20;
     if (y < 0) y = 0;
     blit(logo_buffer, 0, 20 - delta, 212, delta, 14, y);
-
-
 }
 
 
@@ -525,6 +494,49 @@ void animate_credit(int16_t y) {
     height = y - 240;
     if (height > 34) height = 34;
     blit(credit_buffer, 0, 0, 104, height, 68, y);
+}
+
+
+/**
+    Draw the side view - the view the player will see next -
+    to the side buffer.
+ */
+void animate_turn() {
+    // Draw the side view
+    target(side_buffer);
+    pen(BLACK);
+    clear();
+    draw_screen(game.player.x, game.player.y, game.player.direction);
+
+    // Reset back to the main display
+    target(SCREEN);
+    blend(COPY);
+}
+
+
+/**
+    Streamlined (sort of) blit code for left and right turn animations.
+
+    - Parameters:
+        - src: Pointer to the source buffer.
+        - sx:  The top-left corner X co-ordinate of the area to copy.
+        - sy:  The top-left corner Y co-ordinate of the area to copy.
+        - w:   The width of the area to copy.
+        - h:   The height of the area to copy.
+        - dx:  The top-left corner X co-ordinate of the area to copy to.
+        - dy:  The top-left corner Y co-ordinate of the area to copy to.
+
+ */
+void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy) {
+    color_t *ps = src->data + (sx + sy * src->w);
+    color_t *pd = _dt->data + (dx + dy * _dt->w);
+    int32_t ds = _dt->w;
+
+    while (h--) {
+        memcpy(pd, ps, w * 2);
+        pd += ds;
+        ps += src->w;
+    }
 }
 
 

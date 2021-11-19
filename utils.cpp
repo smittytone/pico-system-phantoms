@@ -41,7 +41,7 @@ namespace Utils {
     - Returns: The random number.
  */
 int irandom(int start, int max) {
-    int value = std::rand(); // tinymt32_generate_uint32(&tinymt_store);
+    int value = tinymt32_generate_uint32(&tinymt_store);
     return (value % max + start);
 }
 
