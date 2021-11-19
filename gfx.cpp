@@ -61,8 +61,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     uint8_t i = 0;
 
     // Clear the screen
-    pen(BLACK);
-    clear();
+    cls(BLACK);
 
     if (game.state == DO_TELEPORT_ONE) {
         // 3D View: red
@@ -504,8 +503,7 @@ void animate_credit(int16_t y) {
 void animate_turn() {
     // Draw the side view
     target(side_buffer);
-    pen(BLACK);
-    clear();
+    cls(BLACK);
     draw_screen(game.player.x, game.player.y, game.player.direction);
 
     // Reset back to the main display
@@ -537,6 +535,12 @@ void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32
         pd += ds;
         ps += src->w;
     }
+}
+
+
+void cls(color_t colour) {
+    pen(colour);
+    clear();
 }
 
 

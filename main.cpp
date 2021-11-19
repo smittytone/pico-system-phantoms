@@ -50,8 +50,7 @@ extern      buffer_t* side_buffer;
  */
 void init() {
     // Clear the display as soon as possible
-    pen(GREEN);
-    clear();
+    Gfx::cls(GREEN);
 
     #ifdef DEBUG
     // Enable debugging
@@ -214,7 +213,6 @@ void update(uint32_t tick_ms) {
                         if (Map::phantom_on_square(nx, ny) != ERROR_CONDITION) {
                             // Yes -- so the player is dead!
                             death();
-                            game.state = PLAYER_IS_DEAD;
 
                             #ifdef DEBUG
                             printf("\nPLAYER IS DEAD\n");
@@ -488,8 +486,7 @@ void start_new_game() {
     // Clear the screen (blue), present the current map
     // and give the player a five-second countdown before
     // entering the maze
-    pen(BLUE);
-    clear();
+    Gfx::cls(BLUE);
     Map::draw(0, false);
 
     Gfx::draw_number(game.level, 156, 10, true);
@@ -651,7 +648,7 @@ void set_teleport_square() {
     Randomly roll a level's first Phantom
  */
 void roll_first_phantom() {
-    Phantom p = Phantom(0,0);
+    Phantom p = Phantom(0, 0);
     while (true) {
         // Pick a random co-ordinate
         uint8_t x = Utils::irandom(0, 20);
@@ -685,7 +682,6 @@ void update_world() {
             check_senses();
         } else {
             // Player was killed
-            game.state = PLAYER_IS_DEAD;
             death();
 
             #ifdef DEBUG
@@ -750,7 +746,7 @@ void manage_phantoms() {
 
         // Do we need to add any new phantoms to the board?
         while (game.phantoms.size() < phantom_count) {
-            Phantom p = Phantom();
+            Phantom p = Phantom(0, 0);
             p.roll_location();
             game.phantoms.push_back(p);
         }
@@ -1014,13 +1010,13 @@ void reset_laser() {
     The player has died -- show the map and the score.
  */
 void death() {
+    game.state = PLAYER_IS_DEAD;
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     //sleep_ms(50);
     //tone(2200, 500, 600);
 
     // Clear the display (blue)
-    pen(BLUE);
-    clear();
+    Gfx::cls(BLUE);
 
     // Give instructions
     Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
@@ -1028,10 +1024,10 @@ void death() {
     // Show the map
     show_scores(true);
 
+    // Clear a space and say what happened
     pen(BLUE);
     frect(36, 106, 168, 28);
     Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
-
 }
 
 
@@ -1039,8 +1035,7 @@ void death() {
     Just show the map briefly after killing a Phantom
  */
 void phantom_killed(bool is_last) {
-    pen(BLUE);
-    clear();
+    Gfx::cls(BLUE);
     show_scores(is_last);
 }
 

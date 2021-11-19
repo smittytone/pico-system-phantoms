@@ -23,6 +23,8 @@ extern tinymt32_t   tinymt_store;
 /*
     Constructor.
 
+    NOTE This does not set the Phantom's location.
+
     - Parameters:
         - start_x: Inital X co-ordinate. Default: off the board.
         - start_y: Inital Y co-ordinate. Default: off the board.
@@ -49,123 +51,157 @@ Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
                otherwise `false`.
  */
 bool Phantom::move() {
-    // Only move phantoms that are in the maze
-    if (x != ERROR_CONDITION) {
-        // Has the Phantom been zapped? Don't move it
-        if (hp < 1) return false;
+    // Has the Phantom been zapped? Don't move it
+    if (hp < 1) return false;
 
-        uint8_t new_x = x;
-        uint8_t new_y = y;
-        uint8_t new_direction = direction;
-        uint8_t *p_x = &new_x;
-        uint8_t *p_y = &new_y;
+    uint8_t new_x = x;
+    uint8_t new_y = y;
+    uint8_t new_direction = direction;
+    uint8_t *p_x = &new_x;
+    uint8_t *p_y = &new_y;
 
-        // Get distance to player
-        int8_t dx = x - game.player.x;
-        int8_t dy = y - game.player.y;
+    // Get distance to player
+    int8_t dx = x - game.player.x;
+    int8_t dy = y - game.player.y;
 
-        // Has the phantom got the player?
-        if (dx == 0 && dy == 0) return true;
+    // Has the phantom got the player?
+    if (dx == 0 && dy == 0) return true;
 
-        // Set up direction storage
-        uint8_t available_directions = 0;
-        uint8_t favoured_directions = 0;
-        uint8_t usable_directions = 0;
-        uint8_t exit_count = 0;
+    // Set up direction storage
+    uint8_t available_directions = 0;
+    uint8_t favoured_directions = 0;
+    uint8_t usable_directions = 0;
+    uint8_t exit_count = 0;
 
-        // Determine the directions in which the phantom *can* move: empty spaces with no phantom already there
-        if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x - 1, y) == ERROR_CONDITION) {
-            available_directions |= PHANTOM_WEST;
-            ++exit_count;
+    // Determine the directions in which the phantom *can* move: empty spaces with no phantom already there
+    if (x > 0 && Map::get_square_contents(x - 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x - 1, y) == ERROR_CONDITION) {
+        available_directions |= PHANTOM_WEST;
+        ++exit_count;
+    }
+
+    if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x + 1, y) == ERROR_CONDITION) {
+        available_directions |= PHANTOM_EAST;
+        ++exit_count;
+    }
+
+    if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y - 1) == ERROR_CONDITION) {
+        available_directions |= PHANTOM_NORTH;
+        ++exit_count;
+    }
+
+    if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y + 1) == ERROR_CONDITION) {
+        available_directions |= PHANTOM_SOUTH;
+        ++exit_count;
+    }
+
+    if (available_directions == 0) {
+        // Phantom can't move anywhere -- all its exits are currently blocked
+        return false;
+    }
+
+    // FROM 1.0.1
+    // Move away from the player if the Phantom is reversing
+    uint8_t from = 0;
+    if (back_steps > 0) {
+        // Phantom is indeed reversing, so get the direction
+        // from which it moved into this square -- we'll use this
+        // to prevent the Phantom from back-tracking if in the next
+        // lines it can go after the player again
+        from = came_from();
+        if (exit_count > 2) {
+            // The Phantom has reached a junction, ie. a square with more than
+            // two exits, so reset the reversal and try to move toward the player again
+            back_steps = 0;
+        } else {
+            // The Phantom isn't at a junction, so calculate its
+            // vector away from the player ('dx' and 'dy'
+            // vector toward the player unless changed here)
+            dx *= -1;
+            dy *= -1;
         }
+    }
 
-        if (x < MAP_MAX && Map::get_square_contents(x + 1, y) != MAP_TILE_WALL && Map::phantom_on_square(x + 1, y) == ERROR_CONDITION) {
-            available_directions |= PHANTOM_EAST;
-            ++exit_count;
+    // Get the Phantom's move preferences -- the direction(s)
+    // in which it would like to go
+    if (dy > 0) favoured_directions |= PHANTOM_NORTH;
+    if (dy < 0) favoured_directions |= PHANTOM_SOUTH;
+    if (dx > 0) favoured_directions |= PHANTOM_WEST;
+    if (dx < 0) favoured_directions |= PHANTOM_EAST;
+
+    // FROM 1.0.1
+    // Remove the way the Phantom has come from its list of
+    // favoured directions. This is used when it's reversing
+    // and has reached a junction (ie. 'from != 0')
+    favoured_directions &= (~from);
+
+    // Count up the number of ways favoured moves and available squares match
+    uint8_t count = 0;
+    for (uint8_t i = 0 ; i < 4 ; ++i) {
+        if ((available_directions & (1 << i)) && (favoured_directions & (1 << i))) {
+            // Phantom wants to go in a certain direction and it has an exit
+            // so record this as a usable direction
+            ++count;
+            usable_directions |= (1 << i);
         }
+    }
 
-        if (y > 0 && Map::get_square_contents(x, y - 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y - 1) == ERROR_CONDITION) {
-            available_directions |= PHANTOM_NORTH;
-            ++exit_count;
+    // Handle the move itself
+    if (count == 1) {
+        // Only one way for the Phantom to go, so take it
+        move_one_square(usable_directions, p_x, p_y);
+        new_direction = usable_directions;
+    } else if (count == 2) {
+        // The Phantom has two ways to go, so pick one of them at random:
+        // even roll go the first way (0); odd roll go the second (1)
+        uint8_t r = (Utils::irandom(1, 100) % 2);
+        uint8_t i = 0;
+        while(true) {
+            // Iterate through the directions until we have that can be
+            // used and then is selectable (r == 0)
+            if (usable_directions & (1 << i)) {
+                if (r == 0) {
+                    // Take this direction
+                    move_one_square((usable_directions & (1 << i)), p_x, p_y);
+                    new_direction = (usable_directions & (1 << i));
+                    break;
+                } else {
+                    // Ignore this direction
+                    r--;
+                }
+            }
+
+            ++i;
+            if (i > 3) i = 0;
         }
-
-        if (y < MAP_MAX && Map::get_square_contents(x, y + 1) != MAP_TILE_WALL && Map::phantom_on_square(x, y + 1) == ERROR_CONDITION) {
-            available_directions |= PHANTOM_SOUTH;
-            ++exit_count;
-        }
-
-        if (available_directions == 0) {
-            // Phantom can't move anywhere -- all its exits are currently blocked
-            return false;
-        }
-
-        // FROM 1.0.1
-        // Move away from the player if the Phantom is reversing
-        uint8_t from = 0;
-        if (back_steps > 0) {
-            // Phantom is indeed reversing, so get the direction
-            // from which it moved into this square -- we'll use this
-            // to prevent the Phantom from back-tracking if in the next
-            // lines it can go after the player again
+    } else {
+        // Count == 0 -- this is the special case where phantom can't move
+        //  where it wants so must move away or wait (if it has NOWHERE to go)
+        if (available_directions != 0) {
+            // Just pick a random available direction and take it,
+            // but remove the way the phantom came (provided it
+            // doesn't leave it with no way out)
+            // NOTE re-calculate 'from' here so we don't mess up
+            //      the ealier case when it needs to be zero
             from = came_from();
-            if (exit_count > 2) {
-                // The Phantom has reached a junction, ie. a square with more than
-                // two exits, so reset the reversal and try to move toward the player again
-                back_steps = 0;
-            } else {
-                // The Phantom isn't at a junction, so calculate its
-                // vector away from the player ('dx' and 'dy'
-                // vector toward the player unless changed here)
-                dx *= -1;
-                dy *= -1;
-            }
-        }
+            uint8_t ad = available_directions;
+            ad &= (~from);
 
-        // Get the Phantom's move preferences -- the direction(s)
-        // in which it would like to go
-        if (dy > 0) favoured_directions |= PHANTOM_NORTH;
-        if (dy < 0) favoured_directions |= PHANTOM_SOUTH;
-        if (dx > 0) favoured_directions |= PHANTOM_WEST;
-        if (dx < 0) favoured_directions |= PHANTOM_EAST;
+            // Just in case removing from leaves the Phantom nowhere to go
+            // ie. it's at a dead end
+            if (ad != 0) available_directions = ad;
 
-        // FROM 1.0.1
-        // Remove the way the Phantom has come from its list of
-        // favoured directions. This is used when it's reversing
-        // and has reached a junction (ie. 'from != 0')
-        favoured_directions &= (~from);
-
-        // Count up the number of ways favoured moves and available squares match
-        uint8_t count = 0;
-        for (uint8_t i = 0 ; i < 4 ; ++i) {
-            if ((available_directions & (1 << i)) && (favoured_directions & (1 << i))) {
-                // Phantom wants to go in a certain direction and it has an exit
-                // so record this as a usable direction
-                ++count;
-                usable_directions |= (1 << i);
-            }
-        }
-
-        // Handle the move itself
-        if (count == 1) {
-            // Only one way for the Phantom to go, so take it
-            move_one_square(usable_directions, p_x, p_y);
-            new_direction = usable_directions;
-        } else if (count == 2) {
-            // The Phantom has two ways to go, so pick one of them at random:
-            // even roll go the first way (0); odd roll go the second (1)
-            uint8_t r = (Utils::irandom(1, 100) % 2);
+            // Pick a random value and count down through the available exits
+            // until it comes to zero -- then take that one
             uint8_t i = 0;
-            while(true) {
-                // Iterate through the directions until we have that can be
-                // used and then is selectable (r == 0)
-                if (usable_directions & (1 << i)) {
+            uint8_t r = Utils::irandom(0, 4);
+            while (true) {
+                if ((available_directions & (1 << i)) > 0) {
                     if (r == 0) {
-                        // Take this direction
-                        move_one_square((usable_directions & (1 << i)), p_x, p_y);
-                        new_direction = (usable_directions & (1 << i));
+                        move_one_square((available_directions & (1 << i)), p_x, p_y);
+                        new_direction = (available_directions & (1 << i));
+                        back_steps = 1;
                         break;
                     } else {
-                        // Ignore this direction
                         r--;
                     }
                 }
@@ -173,50 +209,13 @@ bool Phantom::move() {
                 ++i;
                 if (i > 3) i = 0;
             }
-        } else {
-            // Count == 0 -- this is the special case where phantom can't move
-            //  where it wants so must move away or wait (if it has NOWHERE to go)
-            if (available_directions != 0) {
-                // Just pick a random available direction and take it,
-                // but remove the way the phantom came (provided it
-                // doesn't leave it with no way out)
-                // NOTE re-calculate 'from' here so we don't mess up
-                //      the ealier case when it needs to be zero
-                from = came_from();
-                uint8_t ad = available_directions;
-                ad &= (~from);
-
-                // Just in case removing from leaves the Phantom nowhere to go
-                // ie. it's at a dead end
-                if (ad != 0) available_directions = ad;
-
-                // Pick a random value and count down through the available exits
-                // until it comes to zero -- then take that one
-                uint8_t i = 0;
-                uint8_t r = Utils::irandom(0, 4);
-                while (true) {
-                    if ((available_directions & (1 << i)) > 0) {
-                        if (r == 0) {
-                            move_one_square((available_directions & (1 << i)), p_x, p_y);
-                            new_direction = (available_directions & (1 << i));
-                            back_steps = 1;
-                            break;
-                        } else {
-                            r--;
-                        }
-                    }
-
-                    ++i;
-                    if (i > 3) i = 0;
-                }
-            }
         }
-
-        // Set the Phantom's new location
-        x = new_x;
-        y = new_y;
-        direction = new_direction;
     }
+
+    // Set the Phantom's new location
+    x = new_x;
+    y = new_y;
+    direction = new_direction;
 
     return false;
 }
@@ -245,7 +244,9 @@ uint8_t Phantom::came_from() {
 
 
 /*
-    Locate a new Phantom
+    Locate a new Phantom.
+
+    NOTE Don't add Phantom to array until this has been called.
  */
 void Phantom::roll_location() {
     while (true) {
@@ -254,17 +255,26 @@ void Phantom::roll_location() {
         uint8_t new_y = Utils::irandom(0, 20);
 
         // Make sure we're selecting a clear square, the player is not there
-        // already and is not in an adjacent square either
-        bool good = (Map::get_square_contents(new_x, new_y) == MAP_TILE_CLEAR);
-        good &= ((new_x != game.player.x)     && (new_y != game.player.y));
-        good &= ((new_x != game.player.x - 1) && (new_x != game.player.x + 1));
-        good &= ((new_y != game.player.y - 1) && (new_y != game.player.y + 1));
+        // already and is not in a nearby square either
+        if ((new_x < game.player.x - 4 || new_x > game.player.x + 4) && (new_y < game.player.y - 4 || new_y > game.player.y + 4)) {
+            if (Map::get_square_contents(new_x, new_y) == MAP_TILE_CLEAR) {
+                bool good = true;
+                for (uint8_t i = 0 ; i < game.phantoms.size() ; ++i) {
+                    Phantom p = game.phantoms.at(i);
+                    if (p.x == new_x && p.y == new_y) {
+                        good = false;
+                        break;
+                    }
+                }
 
-        // If the chosen square is valid, use it
-        if (good) {
-            x = new_x;
-            y = new_y;
-            break;
+                if (good) {
+                    x = new_x;
+                    y = new_y;
+                    break;
+                }
+            }
         }
     }
+
+
 }
