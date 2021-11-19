@@ -4,6 +4,8 @@ A retro-style 3D arcade game written in C++.
 
 The original Phantom Slayer was created Ken Kalish for Med Systems. It was written in 6809 machine code for the Tandy Color Computer and was compatible with the Dragon 32 micro.
 
+![Phantom Slayer for the Pimoroni PicoSystem](images/phantoms-ps-001.jpg)
+
 For more details on the game [see this page](https://smittytone.net/pico-phantoms/).
 
 #### Requirements
@@ -33,6 +35,10 @@ This code requires the installation of the [Pico SDK](https://github.com/raspber
 ### The Game
 
 See [this blog post for full details](https://blog.smittytone.net/2021/03/26/3d-arcade-action-courtesy-of-raspberry-pi-pico/).
+
+Read the [original game instructions](original-instructions.md).
+
+![Phantom Slayer for the Pimoroni PicoSystem](images/phantoms-ps-002.jpg)
 
 ### To Do
 
