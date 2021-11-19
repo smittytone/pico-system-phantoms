@@ -2,7 +2,7 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.0
+ * @version     1.1.1
  * @author      smittytone
  * @copyright   2021, Tony Smith
  * @licence     MIT

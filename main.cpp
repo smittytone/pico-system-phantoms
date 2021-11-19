@@ -1,7 +1,7 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.0
+ * @version     1.1.1
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -965,7 +965,7 @@ void fire_laser() {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
         Phantom &p = game.phantoms.at(n);
-        p.hp -= 1;
+        p.hp--;
 
         // FROM 1.0.2
         // Use original scoring: 2 points for a hit, 10 for a kill
@@ -974,7 +974,7 @@ void fire_laser() {
         game.is_firing = false;
 
         // Did that kill it?
-        if (p.hp == 0) {
+        if (p.hp < 1) {
             // Yes! One dead Phantom...
             game.score += 10;
             game.level_kills++;

@@ -2,7 +2,7 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.0
+ * @version     1.1.1
  * @author      smittytone
  * @copyright   2021, Tony Smith
  * @licence     MIT
@@ -60,8 +60,8 @@ class Phantom {
         // Properties
         uint8_t     x;
         uint8_t     y;
-        uint8_t     hp;
-        uint8_t     hp_max;
+        int8_t      hp;
+        int8_t      hp_max;
         uint8_t     direction;
         uint8_t     back_steps;
 };
