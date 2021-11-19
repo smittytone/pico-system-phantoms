@@ -1,4 +1,4 @@
-# Phantom Slayer for the Pimoroni PicoSystem
+# Phantom Slayer for the Pimoroni PicoSystem 1.1.0
 
 A retro-style 3D arcade game written in C++.
 
@@ -12,10 +12,10 @@ For more details on the game [see this page](https://smittytone.net/pico-phantom
 
 ### The Code
 
-Build from source code, or copy `phantoms.uf2` to your PicoSystem. Please check the SHA 256:
+Build from source code, or copy `bin/phantoms.uf2` to your PicoSystem. Please check the SHA 256:
 
 ```
-SHA-256 TO ADD
+045b1f7d4306d4d77ae53fe9d40ab86816f293b8e78f7f745e621dee7c41047e
 ```
 
 ### Build the Code
@@ -34,6 +34,15 @@ This code requires the installation of the [Pico SDK](https://github.com/raspber
 
 See [this blog post for full details](https://blog.smittytone.net/2021/03/26/3d-arcade-action-courtesy-of-raspberry-pi-pico/).
 
+### To Do
+
+* Better sound!
+
 ### Credits
 
 This games is based on a 1982 original created by Ken Kalish of Med Systems for the Tandy Color Computer. The design is Ken’s; the code is mine, and I’ve taken only a few liberties with certain gameplay and visual details.
+
+### Release Notes
+
+* 1.1.0 *19 November 2021*
+    * Initial release.
