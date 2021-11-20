@@ -82,6 +82,7 @@ enum {
 #define MAP_TILE_CLEAR                                  0xFF
 #define MAP_TILE_TELEPORTER                             0xAA
 #define MAX_VIEW_RANGE                                  5
+#define BASE_MAP_DELTA                                  4
 
 #define MAX_PHANTOMS                                    3
 #define ERROR_CONDITION                                 99
@@ -119,6 +120,7 @@ typedef struct {
     bool                    is_firing;
 
     std::vector<Phantom>    phantoms;
+    uint8_t                 phantom_count;
     uint32_t                phantom_speed;
     uint32_t                last_phantom_move;
     int8_t                  crosshair_delta;
@@ -162,9 +164,8 @@ void        start_new_game();
 void        init_game();
 void        init_phantoms();
 void        init_level();
-void        start_new_level(bool is_first);
+void        start_new_level();
 void        set_teleport_square();
-void        roll_first_phantom();
 
 void        update_world();
 void        check_senses();

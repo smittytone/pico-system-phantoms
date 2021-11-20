@@ -29,18 +29,66 @@ extern tinymt32_t   tinymt_store;
         - start_x: Inital X co-ordinate. Default: off the board.
         - start_y: Inital Y co-ordinate. Default: off the board.
  */
-Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
+Phantom::Phantom() {
+    // Use 'NOT_ON_BOARD' (== ERROR_CONDITION) as 'not on board yet'
+    init();
+    direction = DIRECTION_NORTH;
+    x = NOT_ON_BOARD;
+    y = NOT_ON_BOARD;
+}
+
+
+/**
+    Roll the Phantom's hit points
+ */
+void Phantom::init() {
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
     uint8_t max_hit_points = level_data[level_index + 1];
     hp = Utils::irandom(min_hit_points, max_hit_points);
-    hp_max = hp;
+    if (hp < 1) {
+        hp = 1;
+        printf("PH WITH 0 HP Min: %i, Max: %i\n", min_hit_points, max_hit_points);
+    }
     back_steps = 0;
-    direction = DIRECTION_NORTH;
+}
 
-    // Use 'ERROR_CONDITION' as 'not on board yet'
-    x = start_x;
-    y = start_y;
+
+/*
+    Set the Phantom on a new square.
+ */
+void Phantom::place(uint8_t my_index) {
+    while (true) {
+        // Pick a random co-ordinate
+        uint8_t new_x = Utils::irandom(0, 20);
+        uint8_t new_y = Utils::irandom(0, 20);
+
+        // Make sure we're selecting a clear square, the player is not there
+        // already and is not in a nearby square either
+        if ((new_x < game.player.x - 4 || new_x > game.player.x + 4) && (new_y < game.player.y - 4 || new_y > game.player.y + 4)) {
+            if (Map::get_square_contents(new_x, new_y) == MAP_TILE_CLEAR) {
+                bool good = true;
+
+                // Make sure the square is not occupied by another Phantom
+                if (game.phantom_count > 1) {
+                    for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
+                        if (i == my_index) continue;
+                        Phantom &p = game.phantoms.at(i);
+                        if (p.x == new_x && p.y == new_y) {
+                            good = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (good) {
+                    x = new_x;
+                    y = new_y;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 
@@ -52,7 +100,7 @@ Phantom::Phantom(uint8_t start_x, uint8_t start_y) {
  */
 bool Phantom::move() {
     // Has the Phantom been zapped? Don't move it
-    if (hp < 1) return false;
+    if (x == NOT_ON_BOARD || hp < 1) return false;
 
     uint8_t new_x = x;
     uint8_t new_y = y;
@@ -240,41 +288,4 @@ uint8_t Phantom::came_from() {
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
     if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
     return PHANTOM_NORTH;
-}
-
-
-/*
-    Locate a new Phantom.
-
-    NOTE Don't add Phantom to array until this has been called.
- */
-void Phantom::roll_location() {
-    while (true) {
-        // Pick a random co-ordinate
-        uint8_t new_x = Utils::irandom(0, 20);
-        uint8_t new_y = Utils::irandom(0, 20);
-
-        // Make sure we're selecting a clear square, the player is not there
-        // already and is not in a nearby square either
-        if ((new_x < game.player.x - 4 || new_x > game.player.x + 4) && (new_y < game.player.y - 4 || new_y > game.player.y + 4)) {
-            if (Map::get_square_contents(new_x, new_y) == MAP_TILE_CLEAR) {
-                bool good = true;
-                for (uint8_t i = 0 ; i < game.phantoms.size() ; ++i) {
-                    Phantom p = game.phantoms.at(i);
-                    if (p.x == new_x && p.y == new_y) {
-                        good = false;
-                        break;
-                    }
-                }
-
-                if (good) {
-                    x = new_x;
-                    y = new_y;
-                    break;
-                }
-            }
-        }
-    }
-
-
 }

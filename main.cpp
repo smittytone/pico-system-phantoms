@@ -36,7 +36,7 @@ Rect        rects[7];
 Game        game;
 
 voice_t     blip = voice(10, 0, 40, 40);
-voice_t     piano = voice(0, 0, 50, 0);
+voice_t     zap = voice(150, 0, 60, 350);
 
 
 /*
@@ -177,14 +177,16 @@ void update(uint32_t tick_ms) {
             if (tick_count == 100) {
                 tick_count = 0;
                 game.state = SHOW_TEMP_MAP;
-                uint8_t phantom_count = game.phantoms.size();
-                phantom_killed(phantom_count == 1);
+                bool last_phantom_killed = (game.level_kills == game.phantom_count);
+                phantom_killed(last_phantom_killed);
 
                 // Take the dead phantom off the board
                 // (so it gets re-rolled in `manage_phantoms()`)
                 // NOTE `manage_phantoms()` calls `start_new_level()`
                 //      if necessary
-                game.phantoms.erase(game.phantoms.begin() + dead_phantom);
+                Phantom &p = game.phantoms.at(dead_phantom);
+                p.x = ERROR_CONDITION;
+                p.y = ERROR_CONDITION;
                 dead_phantom = ERROR_CONDITION;
                 manage_phantoms();
             }
@@ -362,11 +364,11 @@ void draw() {
             //      itself
             // Clear the number
             pen(BLUE);
-            frect(112, 210, 16, 20);
+            frect(112, 214, 16, 20);
 
             // Show the new number
             pen(YELLOW);
-            Gfx::draw_number(count_down, (count_down == 1 ? 118 : 114), 210, true);
+            Gfx::draw_number(count_down, (count_down == 1 ? 118 : 114), 214, true);
             break;
         case SHOW_TEMP_MAP:
             // We've already drawn the post kill map, so just exit
@@ -403,7 +405,7 @@ void draw() {
                 Gfx::draw_screen(p.x, p.y, p.direction);
             } else if (map_mode) {
                 // Draw an overhead view
-                Map::draw(0, true);
+                Map::draw(BASE_MAP_DELTA, true);
             } else {
                 // Show the player's view
                 Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
@@ -431,9 +433,9 @@ void setup_device() {
 
     // Use one of the Pico's other analog inputs
     // to seed the random number generator
-    adc_init();
-    adc_gpio_init(28);
-    adc_select_input(2);
+    //adc_init();
+    //adc_gpio_init(28);
+    //adc_select_input(2);
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
@@ -481,22 +483,22 @@ void start_new_game() {
     // Reset the settings
     init_game();
     init_phantoms();
-    start_new_level(true);
+    start_new_level();
 
     // Clear the screen (blue), present the current map
     // and give the player a five-second countdown before
     // entering the maze
     Gfx::cls(BLUE);
-    Map::draw(0, false);
+    Map::draw(BASE_MAP_DELTA, false);
 
-    Gfx::draw_number(game.level, 156, 10, true);
-    Gfx::draw_word(WORD_LEVEL, 72, 10, true);
+    Gfx::draw_number(game.level, 156, 12, true);
+    Gfx::draw_word(WORD_LEVEL, 72, 12, true);
 
     // Set the game mode
     game.state = START_COUNT;
 
     #ifdef DEBUG
-    printf("DONE START_NEW_GAME\n");
+    printf("DONE START_NEW_GAME()\n");
     #endif
 }
 
@@ -517,6 +519,7 @@ void init_game() {
     // Store the current map number so it's not
     // used in the next game
     game.map = ERROR_CONDITION;
+    game.phantom_count = 1;
 
     game.player.x = 0;
     game.player.y = 0;
@@ -569,6 +572,11 @@ void init_level() {
 void init_phantoms() {
     // Reset the array stored phantoms structures
     game.phantoms.clear();
+    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+        Phantom p;
+        game.phantoms.push_back(p);
+    }
+
     game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
     game.last_phantom_move = 0;
 
@@ -584,7 +592,7 @@ void init_phantoms() {
     each level. A level jump is triggered when all the
     current phantoms have been dispatched.
  */
-void start_new_level(bool is_first) {
+void start_new_level() {
     // Initialise the current map
     game.map = Map::init(game.map);
     init_level();
@@ -608,10 +616,13 @@ void start_new_level(bool is_first) {
     // Set the teleport
     set_teleport_square();
 
-    if (is_first) {
-        // Add the first phantom to the map, everywhere but empty
-        // or where the player
-        roll_first_phantom();
+    // Add the first phantom to the map, everywhere but empty
+    // or where the player has been placed.
+    // NOTE 'game.phantom_count' set in 'init_game()' and 'manage_phantoms()'
+    for (uint8_t i = 0 ; i < game.phantom_count ; i++) {
+        Phantom &p = game.phantoms.at(i);
+        p.init();
+        p.place(i);
     }
 
     /* TEST DATA
@@ -641,30 +652,6 @@ void set_teleport_square() {
             break;
         }
     }
-}
-
-
-/**
-    Randomly roll a level's first Phantom
- */
-void roll_first_phantom() {
-    Phantom p = Phantom(0, 0);
-    while (true) {
-        // Pick a random co-ordinate
-        uint8_t x = Utils::irandom(0, 20);
-        uint8_t y = Utils::irandom(0, 20);
-
-        // If the chosen square is valid, use it
-        if ((x < game.player.x - 4 || x > game.player.x + 4) && (y < game.player.y - 4 || y > game.player.y + 4)) {
-            if (Map::get_square_contents(x, y) == MAP_TILE_CLEAR) {
-                p.x = x;
-                p.y = y;
-                break;
-            }
-        }
-    }
-
-    game.phantoms.push_back(p);
 }
 
 
@@ -718,21 +705,20 @@ void update_world() {
  */
 void manage_phantoms() {
     bool level_up = false;
-    size_t phantom_count = 0;
 
     // If we're on levels 1 and 2, we only have that number of
     // Phantoms. From 3 and up, there are aways three in the maze
     if (game.level < MAX_PHANTOMS) {
         if (game.level_kills == game.level) {
-            game.level++;
             level_up = true;
-            phantom_count = game.level;
+            game.level++;
+            game.phantom_count = game.level;
         }
     } else {
         if (game.level_kills == MAX_PHANTOMS) {
-            game.level++;
             level_up = true;
-            phantom_count = MAX_PHANTOMS;
+            game.level++;
+            game.phantom_count = MAX_PHANTOMS;
         }
     }
 
@@ -742,17 +728,17 @@ void manage_phantoms() {
         game.phantom_speed = ((PHANTOM_MOVE_TIME_US << level_data[index + 2]) >> level_data[index + 3]);
 
         // Just in case...
-        if (phantom_count > MAX_PHANTOMS) phantom_count = MAX_PHANTOMS;
+        if (game.phantom_count > MAX_PHANTOMS) game.phantom_count = MAX_PHANTOMS;
 
-        // Do we need to add any new phantoms to the board?
-        while (game.phantoms.size() < phantom_count) {
-            Phantom p = Phantom(0, 0);
-            p.roll_location();
-            game.phantoms.push_back(p);
+        // Take all existing Phantoms off the board
+        for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+            Phantom &p = game.phantoms.at(i);
+            p.x = ERROR_CONDITION;
+            p.y = ERROR_CONDITION;
         }
 
         // Create a new level
-        start_new_level(false);
+        start_new_level();
     }
 }
 
@@ -883,12 +869,9 @@ uint8_t count_facing_phantoms(uint8_t range) {
                otherwise `false`.
 */
 bool move_phantoms() {
-    size_t number = game.phantoms.size();
-    if (number > 0) {
-        for (size_t i = 0 ; i < number ; ++i) {
-            Phantom &p = game.phantoms.at(i);
-            if (p.move() == true) return true;
-        }
+    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+        Phantom &p = game.phantoms.at(i);
+        if (p.move()) return true;
     }
 
     return false;
@@ -956,6 +939,7 @@ void do_teleport() {
  */
 void fire_laser() {
     // Did we hit a Phantom?
+    play(zap, 640, 200);
     uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
     if (n != ERROR_CONDITION) {
         // A hit! A palpable hit!
@@ -1087,7 +1071,7 @@ void show_scores(bool show_tele) {
     }
 
     // Add in the map
-    Map::draw(4, true, show_tele);
+    Map::draw(BASE_MAP_DELTA, true, show_tele);
 }
 
 

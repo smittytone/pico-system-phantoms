@@ -49,19 +49,20 @@ const uint8_t level_data[84] = {
 class Phantom {
     public:
         // Methods
-        Phantom(uint8_t start_x = NOT_ON_BOARD, uint8_t start_y = NOT_ON_BOARD);
+        Phantom();
 
+        void        init();
+        void        place(uint8_t my_index);
         bool        move();
         void        move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny);
         uint8_t     came_from();
-        void        roll_location();
+
 
 
         // Properties
         uint8_t     x;
         uint8_t     y;
         int8_t      hp;
-        int8_t      hp_max;
         uint8_t     direction;
         uint8_t     back_steps;
 };
