@@ -3,7 +3,7 @@ include(../picosystem/pico_sdk_import.cmake)
 
 set(PICOSYSTEM_DIR /Users/smitty/GitHub/picosystem)
 
-add_definitions(-DDEBUG)
+#add_definitions(-DDEBUG)
 
 project(phantom-slayer
         C CXX ASM)

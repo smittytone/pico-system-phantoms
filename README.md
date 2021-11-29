@@ -14,10 +14,10 @@ For more details on the game [see this page](https://smittytone.net/pico-phantom
 
 ### The Code
 
-Build from source code, or copy `bin/phantoms.uf2` to your PicoSystem. Please check the SHA 256:
+Build from source code, or copy `bin/phantoms.uf2` to your PicoSystem. Please check the SHA 256 first:
 
 ```
-607d9e942284e3760e357cf480cbb2177221a09a44cb77cfe6219eb86467217e
+e1a01d002e47584dba17c9c448e8afa15979c7f79db5995fac63473b2e619df5
 ```
 
 ### Build the Code
@@ -50,7 +50,7 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 
 ### Release Notes
 
-* 1.1.1 *Unreleased*
+* 1.1.1 *29 November 2021*
     * Bug fixes:
         * Phantoms' health could become huge -- fixed.
         * Dead phantoms could move -- fixed.
