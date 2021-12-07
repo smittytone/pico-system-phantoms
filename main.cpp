@@ -1,7 +1,7 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.1
+ * @version     1.1.2
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -380,7 +380,6 @@ void draw() {
             if (anim_x > 240 - SLICE) break;
 
             // Blit screen left by one slice
-            //   src          sx      sy  sw           sh   dx           dy
             Gfx::alt_blit(SCREEN, SLICE, 40, 240 - SLICE, 160, 0, 40);
 
             // Blit side slice to last slice of screen

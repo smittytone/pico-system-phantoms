@@ -2,7 +2,7 @@
  * Phantom Slayer
  * Graphics Routines
  *
- * @version     1.1.1
+ * @version     1.1.2
  * @author      smittytone
  * @copyright   2021, Tony Smith
  * @licence     MIT
@@ -185,13 +185,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-
-    if (game.state == DO_TELEPORT_ONE) {
-        pen(WHITE);
-    } else {
-        pen(RED);
-    }
-
+    pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }
@@ -209,18 +203,6 @@ void draw_teleporter(uint8_t frame_index) {
     Rect b = rects[frame_index + 1];
     pen(GREEN);
     frect(c.x, b.y + b.height + 40, c.width, (c.y + c.height) - (b.y + b.height));
-
-    /*
-    bool dot_state = true;
-
-    // Plot a dot pattern
-    for (uint8_t y = r.y + r.height - 4; y < r.y + r.height ; ++y) {
-        for (uint8_t i = r.x ; i < r.x + r.width - 2; i += 2) {
-            pixel(dot_state ? i : i + 1, y);
-        }
-        dot_state = !dot_state;
-    }
-    */
 }
 
 
@@ -240,12 +222,7 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    if (game.state == DO_TELEPORT_ONE) {
-        pen(WHITE);
-    } else {
-        pen(BLUE);
-    }
-
+    pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
     frect(o.x, i.y + 40, i.x - o.x - 1, i.height);
     if (is_open) return;
 
@@ -271,12 +248,7 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    if (game.state == DO_TELEPORT_ONE) {
-        pen(WHITE);
-    } else {
-        pen(BLUE);
-    }
-
+    pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
     uint8_t xd = i.x + i.width;
     frect(xd + 1, i.y + 40, o.width + o.x - xd - 1, i.height);
     if (is_open) return;
@@ -309,12 +281,7 @@ void draw_far_wall(uint8_t frame_index) {
                rxd - 4, ryd + 37,
                rxd - 4, r.y + 42});
     } else {
-        if (game.state == DO_TELEPORT_ONE) {
-            pen(WHITE);
-        } else {
-            pen(BLUE);
-        }
-
+        pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
         frect(r.x, r.y + 40, r.width, r.height);
     }
 }
@@ -440,30 +407,9 @@ void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
 }
 
 
-void show_debug_info() {
-    if (game.player.x < 10) {
-        draw_number(game.player.x, 0, 0);
-    } else {
-        draw_number(1, 0, 0);
-        draw_number(game.player.x - 10, 4, 0);
-    }
-
-    if (game.player.y < 10) {
-        draw_number(game.player.y, 0, 12);
-    } else {
-        draw_number(1, 0, 12);
-        draw_number(game.player.y - 10, 4, 12);
-    }
-
-    draw_number(game.player.direction, 0, 24);
-
-    draw_number((uint8_t)game.phantoms.size(), 170, 0);
-
-    draw_number(game.level, 80, 12);
-    draw_number(game.kills, 80, 24);
-}
-
-
+/*
+    Roll up the logo down from the top of the screen.
+ */
 void animate_logo(int16_t y) {
     if (y < -19) return;
 
