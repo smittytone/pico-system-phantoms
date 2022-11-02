@@ -324,7 +324,7 @@ uint8_t init(uint8_t last_map) {
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     // Set the map background (blue)
     pen(BLUE);
-    frect(0, 40, 240, 160);
+    frect(0, 0, 240, 240);
 
     // Draw the map
     uint8_t x = 40;
@@ -395,7 +395,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 /*
     Return the contents of the specified grid reference.
 
-    - Paramters:
+    - Parameters:
         - x: The square's x co-ordinate.
         - y: The square's y co-ordinate.
 
@@ -411,7 +411,7 @@ uint8_t get_square_contents(uint8_t x, uint8_t y) {
 /*
     Set the contents of the specified grid reference.
 
-    - Paramters:
+    - Parameters:
         - x:     The square's x co-ordinate.
         - y:     The square's y co-ordinate.
         - value: The square's new contents.
@@ -429,7 +429,7 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
 /*
     Return the number of squares an entity can see.
 
-    - Paramters:
+    - Parameters:
         - x:         The entity's x co-ordinate.
         - y:         The entity's y co-ordinate.
         - direction: The direction in which the entity is facing.

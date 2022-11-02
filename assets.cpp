@@ -1,6 +1,6 @@
 /*
  * Phantom Slayer
- * Image assests file
+ * Image assets file
  *
  * @version     1.1.2
  * @author      smittytone

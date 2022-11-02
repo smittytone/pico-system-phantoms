@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 3.14)
-include(../picosystem/pico_sdk_import.cmake)
+include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
 
-set(PICOSYSTEM_DIR /Users/smitty/GitHub/picosystem)
+get_filename_component(SDKPATH "${PROJECT_SOURCE_DIR}../picosystem" REALPATH)
+if(NOT EXISTS ${SDKPATH})
+    message(FATAL_ERROR "Please clone the Picosystem SDK in a directory parallel ot this one.")
+endif()
 
-#add_definitions(-DDEBUG)
+set(PICOSYSTEM_DIR ../picosystem)
+
+execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
+add_compile_definitions(ROOT=${EPOCH})
+add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
-        C CXX ASM)
-project(phantom-slayer
+        LANGUAGES C CXX ASM
         VERSION 1.1.0
         DESCRIPTION "Phantom Slayer for PicoSystem")
 

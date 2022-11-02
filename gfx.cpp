@@ -185,7 +185,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
  */
 void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
-    pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
+    pen(game.state == DO_TELEPORT_ONE ? WHITE : RED);
     line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
     line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
 }

@@ -42,7 +42,7 @@ namespace Utils {
  */
 int irandom(int start, int max) {
     int value = tinymt32_generate_uint32(&tinymt_store);
-    return (value % max + start);
+    return ((value % max) + start);
 }
 
 

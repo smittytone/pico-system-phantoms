@@ -52,10 +52,16 @@ void init() {
     // Clear the display as soon as possible
     Gfx::cls(GREEN);
 
-    #ifdef DEBUG
+    // Show the version
+    pen(BLACK);
+    cursor(216, 232);
+    text("1.1.2");
+
+#ifdef DEBUG
     // Enable debugging
     stdio_init_all();
-    #endif
+    sleep_ms(2000);
+#endif
 
     // Set up game device
     // NOTE This is all the stuff that is per session,
@@ -119,7 +125,7 @@ void update(uint32_t tick_ms) {
             // Count down five seconds before
             // actually starting the game
             tick_count++;
-            if (tick_count % 100 == 0) {
+            if (tick_count % 50 == 0) {
                 count_down--;
                 beep();
             }
@@ -138,7 +144,7 @@ void update(uint32_t tick_ms) {
             // Flip between TELE_ONE and TELE_TWO
             // every 1/4 second for two seconds
             tick_count++;
-            if (tick_count == 10) {
+            if (tick_count == 5) {
                 tick_count = 0;
                 game.state = DO_TELEPORT_TWO;
                 if (now - tele_flash_time > 1000000) {
@@ -150,7 +156,7 @@ void update(uint32_t tick_ms) {
             break;
         case DO_TELEPORT_TWO:
             tick_count++;
-            if (tick_count == 10) {
+            if (tick_count == 5) {
                 tick_count = 0;
                 game.state = now - tele_flash_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
             }
@@ -159,7 +165,7 @@ void update(uint32_t tick_ms) {
             // Wait 3s while the post-kill
             // map is on screen
             tick_count++;
-            if (tick_count == 300) {
+            if (tick_count == 150) {
                 tick_count = 0;
                 game.state = IN_PLAY;
             }
@@ -174,7 +180,7 @@ void update(uint32_t tick_ms) {
             break;
         case ZAP_PHANTOM:
             tick_count++;
-            if (tick_count == 100) {
+            if (tick_count == 25) {
                 tick_count = 0;
                 game.state = SHOW_TEMP_MAP;
                 bool last_phantom_killed = (game.level_kills == game.phantom_count);
@@ -227,7 +233,7 @@ void update(uint32_t tick_ms) {
                         game.player.y = ny;
 
                         #ifdef DEBUG
-                        printf("MOVED PLAYER\n");
+                        printf("MOVED PLAYER (KEY: %02x), DIRECTION: %i\n", key, game.player.direction);
                         #endif
                     }
                 } else if (dir == TURN_RIGHT) {
@@ -238,7 +244,7 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         #ifdef DEBUG
-                        printf("TURNED PLAYER RIGHT\n");
+                        printf("TURNED PLAYER RIGHT, DIRECTION: %i\n", game.player.direction);
                         #endif
 
                         anim_x = -SLICE;
@@ -254,7 +260,7 @@ void update(uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         #ifdef DEBUG
-                        printf("TURNED PLAYER LEFT\n");
+                        printf("TURNED PLAYER LEFT, DIRECTION: %i\n", game.player.direction);
                         #endif
 
                         anim_x = -SLICE;
@@ -336,15 +342,17 @@ void update(uint32_t tick_ms) {
 }
 
 
-void draw() {
+void draw(uint32_t tick) {
     uint8_t nx;
     buffer_t* scrn = SCREEN;
     switch(game.state) {
         case ANIMATE_LOGO:
+            pen(GREEN);
             Gfx::animate_logo(logo_y);
             //play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
             break;
         case ANIMATE_CREDIT:
+            pen(GREEN);
             Gfx::animate_credit(logo_y);
             //play(piano, 2000 + (300 - logo_y) * 100, 30);
             break;
@@ -438,8 +446,8 @@ void setup_device() {
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, picosystem::battery() * 100);
-    std::srand(picosystem::battery() * 100);
+    tinymt32_init(&tinymt_store, ROOT);
+    std::srand(ROOT);
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -522,7 +530,7 @@ void init_game() {
 
     game.player.x = 0;
     game.player.y = 0;
-    game.player.direction = 0;
+    game.player.direction = DIRECTION_NORTH;
 
     game.tele_x = 0;
     game.tele_y = 0;
@@ -608,9 +616,14 @@ void start_new_level() {
 
     game.player.x = x;
     game.player.y = y;
-    game.player.direction = Utils::irandom(0, 4);
+    game.player.direction = (uint8_t)(Utils::irandom(0, 4));
+    //if (game.player.direction > 3) game.player.direction = 1
     game.start_x = x;
     game.start_y = y;
+
+    #ifdef DEBUG
+    printf("PLAYER LOCATION: %i, %i. DIRECTION: %i\n", x, y, game.player.direction);
+    #endif
 
     // Set the teleport
     set_teleport_square();
