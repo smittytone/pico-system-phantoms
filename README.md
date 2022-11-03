@@ -14,10 +14,10 @@ For more details on the game [see this page](https://smittytone.net/pico-phantom
 
 ### The Code
 
-Build from source code, or copy `bin/phantoms.uf2` to your PicoSystem. Please check the SHA 256 first:
+Build the game from thse source code, or copy `bin/phantom-slayer-1.1.2.uf2` to your PicoSystem. Please check the SHA 256 first:
 
 ```
-e1a01d002e47584dba17c9c448e8afa15979c7f79db5995fac63473b2e619df5
+a5875c8a103ff329cf6d739773c2cba91849eb2442588fef9715362aa2a30efb
 ```
 
 ### Build the Code

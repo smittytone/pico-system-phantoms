@@ -10,7 +10,7 @@ set(PICOSYSTEM_DIR ${SDKPATH})
 
 execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
 add_compile_definitions(ROOT=${EPOCH})
-add_compile_definitions(DEBUG=1)
+#add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
         LANGUAGES C CXX ASM
