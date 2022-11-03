@@ -18,6 +18,7 @@ using namespace picosystem;
 uint8_t     count_down = 5;
 uint8_t     dead_phantom = ERROR_CONDITION;
 uint8_t     help_page_count = 0;
+uint8_t     stab_count = 0;
 
 int16_t     logo_y = -21;
 int32_t     anim_x = 0;
@@ -37,7 +38,7 @@ Game        game;
 
 voice_t     blip = voice(10, 0, 40, 40);
 voice_t     zap = voice(150, 0, 60, 350);
-
+voice_t     stab = voice(10, 10, 300, 200);
 
 /*
  *  EXTERNALLY-DEFINED GLOBALS
@@ -52,16 +53,18 @@ void init() {
     // Clear the display as soon as possible
     Gfx::cls(GREEN);
 
-    // Show the version
-    pen(BLACK);
-    cursor(216, 232);
-    text("1.1.2");
-
 #ifdef DEBUG
     // Enable debugging
     stdio_init_all();
     sleep_ms(2000);
 #endif
+
+    // Show the version
+    pen(BLACK);
+    int32_t w, h;
+    measure("1.1.2", w, h);
+    cursor(238 - w, 238 - h);
+    text("1.1.2");
 
     // Set up game device
     // NOTE This is all the stuff that is per session,
@@ -102,7 +105,7 @@ void update(uint32_t tick_ms) {
         case OFFER_HELP:
             key = Utils::inkey();
             if (key == 0x01) {
-                Help::init();
+                //Help::init();
                 Help::show_page(0);
                 help_page_count = 0;
                 game.state = SHOW_HELP;
@@ -112,14 +115,13 @@ void update(uint32_t tick_ms) {
             }
             break;
         case SHOW_HELP:
-            // Run through the help pages with
-            // eack key press
+            // Run through the help pages with each key press
             if (Utils::inkey() > 0) {
                 help_page_count++;
                 beep();
             }
 
-            if (help_page_count == MAX_HELP_PAGES) start_new_game();
+            if (help_page_count >= MAX_HELP_PAGES) start_new_game();
             break;
         case START_COUNT:
             // Count down five seconds before
@@ -342,7 +344,7 @@ void update(uint32_t tick_ms) {
 }
 
 
-void draw(uint32_t tick) {
+void draw(uint32_t tick_ms) {
     uint8_t nx;
     buffer_t* scrn = SCREEN;
     switch(game.state) {

@@ -56,6 +56,7 @@ enum {
     ANIMATE_LOGO,
     ANIMATE_CREDIT,
     LOGO_PAUSE,
+    DO_STAB,
     OFFER_HELP,
     SHOW_HELP,
     START_COUNT,

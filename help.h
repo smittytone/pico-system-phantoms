@@ -22,7 +22,6 @@
  *      PROTOTYPES
  */
 namespace Help {
-    void        init();
     void        show_page(uint16_t page_number);
     void        show_offer();
 }

@@ -111,26 +111,7 @@ string help_page_4 =
 "Remember the green square as an escape\n"
 "route.\n\n";
 
-
-/*
- *      GLOBALS
- */
-vector<string> help_pages;
-
-
 namespace Help {
-
-
-/*
-    Load the help strings into a page array.
- */
-void init() {
-    help_pages.push_back(help_page_0);
-    help_pages.push_back(help_page_1);
-    help_pages.push_back(help_page_2);
-    help_pages.push_back(help_page_3);
-    help_pages.push_back(help_page_4);
-}
 
 
 /*
@@ -150,12 +131,38 @@ void show_page(uint16_t page_number) {
     text("PHANTOM SLAYER");
 
     // Show the help text
-    cursor(10, 30);
-    text(help_pages.at(page_number));
+    cursor(6, 30);
+    // FROM 1.1.2 -- re-implement without a vector
+    //               access to save memory issues 
+    //               introduced by SDK
+    switch(page_number) {
+        case 0:
+            text(help_page_0);
+            break;
+        case 1:
+            text(help_page_1);
+            break;
+        case 2:
+            text(help_page_2);
+            break;
+        case 3:
+            text(help_page_3);
+            break;
+        default:
+            text(help_page_4);
+            break;
+    }
 
     // Call to action
-    cursor(47, 230);
-    text("PRESS ANY KEY TO CONTINUE");
+    if (page_number < 4) {
+        cursor(47, 230);
+        text("PRESS ANY KEY TO CONTINUE");
+    } else {
+        int32_t w, h;
+        measure("PRESS ANY KEY TO PLAY", w, h);
+        cursor((240 - w) / 2, 230);
+        text("PRESS ANY KEY TO PLAY");
+    }
 }
 
 

@@ -51,7 +51,7 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 ### Release Notes
 
 * 1.1.2 *Unreleased*
-    * Fix some issue introduced by SDK.
+    * Fix some timing issues introduced by SDK.
     * Better randomisation.
     * Refactoring.
 * 1.1.1 *29 November 2021*

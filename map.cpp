@@ -24,7 +24,6 @@ extern Game     game;
  */
 uint8_t         *current_map[20];
 
-
 /*
  *      MAP DATA
  */

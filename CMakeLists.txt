@@ -6,7 +6,7 @@ if(NOT EXISTS ${SDKPATH})
     message(FATAL_ERROR "Please clone the Picosystem SDK in a directory parallel ot this one.")
 endif()
 
-set(PICOSYSTEM_DIR ../picosystem)
+set(PICOSYSTEM_DIR ${SDKPATH})
 
 execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
 add_compile_definitions(ROOT=${EPOCH})
@@ -31,10 +31,10 @@ picosystem_executable(phantom-slayer
                       main.cpp
                       map.cpp
                       phantom.cpp
-                      tinymt32.c
-                      utils.cpp)
+                      utils.cpp
+                      tinymt32.c)
 
-#disable_startup_logo(phantom-slayer)
+disable_startup_logo(phantom-slayer)
 no_spritesheet(phantom-slayer)
 
 target_link_libraries(phantom-slayer
