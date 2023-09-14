@@ -433,7 +433,7 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
         - y:         The entity's y co-ordinate.
         - direction: The direction in which the entity is facing.
 
-    - Returns: The number of visible squares up to a maximum,
+    - Returns: The number of visible squares,
                excluding the entity's square.
  */
 uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
@@ -476,7 +476,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
             } while (x >= 0);
     }
 
-    if (count > MAX_VIEW_RANGE) count = MAX_VIEW_RANGE;
+    //if (count > MAX_VIEW_RANGE) count = MAX_VIEW_RANGE;
     return count;
 }
 

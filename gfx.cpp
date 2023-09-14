@@ -50,13 +50,17 @@ namespace Gfx {
         - directions: The direction in which the viewer is facing.
  */
 void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
-    uint8_t far_frame = Map::get_view_distance(x, y, direction);
-    int8_t frame = far_frame;
+
+    uint8_t furthest_frame = Map::get_view_distance(x, y, direction);
+    int8_t frame = furthest_frame;
+    // FROM 1.1.3 -- move this check here so that `furthest_frame`
+    // represents a true maximum distance
+    if (frame > MAX_VIEW_RANGE) frame = MAX_VIEW_RANGE;
 
     // Set 'phantom_count' upper nibble to total number of
     // Phantoms facing the player; lower nibble is the 'current'
     // Phantom if the player can see more than one
-    uint8_t phantom_count = count_facing_phantoms(far_frame);
+    uint8_t phantom_count = count_facing_phantoms(frame);
     phantom_count = (phantom_count << 4) | phantom_count;
     uint8_t i = 0;
 
@@ -78,10 +82,10 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             // Viewer is facing north, so left = West, right = East
             // Run through the squares from the view limit (inner frame) forward
             // to the player's current square (outer frame)
-            i = y - far_frame;
+            i = y - frame;
             do {
                 // Draw the current frame
-                draw_section(x, i, DIRECTION_WEST, DIRECTION_EAST, frame, far_frame);
+                draw_section(x, i, DIRECTION_WEST, DIRECTION_EAST, frame, furthest_frame);
 
                 // Check for the presence of a Phantom on the drawn square
                 // and, if there is, draw it in
@@ -100,9 +104,9 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
         break;
 
         case DIRECTION_EAST:
-            i = x + far_frame;
+            i = x + frame;
             do {
-                draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, far_frame);
+                draw_section(i, y, DIRECTION_NORTH, DIRECTION_SOUTH, frame, furthest_frame);
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count, (n == dead_phantom));
@@ -113,9 +117,9 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             break;
 
         case DIRECTION_SOUTH:
-            i = y + far_frame;
+            i = y + frame;
             do {
-                draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, far_frame);
+                draw_section(x, i, DIRECTION_EAST, DIRECTION_WEST, frame, furthest_frame);
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count, (n == dead_phantom));
@@ -126,9 +130,9 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             break;
 
         default:
-            i = x - far_frame;
+            i = x - frame;
             do {
-                draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, far_frame);
+                draw_section(i, y, DIRECTION_SOUTH, DIRECTION_NORTH, frame, furthest_frame);
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != ERROR_CONDITION) {
                     draw_phantom(frame, &phantom_count, (n == dead_phantom));
@@ -155,6 +159,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                `false` otherwise
  */
 bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uint8_t current_frame, uint8_t furthest_frame) {
+
     // Is the square a teleporter? If so, draw it
     if (x == game.tele_x && y == game.tele_y) draw_teleporter(current_frame);
 
@@ -168,8 +173,8 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     draw_floor_line(current_frame);
 
     // Have we reached the furthest square the viewer can see?
-    if (current_frame == furthest_frame) {
-        draw_far_wall(current_frame);
+    if (current_frame == MAX_VIEW_RANGE || current_frame == furthest_frame) {
+        draw_far_wall(current_frame, furthest_frame);
         return true;
     }
 
@@ -185,13 +190,15 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
         - frame_index: The frame index of the current frame.
  */
 void draw_floor_line(uint8_t frame_index) {
-    // FROM 1.1.3 -- render left and right edges too.
+
     Rect ro = rects[frame_index];
     Rect ri = rects[frame_index + 1];
     pen(game.state == DO_TELEPORT_ONE ? WHITE : RED);
     // Far edge of tile
     line(ri.x, ri.y + ri.height + 39, ri.x + ri.width, ri.y + ri.height + 39);
     line(ri.x -1 , ri.y + ri.height + 40, ri.x + ri.width + 1, ri.y + ri.height + 40);
+
+    // FROM 1.1.3
     // Left edge of tile
     line(ro.x, ro.y + ro.height + 40, ri.x, ri.y + ri.height + 40);
     line(ro.x, ro.y + ro.height + 39, ri.x, ri.y + ri.height + 39);
@@ -209,6 +216,7 @@ void draw_floor_line(uint8_t frame_index) {
         - frame_index: The frame index of the current frame.
  */
 void draw_teleporter(uint8_t frame_index) {
+
     Rect c = rects[frame_index];
     Rect b = rects[frame_index + 1];
     pen(GREEN);
@@ -226,6 +234,7 @@ void draw_teleporter(uint8_t frame_index) {
         - is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_left_wall(uint8_t frame_index, bool is_open) {
+
     // Get the 'i'ner and 'o'uter frames
     Rect i = rects[frame_index + 1];
     Rect o = rects[frame_index];
@@ -276,11 +285,17 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
     - Parameters:
         - frame_index: The frame index of the current frame.
  */
-void draw_far_wall(uint8_t frame_index) {
+void draw_far_wall(uint8_t frame_index, uint8_t furthest_frame) {
+
+    // Get the back wall rect
     Rect r = rects[frame_index + 1];
+
+    // Set the colour: blue for regular walls, white if we're teleporting
     pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
 
-    if (frame_index == MAX_VIEW_RANGE) {
+    if ((frame_index == MAX_VIEW_RANGE) && (frame_index < furthest_frame)) {
+        // Draw in 'infinite' back wall when we're rendering
+        // frame depth 5 but there are empty tiles beyond
         uint8_t ryd = r.y + r.height;
         uint8_t rxd = r.x + r.width - 1;
         fpoly({r.x,     r.y + 40,
@@ -292,6 +307,7 @@ void draw_far_wall(uint8_t frame_index) {
                rxd - 4, ryd + 36,
                rxd - 4, r.y + 42});
     } else {
+        // Draw in the visible far wall
         frect(r.x, r.y + 40, r.width, r.height);
     }
 }

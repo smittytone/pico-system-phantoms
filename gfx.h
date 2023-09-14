@@ -39,7 +39,7 @@ namespace Gfx {
     void        draw_teleporter(uint8_t frame_index);
     void        draw_left_wall(uint8_t frame_index, bool is_open);
     void        draw_right_wall(uint8_t frame_index, bool is_open);
-    void        draw_far_wall(uint8_t frame_index);
+    void        draw_far_wall(uint8_t frame_index, uint8_t furthest_frame);
 
     void        draw_reticule();
     void        draw_zap(uint8_t frame);
