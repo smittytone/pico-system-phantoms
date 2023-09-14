@@ -9,12 +9,12 @@ endif()
 set(PICOSYSTEM_DIR ${SDKPATH})
 
 execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
-add_compile_definitions(ROOT=${EPOCH})
+add_compile_definitions(RANDSEED=${EPOCH})
 #add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
         LANGUAGES C CXX ASM
-        VERSION 1.1.0
+        VERSION 1.1.3
         DESCRIPTION "Phantom Slayer for PicoSystem")
 
 set(CMAKE_C_STANDARD 11)

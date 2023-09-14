@@ -2,9 +2,9 @@
  * Phantom Slayer
  * Utility functions
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */

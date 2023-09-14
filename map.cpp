@@ -2,9 +2,9 @@
  * Phantom Slayer
  * Map management functions
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -323,7 +323,7 @@ uint8_t init(uint8_t last_map) {
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     // Set the map background (blue)
     pen(BLUE);
-    frect(0, 0, 240, 240);
+    //frect(0, 0, 240, 240);
 
     // Draw the map
     uint8_t x = 40;

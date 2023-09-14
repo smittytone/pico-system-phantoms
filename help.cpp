@@ -2,9 +2,9 @@
  * Phantom Slayer
  * Help page display
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -133,7 +133,7 @@ void show_page(uint16_t page_number) {
     // Show the help text
     cursor(6, 30);
     // FROM 1.1.2 -- re-implement without a vector
-    //               access to save memory issues 
+    //               access to save memory issues
     //               introduced by SDK
     switch(page_number) {
         case 0:

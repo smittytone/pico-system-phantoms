@@ -2,9 +2,9 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -264,6 +264,12 @@ bool Phantom::move() {
     x = new_x;
     y = new_y;
     direction = new_direction;
+
+    // FROM 1.1.3
+    if ((dx == 1 && dy == 0) ||
+        (dx == -1 && dy == 0) ||
+        (dx == 0 && dy == 1) ||
+        (dx == 0 && dy == -1)) return true;
 
     return false;
 }

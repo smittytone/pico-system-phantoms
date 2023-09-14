@@ -1,7 +1,7 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -62,9 +62,9 @@ void init() {
     // Show the version
     pen(BLACK);
     int32_t w, h;
-    measure("1.1.2", w, h);
+    measure("1.1.3", w, h);
     cursor(238 - w, 238 - h);
-    text("1.1.2");
+    text("1.1.3");
 
     // Set up game device
     // NOTE This is all the stuff that is per session,
@@ -139,7 +139,25 @@ void update(uint32_t tick_ms) {
             break;
         case PLAYER_IS_DEAD:
             // NOTE Call 'death()' before coming here
+            // Clear a space and say what happened
+            tick_count++;
+            if (tick_count == 100) {
+                pen(BLUE);
+                frect(36, 106, 168, 28);
+                Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
+                game.state = PLAYER_DEAD_NEXT_GAME;
+                tick_count = 0;
+            };
+            break;
+        case PLAYER_DEAD_NEXT_GAME:
+            // FROM 1.1.3
             // Just await any key press to start again
+            tick_count++;
+            if (tick_count == 100) {
+                pen(BLUE);
+                frect(36, 106, 168, 28);
+                Gfx::draw_word(PHRASE_ANY_KEY, 40, 110, true);
+            };;
             if (Utils::inkey() > 0) start_new_game();
             break;
         case DO_TELEPORT_ONE:
@@ -174,7 +192,6 @@ void update(uint32_t tick_ms) {
             break;
         case ANIMATE_RIGHT_TURN:
         case ANIMATE_LEFT_TURN:
-            //anim_x += SLICE;
             if (anim_x > 240) {
                 game.state = IN_PLAY;
                 blend(ALPHA);
@@ -383,6 +400,7 @@ void draw(uint32_t tick_ms) {
         case SHOW_TEMP_MAP:
             // We've already drawn the post kill map, so just exit
         case PLAYER_IS_DEAD:
+        case PLAYER_DEAD_NEXT_GAME:
             // We've already drawn the end-of-game map, so just exit
             break;
         case ANIMATE_RIGHT_TURN:
@@ -448,8 +466,9 @@ void setup_device() {
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, ROOT);
-    std::srand(ROOT);
+    // TODO Needs a much better seed
+    tinymt32_init(&tinymt_store, RANDSEED);
+    std::srand(RANDSEED);
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -460,7 +479,7 @@ void setup_device() {
                          66,  30, 108, 100, 26,
                          88,  40,  64,  80, 20,
                          102, 46,  36,  68,  8,
-                         114, 50,  12,  60,  2};    // 'End wall' for distant views
+                         114, 50,  12,  58,  2};    // 'End wall' for distant views
 
     // Read the array values into Rect structures
     uint8_t c = 0;
@@ -1010,22 +1029,22 @@ void reset_laser() {
 void death() {
     game.state = PLAYER_IS_DEAD;
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
-    //sleep_ms(50);
+    //sleep_ms(500);
     //tone(2200, 500, 600);
 
     // Clear the display (blue)
     Gfx::cls(BLUE);
 
     // Give instructions
-    Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
+    //Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
 
     // Show the map
     show_scores(true);
 
     // Clear a space and say what happened
-    pen(BLUE);
-    frect(36, 106, 168, 28);
-    Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
+    //pen(BLUE);
+    //frect(36, 106, 168, 28);
+    //Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
 }
 
 
@@ -1070,7 +1089,7 @@ void show_scores(bool show_tele) {
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
 
-    if (game.state != PLAYER_IS_DEAD) {
+    //if (game.state != PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
         Gfx::draw_word(WORD_KILLS, 198, 228, false);
@@ -1082,7 +1101,7 @@ void show_scores(bool show_tele) {
         Gfx::draw_word(WORD_HITS, 10, 228, false);
         score = Utils::bcd(game.level_hits);
         Gfx::draw_number(score, 10, 204, true);
-    }
+    //}
 
     // Add in the map
     Map::draw(BASE_MAP_DELTA, true, show_tele);

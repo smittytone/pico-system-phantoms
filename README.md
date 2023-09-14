@@ -1,4 +1,4 @@
-# Phantom Slayer for the Pimoroni PicoSystem 1.1.2
+# Phantom Slayer for the Pimoroni PicoSystem 1.1.3
 
 A retro-style 3D arcade game written in C++.
 
@@ -50,6 +50,8 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 
 ### Release Notes
 
+* 1.1.3 *Unreleased*
+    *
 * 1.1.2 *3 November 2022*
     * Fix some timing issues introduced by the latest Picosystem SDK.
     * Fix a graphics state issue introduced by the latest SDK.

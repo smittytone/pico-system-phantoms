@@ -1,7 +1,7 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -66,6 +66,7 @@ enum {
     ZAP_PHANTOM,
     SHOW_TEMP_MAP,
     PLAYER_IS_DEAD,
+    PLAYER_DEAD_NEXT_GAME,
     ANIMATE_RIGHT_TURN,
     ANIMATE_LEFT_TURN
 };
@@ -77,6 +78,8 @@ enum {
 #define LASER_FIRE_US                                   200000
 #define LOGO_ANIMATION_US                               9000
 #define LOGO_PAUSE_TIME                                 5000000
+// FROM 1.1.3
+#define DEATH_MAP_INTERVAL                              4000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE

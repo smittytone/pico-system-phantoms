@@ -2,9 +2,9 @@
  * Phantom Slayer
  * Graphics Routines
  *
- * @version     1.1.2
+ * @version     1.1.3
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -66,11 +66,11 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     if (game.state == DO_TELEPORT_ONE) {
         // 3D View: red
         pen(RED);
-        frect(0, 40, 240, 160);
+        frect(0, 40, 240, 161);
     } else {
         // 3D View: yellow
         pen(15, 15, 0);
-        frect(0, 40, 240, 160);
+        frect(0, 40, 240, 161);
     }
 
     switch(direction) {
@@ -164,14 +164,15 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     draw_left_wall(current_frame, (Map::get_view_distance(x, y, left_dir) > 0));
     draw_right_wall(current_frame, (Map::get_view_distance(x, y, right_dir) > 0));
 
+    // Draw a line on the floor
+    draw_floor_line(current_frame);
+
     // Have we reached the furthest square the viewer can see?
     if (current_frame == furthest_frame) {
         draw_far_wall(current_frame);
         return true;
     }
 
-    // Draw a line on the floor
-    draw_floor_line(current_frame);
     return false;
 }
 
@@ -184,10 +185,19 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
         - frame_index: The frame index of the current frame.
  */
 void draw_floor_line(uint8_t frame_index) {
-    Rect r = rects[frame_index + 1];
+    // FROM 1.1.3 -- render left and right edges too.
+    Rect ro = rects[frame_index];
+    Rect ri = rects[frame_index + 1];
     pen(game.state == DO_TELEPORT_ONE ? WHITE : RED);
-    line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
-    line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
+    // Far edge of tile
+    line(ri.x, ri.y + ri.height + 39, ri.x + ri.width, ri.y + ri.height + 39);
+    line(ri.x -1 , ri.y + ri.height + 40, ri.x + ri.width + 1, ri.y + ri.height + 40);
+    // Left edge of tile
+    line(ro.x, ro.y + ro.height + 40, ri.x, ri.y + ri.height + 40);
+    line(ro.x, ro.y + ro.height + 39, ri.x, ri.y + ri.height + 39);
+    // Right edge of tile
+    line(ro.x + ro.width, ro.y + ro.height + 40, ri.x + ri.width, ri.y + ri.height + 40);
+    line(ro.x + ro.width, ro.y + ro.height + 39, ri.x + ri.width, ri.y + ri.height + 39);
 }
 
 
@@ -268,20 +278,20 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
  */
 void draw_far_wall(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
+    pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
 
-    if (frame_index == 5) {
+    if (frame_index == MAX_VIEW_RANGE) {
         uint8_t ryd = r.y + r.height;
-        uint8_t rxd = r.x + r.width;
-        fpoly({r.x,     r.y + 39,
+        uint8_t rxd = r.x + r.width - 1;
+        fpoly({r.x,     r.y + 40,
                r.x + 4, r.y + 42,
-               r.x + 4, ryd + 37,
+               r.x + 4, ryd + 36,
                r.x,     ryd + 39});
-        fpoly({rxd,     r.y + 39,
+        fpoly({rxd,     r.y + 40,
                rxd,     ryd + 39,
-               rxd - 4, ryd + 37,
+               rxd - 4, ryd + 36,
                rxd - 4, r.y + 42});
     } else {
-        pen(game.state == DO_TELEPORT_ONE ? WHITE : BLUE);
         frect(r.x, r.y + 40, r.width, r.height);
     }
 }
