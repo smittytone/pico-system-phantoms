@@ -121,9 +121,9 @@ namespace Help {
         - page_number: The index of the page to display.
  */
 void show_page(uint16_t page_number) {
+
     // CLS
-    pen(GREEN);
-    clear();
+    Gfx::cls(GREEN);
 
     // Game title
     pen(BLACK);
@@ -170,9 +170,9 @@ void show_page(uint16_t page_number) {
     Ask if the player wants help.
  */
 void show_offer() {
+
     // CLS
-    pen(GREEN);
-    clear();
+    Gfx::cls(GREEN);
 
     // Game title
     pen(BLACK);

@@ -50,6 +50,7 @@ extern      buffer_t* side_buffer;
  *  PICOSYSTEM CALLBACKS
  */
 void init() {
+
     // Clear the display as soon as possible
     Gfx::cls(GREEN);
 
@@ -74,6 +75,7 @@ void init() {
 
 
 void update(uint32_t tick_ms) {
+
     uint32_t now = time_us_32();
     uint8_t key = 0;
     switch (game.state) {
@@ -362,6 +364,7 @@ void update(uint32_t tick_ms) {
 
 
 void draw(uint32_t tick_ms) {
+
     uint8_t nx;
     buffer_t* scrn = SCREEN;
     switch(game.state) {
@@ -454,20 +457,20 @@ void draw(uint32_t tick_ms) {
  *      INITIALISATION FUNCTIONS
  */
 void setup_device() {
+
     // Set the LCD backlight
     // TODO Make this controllable during the game
     backlight(100);
 
     // Use one of the Pico's other analog inputs
     // to seed the random number generator
-    //adc_init();
-    //adc_gpio_init(28);
-    //adc_select_input(2);
+    adc_init();
+    adc_gpio_init(28);
+    adc_select_input(2);
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    // TODO Needs a much better seed
-    tinymt32_init(&tinymt_store, RANDSEED);
+    tinymt32_init(&tinymt_store, adc_read() + 1 * battery());
     std::srand(RANDSEED);
 
     // Make the graphic frame rects
@@ -508,6 +511,7 @@ void setup_device() {
     first game and subsequently when the player dies.
  */
 void start_new_game() {
+
     // Reset the settings
     init_game();
     init_phantoms();
@@ -538,6 +542,7 @@ void start_new_game() {
     NOTE Phantom data is separated out into `init_phantoms()`.
  */
 void init_game() {
+
     // If either of these demo/test modes are both set,
     // chase mode takes priority
     chase_mode = false;
@@ -577,6 +582,7 @@ void init_game() {
     for the start of a level.
  */
 void init_level() {
+
     game.show_reticule = false;
     game.can_fire = true;
     game.is_firing = false;
@@ -598,6 +604,7 @@ void init_level() {
     Initialise the current game's Phantom data.
  */
 void init_phantoms() {
+
     // Reset the array stored phantoms structures
     game.phantoms.clear();
     for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
@@ -621,6 +628,7 @@ void init_phantoms() {
     current phantoms have been dispatched.
  */
 void start_new_level() {
+
     // Initialise the current map
     game.map = Map::init(game.map);
     init_level();
@@ -674,6 +682,7 @@ void start_new_level() {
     Randomly roll a teleport square.
  */
 void set_teleport_square() {
+
     while (true) {
         // Pick a random co-ordinate
         uint8_t x = Utils::irandom(0, 20);
@@ -693,6 +702,7 @@ void set_teleport_square() {
     Called from the main `update()` callback.
  */
 void update_world() {
+
     // Move the Phantom(s) periodically -- this is how
     // we increase their speed as the game progresses
     uint32_t now = time_us_32();
@@ -737,6 +747,7 @@ void update_world() {
     been zapped.
  */
 void manage_phantoms() {
+
     bool level_up = false;
 
     // If we're on levels 1 and 2, we only have that number of
@@ -787,6 +798,7 @@ void manage_phantoms() {
     - Returns: The direction in which the player is facing.
  */
 uint8_t get_direction(uint8_t keys_pressed) {
+
     if (keys_pressed & 0x10) return MOVE_FORWARD;
     if (keys_pressed & 0x20) return MOVE_BACKWARD;
     if (keys_pressed & 0x40) return TURN_LEFT;
@@ -808,6 +820,7 @@ uint8_t get_direction(uint8_t keys_pressed) {
     - Returns: The index of the Phantom in the vector.
  */
 uint8_t get_facing_phantom(uint8_t range) {
+
     uint8_t p_index = ERROR_CONDITION;
     switch(game.player.direction) {
         case DIRECTION_NORTH:
@@ -856,6 +869,7 @@ uint8_t get_facing_phantom(uint8_t range) {
     - Returns: The number of Phantoms in front of the Player.
  */
 uint8_t count_facing_phantoms(uint8_t range) {
+
     uint8_t phantom_count = 0;
     switch(game.player.direction) {
         case DIRECTION_NORTH:
@@ -902,6 +916,7 @@ uint8_t count_facing_phantoms(uint8_t range) {
                otherwise `false`.
 */
 bool move_phantoms() {
+
     for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
         Phantom &p = game.phantoms.at(i);
         if (p.move()) return true;
@@ -943,6 +958,7 @@ void check_senses() {
 
 
 void beep() {
+
     play(blip, 200, 50);
 }
 
@@ -955,6 +971,7 @@ void beep() {
     Jump back to the teleport square if the player has walked over it.
  */
 void do_teleport() {
+
     // Move the player to the stored square
     game.state = DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
@@ -971,6 +988,7 @@ void do_teleport() {
     Hit the front-most facing Phantom, if there is one.
  */
 void fire_laser() {
+
     // Did we hit a Phantom?
     play(zap, 640, 200);
     uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
@@ -1012,6 +1030,7 @@ void fire_laser() {
     Reset the laser after firing.
  */
 void reset_laser() {
+
     game.is_firing = false;
     game.can_fire = false;
     game.zap_charge_time = time_us_32();
@@ -1027,6 +1046,7 @@ void reset_laser() {
     The player has died -- show the map and the score.
  */
 void death() {
+
     game.state = PLAYER_IS_DEAD;
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     //sleep_ms(500);
@@ -1052,6 +1072,7 @@ void death() {
     Just show the map briefly after killing a Phantom
  */
 void phantom_killed(bool is_last) {
+
     Gfx::cls(BLUE);
     show_scores(is_last);
 }
@@ -1062,6 +1083,7 @@ void phantom_killed(bool is_last) {
     Show the current score alongside the map.
  */
 void show_scores(bool show_tele) {
+
     uint8_t cx = 10;
     if (game.high_score < game.score) game.high_score = game.score;
 
@@ -1113,5 +1135,6 @@ void show_scores(bool show_tele) {
     Lower for 1, bigger for 0, 2-9
  */
 uint8_t fix_num_width(uint8_t value, uint8_t current) {
+
     return (current - (value == 1 ? 6 : 14));
 }

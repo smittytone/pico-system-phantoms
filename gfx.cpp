@@ -212,6 +212,8 @@ void draw_floor_line(uint8_t frame_index) {
     Draw a green floor tile to indicate the Escape teleport location.
     When stepping on this, the player can beam to their start point.
 
+    TODO Don't colour the adjacent tiles!
+
     - Parameters:
         - frame_index: The frame index of the current frame.
  */
@@ -261,6 +263,7 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
         - is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_right_wall(uint8_t frame_index, bool is_open) {
+
     // Get the 'i'ner and 'o'uter frames
     Rect i = rects[frame_index + 1];
     Rect o = rects[frame_index];
@@ -301,9 +304,9 @@ void draw_far_wall(uint8_t frame_index, uint8_t furthest_frame) {
         fpoly({r.x,     r.y + 40,
                r.x + 4, r.y + 42,
                r.x + 4, ryd + 36,
-               r.x,     ryd + 39});
+               r.x,     ryd + 38});
         fpoly({rxd,     r.y + 40,
-               rxd,     ryd + 39,
+               rxd,     ryd + 38,
                rxd - 4, ryd + 36,
                rxd - 4, r.y + 42});
     } else {
@@ -317,6 +320,7 @@ void draw_far_wall(uint8_t frame_index, uint8_t furthest_frame) {
     Draw the laser sight: a big cross on the screen.
  */
 void draw_reticule() {
+
     pen(ORANGE);
     rect(100 + game.crosshair_delta, 119, 40, 2);
     rect(119 + game.crosshair_delta, 100, 2, 40);
@@ -330,6 +334,7 @@ void draw_reticule() {
         - frame_index: The frame in which to place the bolt.
  */
  void draw_zap(uint8_t frame_index) {
+
     if (frame_index < 5) {
         uint16_t radius = radii[frame_index];
         pen(ORANGE);
@@ -347,6 +352,7 @@ void draw_reticule() {
         - count:       The number of Phantoms on screen.
  */
 void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
+
     Rect r = rects[frame_index];
     uint8_t dx = 120;
     uint8_t c = *count;
@@ -398,6 +404,7 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
         - y:     The target Y co-ordinate.
  */
 void draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double) {
+
     uint8_t w_x = word_sizes[index * 3];
     uint8_t w_y = word_sizes[index * 3 + 1];
     uint8_t w_len = word_sizes[index * 3 + 2];
@@ -421,6 +428,7 @@ void draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double) {
         - do_double: Render at 2x size.
  */
 void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
+
     uint8_t n_len = number == 1 ? 2 : 6;
     uint8_t n_x = number == 1 ? 6 : (2 + ((number - 1) * 6));
     if (number == 0) n_x = 0;
@@ -437,6 +445,7 @@ void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
     Roll up the logo down from the top of the screen.
  */
 void animate_logo(int16_t y) {
+
     if (y < -19) return;
 
     uint8_t height = 21 + y;
@@ -456,6 +465,7 @@ void animate_logo(int16_t y) {
     Roll up the credit from the bottom.
  */
 void animate_credit(int16_t y) {
+
     if (y > 239) return;
 
     uint8_t height = 241 - y;
@@ -473,6 +483,7 @@ void animate_credit(int16_t y) {
     to the side buffer.
  */
 void animate_turn() {
+
     // Draw the side view
     target(side_buffer);
     cls(BLACK);
@@ -498,6 +509,7 @@ void animate_turn() {
 
  */
 void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy) {
+
     color_t *ps = src->data + (sx + sy * src->w);
     color_t *pd = _dt->data + (dx + dy * _dt->w);
     int32_t ds = _dt->w;
@@ -511,6 +523,7 @@ void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32
 
 
 void cls(color_t colour) {
+
     pen(colour);
     clear();
 }

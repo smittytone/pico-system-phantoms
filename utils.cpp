@@ -41,6 +41,7 @@ namespace Utils {
     - Returns: The random number.
  */
 int irandom(int start, int max) {
+
     int value = tinymt32_generate_uint32(&tinymt_store);
     return ((value % max) + start);
 }
@@ -52,6 +53,7 @@ int irandom(int start, int max) {
     A (Bit 0), B, X, Y, UP, DOWN, LEFT, RIGHT (Bit 7)
  */
 uint8_t inkey() {
+
     uint8_t bits = 0;
     for (uint8_t i = 0 ; i < 8 ; ++i) {
         if (pressed(keys[i])) bits |= (1 << i);
@@ -71,6 +73,7 @@ uint8_t inkey() {
     - Returns: The BCD encoding of the input.
  */
 uint32_t bcd(uint32_t base) {
+
     if (base > 9999) base = 9999;
     for (uint32_t i = 0 ; i < 16 ; ++i) {
         base = base << 1;

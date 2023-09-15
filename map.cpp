@@ -158,6 +158,7 @@ namespace Map {
 
 
 uint8_t init(uint8_t last_map) {
+
     // FROM 1.0.2
     // Don't pick the same map as last time
     uint8_t map;
@@ -321,6 +322,7 @@ uint8_t init(uint8_t last_map) {
         - show_entities: Display phantoms.
  */
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
+
     // Set the map background (blue)
     pen(BLUE);
     //frect(0, 0, 240, 240);
@@ -401,6 +403,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     - Returns: The contents of the square.
  */
 uint8_t get_square_contents(uint8_t x, uint8_t y) {
+
     if (x > MAP_MAX || y > MAP_MAX) return MAP_TILE_WALL;
     uint8_t *line = current_map[y];
     return line[x];
@@ -418,6 +421,7 @@ uint8_t get_square_contents(uint8_t x, uint8_t y) {
     - Returns: `true` if the square was set, otherwise `false`.
  */
 bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
+
     if (x > MAP_MAX || y > MAP_MAX) return false;
     uint8_t *line = current_map[y];
     line[x] = value;
@@ -437,6 +441,7 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
                excluding the entity's square.
  */
 uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
+
     uint8_t count = 0;
     switch(direction) {
         case DIRECTION_NORTH:
@@ -488,6 +493,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
                or `ERROR_CONDITION` if the square is empty.
  */
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
+
     size_t number = game.phantoms.size();
     for (size_t i = 0 ; i < number ; ++i) {
         Phantom &p = game.phantoms.at(i);

@@ -30,6 +30,7 @@ extern tinymt32_t   tinymt_store;
         - start_y: Inital Y co-ordinate. Default: off the board.
  */
 Phantom::Phantom() {
+
     // Use 'NOT_ON_BOARD' (== ERROR_CONDITION) as 'not on board yet'
     init();
     direction = DIRECTION_NORTH;
@@ -42,6 +43,7 @@ Phantom::Phantom() {
     Roll the Phantom's hit points
  */
 void Phantom::init() {
+
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
     uint8_t max_hit_points = level_data[level_index + 1];
@@ -58,6 +60,7 @@ void Phantom::init() {
     Set the Phantom on a new square.
  */
 void Phantom::place(uint8_t my_index) {
+
     while (true) {
         // Pick a random co-ordinate
         uint8_t new_x = Utils::irandom(0, 20);
@@ -99,6 +102,7 @@ void Phantom::place(uint8_t my_index) {
                otherwise `false`.
  */
 bool Phantom::move() {
+
     // Has the Phantom been zapped? Don't move it
     if (x == NOT_ON_BOARD || hp < 1) return false;
 
@@ -279,6 +283,7 @@ bool Phantom::move() {
     Move the Phantom one space according in the chosen direction.
  */
 void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
+
     if (nd == PHANTOM_NORTH) *ny = y - 1;
     if (nd == PHANTOM_SOUTH) *ny = y + 1;
     if (nd == PHANTOM_EAST)  *nx = x + 1;
@@ -290,6 +295,7 @@ void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
     Return the direction the phantom has come from.
  */
 uint8_t Phantom::came_from() {
+
     if (direction == PHANTOM_WEST)  return PHANTOM_EAST;
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
     if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;
