@@ -8,8 +8,8 @@ endif()
 
 set(PICOSYSTEM_DIR ${SDKPATH})
 
-execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
-add_compile_definitions(RANDSEED=${EPOCH})
+#execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
+#add_compile_definitions(RANDSEED=${EPOCH})
 #add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
