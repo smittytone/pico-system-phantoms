@@ -12,12 +12,13 @@
 
 using namespace picosystem;
 
+static inline uint8_t rnd_hw(void);
 
 /*
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern tinymt32_t   tinymt_store;
-
+uint8_t rnd_last = rnd_hw();
 
 /*
  *      GLOBALS
@@ -42,7 +43,11 @@ namespace Utils {
  */
 int irandom(int start, int max) {
 
-    int value = tinymt32_generate_uint32(&tinymt_store);
+    //int value = tinymt32_generate_uint32(&tinymt_store);
+    //return ((value % max) + start);
+
+    int value = rnd_hw() << rnd_last;
+    rnd_last = rnd_hw();
     return ((value % max) + start);
 }
 
@@ -89,3 +94,11 @@ uint32_t bcd(uint32_t base) {
 
 
 }   // namespace Utils
+
+
+static inline uint8_t rnd_hw(void) {
+    uint8_t rnd = 0;
+    for (int i = 0; i < 8; i++)
+        rnd |= ((rosc_hw->randombit & 1) << i);
+    return (rnd);
+}

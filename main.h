@@ -16,6 +16,7 @@
  */
 #include "picosystem.hpp"
 #include "hardware/adc.h"
+#include "hardware/structs/rosc.h"
 #include <iostream>
 #include <string>
 #include <vector>

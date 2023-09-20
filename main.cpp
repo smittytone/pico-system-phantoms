@@ -39,6 +39,7 @@ Game        game;
 voice_t     blip = voice(10, 0, 40, 40);
 voice_t     zap = voice(150, 0, 60, 350);
 voice_t     stab = voice(10, 10, 300, 200);
+voice_t     roar = voice(0, 0, 100, 500, 0, 100, 100);
 
 /*
  *  EXTERNALLY-DEFINED GLOBALS
@@ -158,7 +159,7 @@ void update(uint32_t tick_ms) {
             if (tick_count == 100) {
                 pen(BLUE);
                 frect(36, 106, 168, 28);
-                Gfx::draw_word(PHRASE_ANY_KEY, 40, 110, true);
+                Gfx::draw_word(PHRASE_ANY_KEY, 44, 110, true);
             };;
             if (Utils::inkey() > 0) start_new_game();
             break;
@@ -371,12 +372,12 @@ void draw(uint32_t tick_ms) {
         case ANIMATE_LOGO:
             pen(GREEN);
             Gfx::animate_logo(logo_y);
-            //play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
+            if (position() == -1) play(roar, 150 + ((logo_y + 30) * 3), 40, 100);
             break;
         case ANIMATE_CREDIT:
             pen(GREEN);
             Gfx::animate_credit(logo_y);
-            //play(piano, 2000 + (300 - logo_y) * 100, 30);
+            if (position() == -1) play(roar, 150 + ((300 - logo_y) * 2), 40, 100);
             break;
         case LOGO_PAUSE:
             break;
@@ -471,7 +472,7 @@ void setup_device() {
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
     tinymt32_init(&tinymt_store, adc_read() + 1 * battery());
-    std::srand(RANDSEED);
+    //std::srand(RANDSEED);
 
     // Make the graphic frame rects
     // NOTE These are pixel values:
@@ -1048,9 +1049,10 @@ void reset_laser() {
 void death() {
 
     game.state = PLAYER_IS_DEAD;
-    //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
-    //sleep_ms(500);
-    //tone(2200, 500, 600);
+    for (unsigned int i = 0 ; i < 4 ; i++) {
+        play(roar, 150, 500, 100);
+        sleep(1000);
+    }
 
     // Clear the display (blue)
     Gfx::cls(BLUE);
@@ -1111,7 +1113,7 @@ void show_scores(bool show_tele) {
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
 
-    //if (game.state != PLAYER_IS_DEAD) {
+    if (game.state != PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
         Gfx::draw_word(WORD_KILLS, 198, 228, false);
@@ -1123,7 +1125,7 @@ void show_scores(bool show_tele) {
         Gfx::draw_word(WORD_HITS, 10, 228, false);
         score = Utils::bcd(game.level_hits);
         Gfx::draw_number(score, 10, 204, true);
-    //}
+    }
 
     // Add in the map
     Map::draw(BASE_MAP_DELTA, true, show_tele);

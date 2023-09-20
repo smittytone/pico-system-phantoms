@@ -17,7 +17,6 @@ using std::string;
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern Game         game;
-extern tinymt32_t   tinymt_store;
 
 
 /*
@@ -117,7 +116,11 @@ bool Phantom::move() {
     int8_t dy = y - game.player.y;
 
     // Has the phantom got the player?
-    if (dx == 0 && dy == 0) return true;
+    if (dx == 0 && dy == 0) {
+        x = old_x;
+        y = old_y;
+        return true;
+    }
 
     // Set up direction storage
     uint8_t available_directions = 0;
@@ -264,17 +267,15 @@ bool Phantom::move() {
         }
     }
 
+    // FROM 1.1.3
+    // Record the Phantom's last location
+    old_x = x;
+    old_y = y;
+
     // Set the Phantom's new location
     x = new_x;
     y = new_y;
     direction = new_direction;
-
-    // FROM 1.1.3
-    if ((dx == 1 && dy == 0) ||
-        (dx == -1 && dy == 0) ||
-        (dx == 0 && dy == 1) ||
-        (dx == 0 && dy == -1)) return true;
-
     return false;
 }
 

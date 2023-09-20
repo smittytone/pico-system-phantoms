@@ -62,6 +62,8 @@ class Phantom {
         // Properties
         uint8_t     x;
         uint8_t     y;
+        uint8_t     old_x;
+        uint8_t     old_y;
         int8_t      hp;
         uint8_t     direction;
         uint8_t     back_steps;
