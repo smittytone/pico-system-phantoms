@@ -154,15 +154,13 @@ void show_page(uint16_t page_number) {
     }
 
     // Call to action
-    if (page_number < 4) {
-        cursor(47, 230);
-        text("PRESS ANY KEY TO CONTINUE");
-    } else {
-        int32_t w, h;
-        measure("PRESS ANY KEY TO PLAY", w, h);
-        cursor((240 - w) / 2, 230);
-        text("PRESS ANY KEY TO PLAY");
-    }
+    int32_t w, h;
+    string s = "PRESS ANY KEY TO CONTINUE";
+    if (page_number > 0 && page_number < 4) s += ", B TO GO BACK";
+    if (page_number == 4) s = "PRESS ANY KEY TO PLAY, B TO GO BACK";
+    measure(s, w, h);
+    cursor((240 - w) / 2, 230);
+    text(s);
 }
 
 

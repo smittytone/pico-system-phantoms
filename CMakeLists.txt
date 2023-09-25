@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14...3.28)
 include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
 
 get_filename_component(SDKPATH "${PROJECT_SOURCE_DIR}../picosystem" REALPATH)

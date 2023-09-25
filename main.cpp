@@ -17,7 +17,7 @@ using namespace picosystem;
  */
 uint8_t     count_down = 5;
 uint8_t     dead_phantom = ERROR_CONDITION;
-uint8_t     help_page_count = 0;
+int8_t      help_page_count = 0;
 uint8_t     stab_count = 0;
 
 int16_t     logo_y = -21;
@@ -39,7 +39,7 @@ Game        game;
 voice_t     blip = voice(10, 0, 40, 40);
 voice_t     zap = voice(150, 0, 60, 350);
 voice_t     stab = voice(10, 10, 300, 200);
-voice_t     roar = voice(0, 0, 100, 500, 0, 100, 100);
+voice_t     roar = voice(5, 5, 100, 500, 0, 100, 100);
 
 /*
  *  EXTERNALLY-DEFINED GLOBALS
@@ -72,6 +72,10 @@ void init() {
     // NOTE This is all the stuff that is per session,
     //      not per game, or per level
     setup_device();
+
+    // FROM 1.1.3
+    // Clear High Score here, on boot
+    game.high_score = 0;
 }
 
 
@@ -117,15 +121,18 @@ void update(uint32_t tick_ms) {
                 start_new_game();
             }
             break;
-        case SHOW_HELP:
+        case SHOW_HELP: {
             // Run through the help pages with each key press
-            if (Utils::inkey() > 0) {
-                help_page_count++;
+            uint32_t k = Utils::inkey();
+            if (k > 0) {
+                help_page_count += (k != 2 ? 1 : -1);
+                if (help_page_count < 0) help_page_count = 0;
                 beep();
             }
 
             if (help_page_count >= MAX_HELP_PAGES) start_new_game();
             break;
+        }
         case START_COUNT:
             // Count down five seconds before
             // actually starting the game
@@ -372,12 +379,12 @@ void draw(uint32_t tick_ms) {
         case ANIMATE_LOGO:
             pen(GREEN);
             Gfx::animate_logo(logo_y);
-            if (position() == -1) play(roar, 150 + ((logo_y + 30) * 3), 40, 100);
+            play(roar, logo_y + 125);
             break;
         case ANIMATE_CREDIT:
             pen(GREEN);
             Gfx::animate_credit(logo_y);
-            if (position() == -1) play(roar, 150 + ((300 - logo_y) * 2), 40, 100);
+            play(roar, 525 - logo_y);
             break;
         case LOGO_PAUSE:
             break;
@@ -567,7 +574,6 @@ void init_game() {
     game.level = 1;
     game.score = 0;
     game.kills = 0;
-    game.high_score = 0;
 
     game.crosshair_delta = 0;
     game.audio_range = 4;
