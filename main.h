@@ -71,12 +71,12 @@ enum {
     KEY_A       = 0x01,
     KEY_B       = 0x02,
     KEY_X       = 0x04,
-    KEY_Y       = 0x08
+    KEY_Y       = 0x08,
     KEY_UP      = 0x10,
     KEY_DOWN    = 0x20,
     KEY_LEFT    = 0x40,
     KEY_RIGHT   = 0x80
-}
+};
 
 
 // Timer limits
