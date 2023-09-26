@@ -114,11 +114,10 @@ string help_page_4 =
 namespace Help {
 
 
-/*
-    Show a page of help text.
-
-    - Parameters:
-        - page_number: The index of the page to display.
+/**
+ * @brief Show a page of help text.
+ *
+ * @param page_number: The index of the page to display.
  */
 void show_page(uint16_t page_number) {
 
@@ -164,10 +163,10 @@ void show_page(uint16_t page_number) {
 }
 
 
-/*
-    Ask if the player wants help.
+/**
+ * @brief Ask if the player wants help.
  */
-void show_offer() {
+void show_offer(void) {
 
     // CLS
     Gfx::cls(GREEN);

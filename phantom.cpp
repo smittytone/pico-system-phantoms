@@ -2,7 +2,6 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2023, Tony Smith
  * @licence     MIT
@@ -19,14 +18,12 @@ using std::string;
 extern Game         game;
 
 
-/*
-    Constructor.
-
-    NOTE This does not set the Phantom's location.
-
-    - Parameters:
-        - start_x: Inital X co-ordinate. Default: off the board.
-        - start_y: Inital Y co-ordinate. Default: off the board.
+/**
+ * @brief Constructor.
+ *        NOTE This does not set the Phantom's location.
+ *
+ * @param start_x: Inital X co-ordinate. Default: off the board.
+ * @param start_y: Inital Y co-ordinate. Default: off the board.
  */
 Phantom::Phantom() {
 
@@ -39,9 +36,9 @@ Phantom::Phantom() {
 
 
 /**
-    Roll the Phantom's hit points
+ * @brief Roll the Phantom's hit points
  */
-void Phantom::init() {
+void Phantom::init(void) {
 
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
@@ -55,8 +52,10 @@ void Phantom::init() {
 }
 
 
-/*
-    Set the Phantom on a new square.
+/**
+ * @brief Set the Phantom on a new square.
+ * 
+ * @param my_index: Current phantom's index.
  */
 void Phantom::place(uint8_t my_index) {
 
@@ -94,13 +93,12 @@ void Phantom::place(uint8_t my_index) {
 }
 
 
-/*
-    Move the Phantom.
-
-    - Returns: `true` if the player was caught,
-               otherwise `false`.
+/**
+ * @brief Move the Phantom.
+ *
+ * @returns `true` if the player was caught, otherwise `false`.
  */
-bool Phantom::move() {
+bool Phantom::move(void) {
 
     // Has the Phantom been zapped? Don't move it
     if (x == NOT_ON_BOARD || hp < 1) return false;
@@ -280,8 +278,12 @@ bool Phantom::move() {
 }
 
 
-/*
-    Move the Phantom one space according in the chosen direction.
+/**
+ * @brief Move the Phantom one space according in the chosen direction.
+ * 
+ * @param nd: New direction.
+ * @param nx: Pointer to phantom's X co-ordinate.
+ * @param nx: Pointer to phantom's Y co-ordinate.
  */
 void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
 
@@ -292,10 +294,12 @@ void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
 }
 
 
-/*
-    Return the direction the phantom has come from.
+/**
+ * @brief Return the direction the phantom has come from.
+ * 
+ * @returns The direction in which the phantom is facing.
  */
-uint8_t Phantom::came_from() {
+uint8_t Phantom::came_from(void) {
 
     if (direction == PHANTOM_WEST)  return PHANTOM_EAST;
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;

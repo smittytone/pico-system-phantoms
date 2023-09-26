@@ -1,7 +1,6 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -10,6 +9,31 @@
 #include "main.h"
 
 using namespace picosystem;
+
+
+/*
+ * STATIC PROTOTYPES
+ */
+static void setup_device(void);
+static void start_new_game(void);
+static void init_game(void);
+static void start_new_level(void);
+static void init_level(void);
+static void init_phantoms(void);
+static void set_teleport_square(void);
+static void update_world(void);
+static void check_senses(void);
+static void manage_phantoms(void);
+static bool move_phantoms(void);
+static void do_teleport(void);
+static void fire_laser(void);
+static void reset_laser(void);
+static void death(void);
+static void phantom_killed(bool is_last = false);
+static void show_scores(bool show_tele = false);
+static uint8_t get_direction(uint8_t key_pressed);
+static uint8_t get_facing_phantom(uint8_t range);
+
 
 
 /*
@@ -50,7 +74,7 @@ extern      buffer_t* side_buffer;
 /*
  *  PICOSYSTEM CALLBACKS
  */
-void init() {
+void init(void) {
 
     // Clear the display as soon as possible
     Gfx::cls(GREEN);
@@ -116,7 +140,7 @@ void update(uint32_t tick_ms) {
                 Help::show_page(0);
                 help_page_count = 0;
                 game.state = SHOW_HELP;
-                beep();
+                Utils::beep();
             } else if (key != 0) {
                 start_new_game();
             }
@@ -127,7 +151,7 @@ void update(uint32_t tick_ms) {
             if (k > 0) {
                 help_page_count += (k != 2 ? 1 : -1);
                 if (help_page_count < 0) help_page_count = 0;
-                beep();
+                Utils::beep();
             }
 
             if (help_page_count >= MAX_HELP_PAGES) start_new_game();
@@ -139,7 +163,7 @@ void update(uint32_t tick_ms) {
             tick_count++;
             if (tick_count % 50 == 0) {
                 count_down--;
-                beep();
+                Utils::beep();
             }
 
             if (count_down == 0) {
@@ -317,7 +341,7 @@ void update(uint32_t tick_ms) {
                 // Lower radar range
                 game.audio_range++;
                 if (game.audio_range > 6) game.audio_range = 1;
-                beep();
+                Utils::beep();
 
                 #ifdef DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
@@ -326,7 +350,7 @@ void update(uint32_t tick_ms) {
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
-                beep();
+                Utils::beep();
 
                 #ifdef DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
@@ -464,7 +488,7 @@ void draw(uint32_t tick_ms) {
 /*
  *      INITIALISATION FUNCTIONS
  */
-void setup_device() {
+static void setup_device(void) {
 
     // Set the LCD backlight
     // TODO Make this controllable during the game
@@ -513,12 +537,12 @@ void setup_device() {
 }
 
 
-/*
-    Start a new game by re-initialising the game state,
-    and setting up a new maze. Called at the start of the
-    first game and subsequently when the player dies.
+/**
+ * @brief Start a new game by re-initialising the game state,
+ *        and setting up a new maze. Called at the start of the
+ *        first game and subsequently when the player dies.
  */
-void start_new_game() {
+static void start_new_game(void) {
 
     // Reset the settings
     init_game();
@@ -543,13 +567,13 @@ void start_new_game() {
 }
 
 
-/*
-    Reset the main game control structure. Called only at the start of
-    a game, not the start of a level.
-
-    NOTE Phantom data is separated out into `init_phantoms()`.
+/**
+ * @brief Reset the main game control structure. Called only at the start of
+ *        a game, not the start of a level (see `init_level()`).
+ *
+ *        NOTE Phantom data is separated out into `init_phantoms()`.
  */
-void init_game() {
+static void init_game(void) {
 
     // If either of these demo/test modes are both set,
     // chase mode takes priority
@@ -584,57 +608,13 @@ void init_game() {
 }
 
 
-/*
-    Reset the main game control structure values
-    for the start of a level.
- */
-void init_level() {
-
-    game.show_reticule = false;
-    game.can_fire = true;
-    game.is_firing = false;
-
-    game.level_kills = 0;
-    game.level_hits = 0;
-
-    game.zap_charge_time = 0;
-    game.zap_fire_time = 0;
-    game.zap_frame = 0;
-
-    #ifdef DEBUG
-    printf("DONE INIT_LEVEL()\n");
-    #endif
-}
-
-
-/*
-    Initialise the current game's Phantom data.
- */
-void init_phantoms() {
-
-    // Reset the array stored phantoms structures
-    game.phantoms.clear();
-    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
-        Phantom p;
-        game.phantoms.push_back(p);
-    }
-
-    game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
-    game.last_phantom_move = 0;
-
-    #ifdef DEBUG
-    printf("DONE INIT_PHANTOMS()\n");
-    #endif
-}
-
-
 /**
-    Generate and populate a new level. This happens
-    at the start of a new game and at the start of
-    each level. A level jump is triggered when all the
-    current phantoms have been dispatched.
+ * @brief Generate and populate a new level. This happens
+ *        at the start of a new game and at the start of
+ *        each level. A level jump is triggered when all the
+ *        current phantoms have been dispatched.
  */
-void start_new_level() {
+static void start_new_level(void) {
 
     // Initialise the current map
     game.map = Map::init(game.map);
@@ -686,9 +666,53 @@ void start_new_level() {
 
 
 /**
-    Randomly roll a teleport square.
+ * @brief Reset the main game control structure values
+ *        for the start of a level.
  */
-void set_teleport_square() {
+static void init_level(void) {
+
+    game.show_reticule = false;
+    game.can_fire = true;
+    game.is_firing = false;
+
+    game.level_kills = 0;
+    game.level_hits = 0;
+
+    game.zap_charge_time = 0;
+    game.zap_fire_time = 0;
+    game.zap_frame = 0;
+
+    #ifdef DEBUG
+    printf("DONE INIT_LEVEL()\n");
+    #endif
+}
+
+
+/**
+ * @brief Initialise the current game's Phantom data.
+ */
+static void init_phantoms(void) {
+
+    // Reset the array stored phantoms structures
+    game.phantoms.clear();
+    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+        Phantom p;
+        game.phantoms.push_back(p);
+    }
+
+    game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
+    game.last_phantom_move = 0;
+
+    #ifdef DEBUG
+    printf("DONE INIT_PHANTOMS()\n");
+    #endif
+}
+
+
+/**
+ @brief Randomly roll a teleport square.
+ */
+static void set_teleport_square(void) {
 
     while (true) {
         // Pick a random co-ordinate
@@ -705,10 +729,10 @@ void set_teleport_square() {
 
 
 /**
-    Update the world at the end of the move cycle.
-    Called from the main `update()` callback.
+ * @brief Update the world at the end of the move cycle.
+ *        Called from the main `update()` callback.
  */
-void update_world() {
+static void update_world(void) {
 
     // Move the Phantom(s) periodically -- this is how
     // we increase their speed as the game progresses
@@ -748,12 +772,43 @@ void update_world() {
 
 
 /**
-    Check whether we need to increase the number of phantoms
-    on the board or increase their speed -- all caused by a
-    level-up. We up the level if all the level's phantoms have
-    been zapped.
+ * @brief Scan around the player for nearby Phantoms.
  */
-void manage_phantoms() {
+static void check_senses(void) {
+
+    int dx = game.player.x - game.audio_range;
+    int dy = game.player.y - game.audio_range;
+
+    for (int x = dx ; x < (dx + (game.audio_range << 1)) ; x++) {
+        if (x < 0) continue;
+        if (x > MAP_MAX) break;
+        for (int y = dy ; y < (dy + (game.audio_range << 1)) ; y++) {
+            if (y < 0) continue;
+            if (y > MAP_MAX) break;
+            uint8_t nabbed = Map::phantom_on_square(x, y);
+            if (nabbed != ERROR_CONDITION) {
+                // There's a Phantom in range, so sound a tone
+                led(100, 0, 0);
+                Utils::beep();
+                sleep_ms(200);
+                led(0, 0, 0);
+
+                // Only play one beep, no matter
+                // how many nearby phantoms there are
+                return;
+            }
+        }
+    }
+}
+
+
+/**
+ * @brief Check whether we need to increase the number of phantoms
+ *        on the board or increase their speed -- all caused by a
+ *        level-up. We up the level if all the level's phantoms have
+ *        been zapped.
+ */
+static void manage_phantoms(void) {
 
     bool level_up = false;
 
@@ -795,38 +850,32 @@ void manage_phantoms() {
 
 
 /**
-    Get player movement action from the joypad
-    Favour movement over rotation.
+ * @brief Tell all of the current Phantoms to move.
+ *
+ * @returns `true` if a Phantom caught the Player,
+            otherwise `false`.
+*/
+static bool move_phantoms(void) {
 
-    - Parameters:
-        - keys_pressed: Bitfield indicating which
-                        keys have been pressed.
+    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+        Phantom &p = game.phantoms.at(i);
+        if (p.move()) return true;
+    }
 
-    - Returns: The direction in which the player is facing.
- */
-uint8_t get_direction(uint8_t keys_pressed) {
-
-    if (keys_pressed & 0x10) return MOVE_FORWARD;
-    if (keys_pressed & 0x20) return MOVE_BACKWARD;
-    if (keys_pressed & 0x40) return TURN_LEFT;
-    if (keys_pressed & 0x80) return TURN_RIGHT;
-
-    // Just in case
-    return ERROR_CONDITION;
+    return false;
 }
 
 
 /**
-    Return the index of the closest facing Phantom to the
-    player from the the 'game.phantoms' vector --
-    or `ERROR_CONDITION`.
-
-    - Parameters:
-        - range: The number of squares to iterate over.
-
-    - Returns: The index of the Phantom in the vector.
+ * @brief Return the index of the closest facing Phantom to the
+ *        player from the the 'game.phantoms' vector --
+ *        or `ERROR_CONDITION`.
+ *
+ * @param range: The number of squares to iterate over.
+ *
+ * @returns The index of the Phantom in the vector.
  */
-uint8_t get_facing_phantom(uint8_t range) {
+static uint8_t get_facing_phantom(uint8_t range) {
 
     uint8_t p_index = ERROR_CONDITION;
     switch(game.player.direction) {
@@ -868,12 +917,11 @@ uint8_t get_facing_phantom(uint8_t range) {
 
 
 /**
-    Return the number of Phantoms in front of the player.
-
-    - Parameters:
-        - range: The number of squares to iterate over.
-
-    - Returns: The number of Phantoms in front of the Player.
+ * @brief Return the number of Phantoms in front of the player.
+ *
+ * @param range: The number of squares to iterate over.
+ *
+ * @returns The number of Phantoms in front of the Player.
  */
 uint8_t count_facing_phantoms(uint8_t range) {
 
@@ -917,67 +965,34 @@ uint8_t count_facing_phantoms(uint8_t range) {
 
 
 /**
-    Tell all of the current Phantoms to move.
-
-    - Returns: `true` if a Phantom caught the Player,
-               otherwise `false`.
-*/
-bool move_phantoms() {
-
-    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
-        Phantom &p = game.phantoms.at(i);
-        if (p.move()) return true;
-    }
-
-    return false;
-}
-
-
-/**
-    Scan around the player for nearby Phantoms.
+ * @brief Get player movement action from the joypad
+ *        Favour movement over rotation.
+ *
+ * @param keys_pressed: Bitfield indicating which
+ *                      keys have been pressed.
+ *
+ * @returns The direction in which the player is facing.
  */
-void check_senses() {
+static uint8_t get_direction(uint8_t keys_pressed) {
 
-    int dx = game.player.x - game.audio_range;
-    int dy = game.player.y - game.audio_range;
+    if (keys_pressed & 0x10) return MOVE_FORWARD;
+    if (keys_pressed & 0x20) return MOVE_BACKWARD;
+    if (keys_pressed & 0x40) return TURN_LEFT;
+    if (keys_pressed & 0x80) return TURN_RIGHT;
 
-    for (int x = dx ; x < (dx + (game.audio_range << 1)) ; x++) {
-        if (x < 0) continue;
-        if (x > MAP_MAX) break;
-        for (int y = dy ; y < (dy + (game.audio_range << 1)) ; y++) {
-            if (y < 0) continue;
-            if (y > MAP_MAX) break;
-            uint8_t nabbed = Map::phantom_on_square(x, y);
-            if (nabbed != ERROR_CONDITION) {
-                // There's a Phantom in range, so sound a tone
-                led(100, 0, 0);
-                beep();
-                sleep_ms(200);
-                led(0, 0, 0);
-
-                // Only play one beep, no matter
-                // how many nearby phantoms there are
-                return;
-            }
-        }
-    }
-}
-
-
-void beep() {
-
-    play(blip, 200, 50);
+    // Just in case
+    return ERROR_CONDITION;
 }
 
 
 /*
- *      ACTIONS
+ * ACTIONS
  */
 
 /**
-    Jump back to the teleport square if the player has walked over it.
+ * @brief Jump back to the teleport square if the player has walked over it.
  */
-void do_teleport() {
+static void do_teleport(void) {
 
     // Move the player to the stored square
     game.state = DO_TELEPORT_ONE;
@@ -994,7 +1009,7 @@ void do_teleport() {
 /**
     Hit the front-most facing Phantom, if there is one.
  */
-void fire_laser() {
+static void fire_laser(void) {
 
     // Did we hit a Phantom?
     play(zap, 640, 200);
@@ -1034,9 +1049,9 @@ void fire_laser() {
 
 
 /**
-    Reset the laser after firing.
+ * @brief Reset the laser after firing.
  */
-void reset_laser() {
+static void reset_laser(void) {
 
     game.is_firing = false;
     game.can_fire = false;
@@ -1046,13 +1061,13 @@ void reset_laser() {
 
 
 /*
- *      GAME OUTCOMES
+ * GAME OUTCOMES
  */
 
 /**
-    The player has died -- show the map and the score.
+ * @bried The player has died -- show the map and the score.
  */
-void death() {
+static void death(void) {
 
     game.state = PLAYER_IS_DEAD;
     for (unsigned int i = 0 ; i < 4 ; i++) {
@@ -1077,9 +1092,11 @@ void death() {
 
 
 /**
-    Just show the map briefly after killing a Phantom
+ * @brief Just show the map briefly after killing a Phantom.
+ * 
+ * @param is_last: The phantom is the last one on the level.
  */
-void phantom_killed(bool is_last) {
+static void phantom_killed(bool is_last) {
 
     Gfx::cls(BLUE);
     show_scores(is_last);
@@ -1087,10 +1104,10 @@ void phantom_killed(bool is_last) {
 
 
 /**
-    Code used in a couple of 'show map' locations
-    Show the current score alongside the map.
+ * @brief Code used in a couple of 'show map' locations
+ *        and show the current score alongside the map.
  */
-void show_scores(bool show_tele) {
+static void show_scores(bool show_tele) {
 
     uint8_t cx = 10;
     if (game.high_score < game.score) game.high_score = game.score;
@@ -1112,11 +1129,11 @@ void show_scores(bool show_tele) {
     score = Utils::bcd(game.high_score);
     cx = (score & 0x000F == 1) ? 226 : 218;
     Gfx::draw_number(score & 0x000F, cx, 18, true);
-    cx = fix_num_width((score & 0x00F0) >> 4, cx);
+    cx = Utils::fix_num_width((score & 0x00F0) >> 4, cx);
     Gfx::draw_number((score & 0x00F0) >> 4,  cx, 18, true);
-    cx = fix_num_width((score & 0x0F00) >> 8, cx);
+    cx = Utils::fix_num_width((score & 0x0F00) >> 8, cx);
     Gfx::draw_number((score & 0x0F00) >> 8,  cx, 18, true);
-    cx = fix_num_width((score & 0xF000) >> 12, cx);
+    cx = Utils::fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
 
     if (game.state != PLAYER_IS_DEAD) {
@@ -1137,12 +1154,3 @@ void show_scores(bool show_tele) {
     Map::draw(BASE_MAP_DELTA, true, show_tele);
 }
 
-
-/*
-    Return the delta when presenting a number.
-    Lower for 1, bigger for 0, 2-9
- */
-uint8_t fix_num_width(uint8_t value, uint8_t current) {
-
-    return (current - (value == 1 ? 6 : 14));
-}

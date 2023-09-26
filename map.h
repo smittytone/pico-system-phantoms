@@ -2,7 +2,6 @@
  * Phantom Slayer
  * Map management functions
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2023, Tony Smith
  * @licence     MIT

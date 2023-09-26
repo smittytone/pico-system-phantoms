@@ -40,14 +40,13 @@ namespace Gfx {
 
 
 /**
-    Render a single viewpoint frame at the specified square.
-    Progressively draw in walls, square by square, moving away
-    from (x,y) in the specified direction.
-
-    - Parameters:
-        - x:          The square's X co-ordinate.
-        - y:          The square's Y co-ordinate.
-        - directions: The direction in which the viewer is facing.
+ * @brief Render a single viewpoint frame at the specified square.
+ *        Progressively draw in walls, square by square, moving away
+ *        from (x,y) in the specified direction.
+ *
+ * @param x:          The square's X co-ordinate.
+ * @param y:          The square's Y co-ordinate.
+ * @param directions: The direction in which the viewer is facing.
  */
 void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
@@ -145,18 +144,17 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
 
 /**
-    Draw a section of the view, ie. a frame.
+ * @brief Draw a section of the view, ie. a frame.
+ *
+ * @param x:              The square's X co-ordinate.
+ * @param y:              The square's Y co-ordinate.
+ * @param left_dir:       The direction to the left of the viewer.
+ * @param rightt_dir:     The direction to the left of the viewer.
+ * @param current_frame:  The viewpoint's frame index.
+ * @param furthest_frame: The frame index of the last visble square.
 
-    - Parameters:
-        - x:              The square's X co-ordinate.
-        - y:              The square's Y co-ordinate.
-        - left_dir:       The direction to the left of the viewer.
-        - rightt_dir:     The direction to the left of the viewer.
-        - current_frame:  The viewpoint's frame index.
-        - furthest_frame: The frame index of the last visble square.
-
-    - Returns: `true` when we've got to the furthest rendered square,
-               `false` otherwise
+ * @returns `true` when we've got to the furthest rendered square,
+            `false` otherwise
  */
 bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uint8_t current_frame, uint8_t furthest_frame) {
 
@@ -183,11 +181,10 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
 
 
 /**
-    Draw a grid line on the floor -- this is all
-    we do to create the floor (ceiling has no line)
-
-    - Parameters:
-        - frame_index: The frame index of the current frame.
+ * @brief Draw a grid line on the floor -- this is all
+ *        we do to create the floor (ceiling has no line)
+ *
+ * @param frame_index: The frame index of the current frame.
  */
 void draw_floor_line(uint8_t frame_index) {
 
@@ -209,13 +206,12 @@ void draw_floor_line(uint8_t frame_index) {
 
 
 /**
-    Draw a green floor tile to indicate the Escape teleport location.
-    When stepping on this, the player can beam to their start point.
-
-    TODO Don't colour the adjacent tiles!
-
-    - Parameters:
-        - frame_index: The frame index of the current frame.
+ * @brief Draw a green floor tile to indicate the Escape teleport location.
+ *        When stepping on this, the player can beam to their start point.
+ *
+ *        TODO Don't colour the adjacent tiles!
+ *
+ * @param frame_index: The frame index of the current frame.
  */
 void draw_teleporter(uint8_t frame_index) {
 
@@ -227,13 +223,12 @@ void draw_teleporter(uint8_t frame_index) {
 
 
 /**
-    Render a left-side wall section for the current square.
-    NOTE 'is_open' is true if there is no wall -- ie. we're at
-         a junction point.
-
-    - Parameters:
-        - frame_index: The frame index of the current frame.
-        - is_open:     `true` if the wall is a path, `false` if it's a wall.
+ * @brief Render a left-side wall section for the current square.
+ *        NOTE `is_open` is true if there is no wall -- ie. we're at
+ *             a junction point.
+ *
+ * @param frame_index: The frame index of the current frame.
+ * @param is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_left_wall(uint8_t frame_index, bool is_open) {
 
@@ -254,13 +249,12 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
 
 /**
-    Render a right-side wall section for the current square.
-    NOTE 'is_open' is true if there is no wall -- we're at
-         a junction point.
-
-    - Parameters:
-        - frame_index: The frame index of the current frame.
-        - is_open:     `true` if the wall is a path, `false` if it's a wall.
+ * @brief Render a right-side wall section for the current square.
+ *        NOTE `is_open` is true if there is no wall -- we're at
+ *             a junction point.
+ *
+ * @param frame_index: The frame index of the current frame.
+ * @param is_open:     `true` if the wall is a path, `false` if it's a wall.
  */
 void draw_right_wall(uint8_t frame_index, bool is_open) {
 
@@ -282,11 +276,10 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
 
 /**
-    Draw the wall facing the viewer, or for very long distances,
-    an 'infinity' view.
-
-    - Parameters:
-        - frame_index: The frame index of the current frame.
+ * @brief Draw the wall facing the viewer, or for very long distances,
+ *        an 'infinity' view.
+ *
+ * @param frame_index: The frame index of the current frame.
  */
 void draw_far_wall(uint8_t frame_index, uint8_t furthest_frame) {
 
@@ -317,9 +310,9 @@ void draw_far_wall(uint8_t frame_index, uint8_t furthest_frame) {
 
 
 /**
-    Draw the laser sight: a big cross on the screen.
+ * @brief Draw the laser sight: a big cross on the screen.
  */
-void draw_reticule() {
+void draw_reticule(void) {
 
     pen(ORANGE);
     rect(100 + game.crosshair_delta, 119, 40, 2);
@@ -328,10 +321,9 @@ void draw_reticule() {
 
 
 /**
-    Draw a laser bolt.
-
-    - Parameters:
-        - frame_index: The frame in which to place the bolt.
+ * @brief Draw a laser bolt.
+ *
+ * @param frame_index: The frame in which to place the bolt.
  */
  void draw_zap(uint8_t frame_index) {
 
@@ -344,12 +336,11 @@ void draw_reticule() {
 
 
 /**
-    Draw a Phantom in the specified frame - which determines
-    its x and y co-ordinates in the frame.
-
-    - Parameters:
-        - frame_index: The frame in which to place the Phantom.
-        - count:       The number of Phantoms on screen.
+ * @brief Draw a Phantom in the specified frame - which determines
+ *        its x and y co-ordinates in the frame.
+ *
+ * @param frame_index: The frame in which to place the Phantom.
+ * @param count:       The number of Phantoms on screen.
  */
 void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
 
@@ -396,12 +387,11 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
 
 
 /**
-    Display a pre-rendered word graphic.
-
-    - Parameters:
-        - index: The word's index in the `word_sizes` array.
-        - x:     The target X co-ordinate.
-        - y:     The target Y co-ordinate.
+ * @brief Display a pre-rendered word graphic.
+ *
+ * @param index: The word's index in the `word_sizes` array.
+ * @param x:     The target X co-ordinate.
+ * @param y:     The target Y co-ordinate.
  */
 void draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double) {
 
@@ -419,13 +409,12 @@ void draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double) {
 
 
 /**
-    Display a pre-rendered single-digit number graphic.
-
-    - Parameters:
-        - index:     The word's index in the `word_sizes` array.
-        - x:         The target X co-ordinate.
-        - y:         The target Y co-ordinate.
-        - do_double: Render at 2x size.
+ * @brief Display a pre-rendered single-digit number graphic.
+ *
+ * @param index:     The word's index in the `word_sizes` array.
+ * @param x:         The target X co-ordinate.
+ * @param y:         The target Y co-ordinate.
+ * @param do_double: Render at 2x size.
  */
 void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
 
@@ -441,8 +430,10 @@ void draw_number(uint8_t number, uint8_t x, uint8_t y, bool do_double) {
 }
 
 
-/*
-    Roll up the logo down from the top of the screen.
+/**
+ * @brief Roll up the logo down from the top of the screen.
+ *
+ * @param y: The logo image's Y co-ordinate.
  */
 void animate_logo(int16_t y) {
 
@@ -461,8 +452,10 @@ void animate_logo(int16_t y) {
 }
 
 
-/*
-    Roll up the credit from the bottom.
+/**
+ * @brief Roll up the credit from the bottom.
+ *
+ * @param y: The credit image's Y co-ordinate.
  */
 void animate_credit(int16_t y) {
 
@@ -479,10 +472,10 @@ void animate_credit(int16_t y) {
 
 
 /**
-    Draw the side view - the view the player will see next -
-    to the side buffer.
+ * @brief Draw the side view - the view the player will see next -
+ *        to the side buffer.
  */
-void animate_turn() {
+void animate_turn(void) {
 
     // Draw the side view
     target(side_buffer);
@@ -496,17 +489,15 @@ void animate_turn() {
 
 
 /**
-    Streamlined (sort of) blit code for left and right turn animations.
-
-    - Parameters:
-        - src: Pointer to the source buffer.
-        - sx:  The top-left corner X co-ordinate of the area to copy.
-        - sy:  The top-left corner Y co-ordinate of the area to copy.
-        - w:   The width of the area to copy.
-        - h:   The height of the area to copy.
-        - dx:  The top-left corner X co-ordinate of the area to copy to.
-        - dy:  The top-left corner Y co-ordinate of the area to copy to.
-
+* @brief Streamlined (sort of) blit code for left and right turn animations.
+ *
+ * @param src: Pointer to the source buffer.
+ * @param sx:  The top-left corner X co-ordinate of the area to copy.
+ * @param sy:  The top-left corner Y co-ordinate of the area to copy.
+ * @param w:   The width of the area to copy.
+ * @param h:   The height of the area to copy.
+ * @param dx:  The top-left corner X co-ordinate of the area to copy to.
+ * @param dy:  The top-left corner Y co-ordinate of the area to copy to.
  */
 void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy) {
 
@@ -522,6 +513,11 @@ void alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32
 }
 
 
+/**
+ * @brief Clear the screen to a specific colour.
+ * 
+ * @param colour: The colour to set the screen.
+*/
 void cls(color_t colour) {
 
     pen(colour);

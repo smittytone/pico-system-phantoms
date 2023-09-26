@@ -2,7 +2,6 @@
  * Phantom Slayer
  * Utility functions
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2023, Tony Smith
  * @licence     MIT
@@ -17,8 +16,10 @@
  */
 namespace Utils {
     int             irandom(int start, int max);
-    uint8_t         inkey();
+    uint8_t         inkey(void);
     uint32_t        bcd(uint32_t base);
+    void            beep(void);
+    uint8_t         fix_num_width(uint8_t value, uint8_t current);
 }
 
 

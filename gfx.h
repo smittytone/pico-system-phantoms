@@ -1,7 +1,6 @@
 /*
  * Phantom Slayer
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2023, Tony Smith
  * @licence     MIT
@@ -41,9 +40,9 @@ namespace Gfx {
     void        draw_right_wall(uint8_t frame_index, bool is_open);
     void        draw_far_wall(uint8_t frame_index, uint8_t furthest_frame);
 
-    void        draw_reticule();
+    void        draw_reticule(void);
     void        draw_zap(uint8_t frame);
-    void        animate_turn();
+    void        animate_turn(void);
     void        draw_phantom(uint8_t frame_number, uint8_t* phantom_count, bool is_zapped);
 
     void        draw_word(uint8_t index, uint8_t x, uint8_t y, bool do_double);
@@ -52,7 +51,7 @@ namespace Gfx {
     void        animate_credit(int16_t y);
     void        animate_logo(int16_t y);
 
-    void        show_debug_info();
+    void        show_debug_info(void);
 
     void        alt_blit(buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy);
     void        cls(color_t colour);

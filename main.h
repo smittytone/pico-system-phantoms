@@ -1,7 +1,6 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2021
  * @licence     MIT
@@ -30,11 +29,6 @@
 #include "phantom.h"
 #include "tinymt32.h"
 #include "utils.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*
@@ -161,36 +155,16 @@ typedef struct {
 } Rect;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /*
  *      PROTOTYPES
  */
-void        setup_device();
-void        start_new_game();
-void        init_game();
-void        init_phantoms();
-void        init_level();
-void        start_new_level();
-void        set_teleport_square();
 
-void        update_world();
-void        check_senses();
-bool        move_phantoms();
-void        manage_phantoms();
-
-uint8_t     get_direction(uint8_t key_pressed);
-uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
-
-void        fire_laser();
-void        reset_laser();
-void        do_teleport();
-
-void        death();
-void        phantom_killed(bool is_last = false);
-void        show_scores(bool show_tele = false);
-uint8_t     fix_num_width(uint8_t value, uint8_t current);
-
-void        beep();
 
 
 #ifdef __cplusplus
