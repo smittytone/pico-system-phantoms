@@ -2,7 +2,6 @@
  * Phantom Slayer
  * Help page display
  *
- * @version     1.1.3
  * @author      smittytone
  * @copyright   2023, Tony Smith
  * @licence     MIT

@@ -2,7 +2,7 @@
  * phantom-slayer for Raspberry Pi Pico
  *
  * @author      smittytone
- * @copyright   2021
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -256,7 +256,7 @@ void update(uint32_t tick_ms) {
             // Was a key tapped?
             key = Utils::inkey();
 
-            if ((key > 0x0F) && !game.show_reticule) {
+            if ((key > KEY_Y) && !game.show_reticule) {
                 // A move key has been pressed
                 uint8_t dir = get_direction(key);
                 uint8_t nx = game.player.x;
@@ -322,7 +322,7 @@ void update(uint32_t tick_ms) {
                         return;
                     }
                 }
-            } else if ((key & 0x02) && !game.show_reticule) {
+            } else if ((key & KEY_B) && !game.show_reticule) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
@@ -332,7 +332,7 @@ void update(uint32_t tick_ms) {
 
                     do_teleport();
                 }
-            } else if (key & 0x04) {
+            } else if (key & KEY_X) {
                 #ifdef DEBUG
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
@@ -346,7 +346,7 @@ void update(uint32_t tick_ms) {
                 #ifdef DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
                 #endif
-            } else if (key & 0x08) {
+            } else if (key & KEY_Y) {
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
@@ -377,9 +377,9 @@ void update(uint32_t tick_ms) {
                 if (game.show_reticule) {
                     // Fire the laser: clear the cross hair and zap
                     game.show_reticule = false;
-                    reset_laser();
                     game.is_firing = true;
-
+                    reset_laser();
+                    
                     // Check if we've hit a Phantom
                     fire_laser();
 
@@ -477,7 +477,10 @@ void draw(uint32_t tick_ms) {
             if (game.state == ZAP_PHANTOM) return;
 
             // Is the laser being fired?
-            if (game.is_firing) Gfx::draw_zap(game.zap_frame);
+            if (game.is_firing) {
+                Gfx::draw_zap(game.zap_frame);
+                //fire_laser();
+            }
 
             // Has the player primed the laser?
             if (game.show_reticule) Gfx::draw_reticule();
@@ -975,10 +978,10 @@ uint8_t count_facing_phantoms(uint8_t range) {
  */
 static uint8_t get_direction(uint8_t keys_pressed) {
 
-    if (keys_pressed & 0x10) return MOVE_FORWARD;
-    if (keys_pressed & 0x20) return MOVE_BACKWARD;
-    if (keys_pressed & 0x40) return TURN_LEFT;
-    if (keys_pressed & 0x80) return TURN_RIGHT;
+    if (keys_pressed & KEY_UP) return MOVE_FORWARD;
+    if (keys_pressed & KEY_DOWN) return MOVE_BACKWARD;
+    if (keys_pressed & KEY_LEFT) return TURN_LEFT;
+    if (keys_pressed & KEY_RIGHT) return TURN_RIGHT;
 
     // Just in case
     return ERROR_CONDITION;
@@ -1007,7 +1010,7 @@ static void do_teleport(void) {
 
 
 /**
-    Hit the front-most facing Phantom, if there is one.
+ * @brief Hit the front-most facing Phantom, if there is one.
  */
 static void fire_laser(void) {
 
@@ -1065,7 +1068,7 @@ static void reset_laser(void) {
  */
 
 /**
- * @bried The player has died -- show the map and the score.
+ * @brief The player has died -- show the map and the score.
  */
 static void death(void) {
 
