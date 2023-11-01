@@ -139,6 +139,8 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 ++i;
             } while (frame >= 0);
     }
+
+    if (game.is_firing) draw_zap(game.zap_frame); 
 }
 
 
@@ -327,9 +329,8 @@ void draw_reticule(void) {
  void draw_zap(uint8_t frame_index) {
 
     if (frame_index < 5) {
-        uint16_t radius = radii[frame_index];
         pen(ORANGE);
-        fcircle(120, 120, radius);
+        fcircle(120, 120, radii[frame_index]);
     }
 }
 

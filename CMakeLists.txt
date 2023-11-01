@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14...3.28)
+cmake_minimum_required(VERSION 3.14)
 include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
 
 get_filename_component(SDKPATH "${PROJECT_SOURCE_DIR}../picosystem" REALPATH)
@@ -10,7 +10,6 @@ set(PICOSYSTEM_DIR ${SDKPATH})
 
 #execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
 #add_compile_definitions(RANDSEED=${EPOCH})
-#add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
         LANGUAGES C CXX ASM

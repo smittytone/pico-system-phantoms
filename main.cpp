@@ -33,7 +33,7 @@ static void phantom_killed(bool is_last = false);
 static void show_scores(bool show_tele = false);
 static uint8_t get_direction(uint8_t key_pressed);
 static uint8_t get_facing_phantom(uint8_t range);
-
+static uint8_t get_facing_phantom_distance(uint8_t index);
 
 
 /*
@@ -79,9 +79,9 @@ void init(void) {
     // Clear the display as soon as possible
     Gfx::cls(GREEN);
 
-#ifdef DEBUG
+#ifdef PHANTOM_DEBUG
     // Enable debugging
-    stdio_init_all();
+    stdio_usb_init();
     sleep_ms(2000);
 #endif
 
@@ -275,7 +275,7 @@ void update(uint32_t tick_ms) {
                             // Yes -- so the player is dead!
                             death();
 
-                            #ifdef DEBUG
+                            #ifdef PHANTOM_DEBUG
                             printf("\nPLAYER IS DEAD\n");
                             #endif
                             return;
@@ -285,7 +285,7 @@ void update(uint32_t tick_ms) {
                         game.player.x = nx;
                         game.player.y = ny;
 
-                        #ifdef DEBUG
+                        #ifdef PHANTOM_DEBUG
                         printf("MOVED PLAYER (KEY: %02x), DIRECTION: %i\n", key, game.player.direction);
                         #endif
                     }
@@ -296,7 +296,7 @@ void update(uint32_t tick_ms) {
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
-                        #ifdef DEBUG
+                        #ifdef PHANTOM_DEBUG
                         printf("TURNED PLAYER RIGHT, DIRECTION: %i\n", game.player.direction);
                         #endif
 
@@ -312,7 +312,7 @@ void update(uint32_t tick_ms) {
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
-                        #ifdef DEBUG
+                        #ifdef PHANTOM_DEBUG
                         printf("TURNED PLAYER LEFT, DIRECTION: %i\n", game.player.direction);
                         #endif
 
@@ -326,14 +326,14 @@ void update(uint32_t tick_ms) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
-                    #ifdef DEBUG
+                    #ifdef PHANTOM_DEBUG
                     printf("PLAYER TELEPORTING\n");
                     #endif
 
                     do_teleport();
                 }
             } else if (key & KEY_X) {
-                #ifdef DEBUG
+                #ifdef PHANTOM_DEBUG
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
                 #endif
@@ -343,7 +343,7 @@ void update(uint32_t tick_ms) {
                 if (game.audio_range > 6) game.audio_range = 1;
                 Utils::beep();
 
-                #ifdef DEBUG
+                #ifdef PHANTOM_DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
                 #endif
             } else if (key & KEY_Y) {
@@ -352,7 +352,7 @@ void update(uint32_t tick_ms) {
                 if (game.audio_range < 1) game.audio_range = 6;
                 Utils::beep();
 
-                #ifdef DEBUG
+                #ifdef PHANTOM_DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
                 #endif
             }
@@ -365,10 +365,6 @@ void update(uint32_t tick_ms) {
                     // Button A pressed
                     if (!game.show_reticule) {
                         game.show_reticule = true;
-
-                        #ifdef DEBUG
-                        printf("READY TO FIRE\n");
-                        #endif
                     }
                 }
             } else {
@@ -379,13 +375,10 @@ void update(uint32_t tick_ms) {
                     game.show_reticule = false;
                     game.is_firing = true;
                     reset_laser();
-                    
-                    // Check if we've hit a Phantom
-                    fire_laser();
 
-                    #ifdef DEBUG
-                        printf("FIRED\n");
-                    #endif
+                    // Check if we've hit a Phantom
+                    //play(zap, 640, 200);
+                    fire_laser();
                 }
             }
 
@@ -477,10 +470,7 @@ void draw(uint32_t tick_ms) {
             if (game.state == ZAP_PHANTOM) return;
 
             // Is the laser being fired?
-            if (game.is_firing) {
-                Gfx::draw_zap(game.zap_frame);
-                //fire_laser();
-            }
+            if (game.is_firing) Gfx::draw_zap(game.zap_frame);
 
             // Has the player primed the laser?
             if (game.show_reticule) Gfx::draw_reticule();
@@ -534,7 +524,7 @@ static void setup_device(void) {
     // Start the game loop at the intro animation
     game.state = ANIMATE_LOGO;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE SETUP_DEVICE\n");
     #endif
 }
@@ -564,7 +554,7 @@ static void start_new_game(void) {
     // Set the game mode
     game.state = START_COUNT;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE START_NEW_GAME()\n");
     #endif
 }
@@ -605,7 +595,7 @@ static void init_game(void) {
     game.crosshair_delta = 0;
     game.audio_range = 4;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE INIT_GAME()\n");
     #endif
 }
@@ -640,7 +630,7 @@ static void start_new_level(void) {
     game.start_x = x;
     game.start_y = y;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("PLAYER LOCATION: %i, %i. DIRECTION: %i\n", x, y, game.player.direction);
     #endif
 
@@ -662,7 +652,7 @@ static void start_new_level(void) {
     game.player.direction = DIRECTION_EAST;
      */
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE START_NEW_LEVEL()\n");
     #endif
 }
@@ -685,7 +675,7 @@ static void init_level(void) {
     game.zap_fire_time = 0;
     game.zap_frame = 0;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE INIT_LEVEL()\n");
     #endif
 }
@@ -706,7 +696,7 @@ static void init_phantoms(void) {
     game.phantom_speed = PHANTOM_MOVE_TIME_US << 1;
     game.last_phantom_move = 0;
 
-    #ifdef DEBUG
+    #ifdef PHANTOM_DEBUG
     printf("DONE INIT_PHANTOMS()\n");
     #endif
 }
@@ -748,7 +738,7 @@ static void update_world(void) {
             // Player was killed
             death();
 
-            #ifdef DEBUG
+            #ifdef PHANTOM_DEBUG
             printf("PLAYER IS DEAD\n");
             #endif
 
@@ -764,12 +754,25 @@ static void update_world(void) {
 
     // Animate the laser zap
     if (game.is_firing && now - game.zap_fire_time > LASER_FIRE_US) {
-        if (game.zap_frame == 6) {
-            reset_laser();
+        /*
+        uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
+        if (n != ERROR_CONDITION) {
+            uint8_t d = get_facing_phantom_distance(n);
+            if (game.zap_frame >= d) {
+                reset_laser();
+            } else {
+                game.zap_frame++;
+                game.zap_fire_time = now;
+            }
         } else {
-            game.zap_frame++;
-            game.zap_fire_time = now;
-        }
+            */
+            if (game.zap_frame == 6) {
+                reset_laser();
+            } else {
+                game.zap_frame++;
+                game.zap_fire_time = now;
+            }
+        //}
     }
 }
 
@@ -916,6 +919,28 @@ static uint8_t get_facing_phantom(uint8_t range) {
     }
 
     return p_index;
+}
+
+
+static uint8_t get_facing_phantom_distance(uint8_t index) {
+
+    Phantom &p = game.phantoms.at(index);
+    switch(game.player.direction) {
+        case DIRECTION_NORTH:
+            if (game.player.y == 0) return ERROR_CONDITION;
+            return game.player.y - p.y;;
+        case DIRECTION_EAST:
+            if (game.player.x == MAP_MAX) return ERROR_CONDITION;
+            return p.x - game.player.x;
+        case DIRECTION_SOUTH:
+            if (game.player.y == MAP_MAX) return ERROR_CONDITION;
+            return p.y - game.player.y;
+        default:
+            if (game.player.x == 0) return ERROR_CONDITION;
+            return game.player.x - p.x;
+    }
+
+    return ERROR_CONDITION;
 }
 
 
@@ -1096,7 +1121,7 @@ static void death(void) {
 
 /**
  * @brief Just show the map briefly after killing a Phantom.
- * 
+ *
  * @param is_last: The phantom is the last one on the level.
  */
 static void phantom_killed(bool is_last) {
