@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Utility functions
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -12,11 +11,13 @@
 
 using namespace picosystem;
 
+static inline uint8_t rnd_hw(void);
 
 /*
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern tinymt32_t   tinymt_store;
+extern voice_t      blip;
 
 
 /*
@@ -24,34 +25,40 @@ extern tinymt32_t   tinymt_store;
  */
 // NOTE Key values defined by picosystem
 uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
+uint8_t rnd_last = rnd_hw();
 
 
 namespace Utils {
 
 /**
-    Randomise using TinyMT
-    https://github.com/MersenneTwister-Lab/TinyMT
-    Generate a PRG between 0 and max-1 then add start,
-    eg. 10, 20 -> range 10-29
-
-    - Parameters:
-        - start: A baseline value added to the rolled value.
-        - max:   A maximum roll.
-
-    - Returns: The random number.
+ * @brief Randomise using TinyMT
+ *        https://github.com/MersenneTwister-Lab/TinyMT
+ *        Generate a PRG between 0 and max-1 then add start,
+ *        eg. 10, 20 -> range 10-29
+ *
+ * @param start: A baseline value added to the rolled value.
+ * @param max:   A maximum roll.
+ *
+ * @returns: The random number.
  */
 int irandom(int start, int max) {
-    int value = tinymt32_generate_uint32(&tinymt_store);
+
+    //int value = tinymt32_generate_uint32(&tinymt_store);
+    //return ((value % max) + start);
+
+    int value = rnd_hw() << rnd_last;
+    rnd_last = rnd_hw();
     return ((value % max) + start);
 }
 
 
 /**
-    Check all the keys to see if any have been pressed. Set a
-    bit for each key set in the order:
-    A (Bit 0), B, X, Y, UP, DOWN, LEFT, RIGHT (Bit 7)
+ * @brief Check all the keys to see if any have been pressed. Set a
+ *        bit for each key set in the order:
+ *        A (Bit 0), B, X, Y, UP, DOWN, LEFT, RIGHT (Bit 7)
  */
-uint8_t inkey() {
+uint8_t inkey(void) {
+
     uint8_t bits = 0;
     for (uint8_t i = 0 ; i < 8 ; ++i) {
         if (pressed(keys[i])) bits |= (1 << i);
@@ -62,15 +69,15 @@ uint8_t inkey() {
 
 
 /**
-    Convert a 16-bit int (to cover decimal range 0-9999) to
-    its BCD equivalent.
-
-    - Parameters:
-        - base: The input integer.
-
-    - Returns: The BCD encoding of the input.
+ * @brief Convert a 16-bit int (to cover decimal range 0-9999) to
+ *        its BCD equivalent.
+ *
+ * @param base: The input integer.
+ *
+ * @returns: The BCD encoding of the input.
  */
 uint32_t bcd(uint32_t base) {
+
     if (base > 9999) base = 9999;
     for (uint32_t i = 0 ; i < 16 ; ++i) {
         base = base << 1;
@@ -85,4 +92,31 @@ uint32_t bcd(uint32_t base) {
 }
 
 
+/**
+ * @brief Beep!
+*/
+void beep(void) {
+
+    play(blip, 200, 50);
+}
+
+
+/*
+ * @brief Return the delta when presenting a number.
+ *        Lower for 1, bigger for 0, 2-9
+ */
+uint8_t fix_num_width(uint8_t value, uint8_t current) {
+
+    return (current - (value == 1 ? 6 : 14));
+}
+
+
 }   // namespace Utils
+
+
+static inline uint8_t rnd_hw(void) {
+    uint8_t rnd = 0;
+    for (int i = 0; i < 8; i++)
+        rnd |= ((rosc_hw->randombit & 1) << i);
+    return (rnd);
+}

@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -17,19 +16,17 @@ using std::string;
  *      EXTERNALLY-DEFINED GLOBALS
  */
 extern Game         game;
-extern tinymt32_t   tinymt_store;
 
 
-/*
-    Constructor.
-
-    NOTE This does not set the Phantom's location.
-
-    - Parameters:
-        - start_x: Inital X co-ordinate. Default: off the board.
-        - start_y: Inital Y co-ordinate. Default: off the board.
+/**
+ * @brief Constructor.
+ *        NOTE This does not set the Phantom's location.
+ *
+ * @param start_x: Inital X co-ordinate. Default: off the board.
+ * @param start_y: Inital Y co-ordinate. Default: off the board.
  */
 Phantom::Phantom() {
+
     // Use 'NOT_ON_BOARD' (== ERROR_CONDITION) as 'not on board yet'
     init();
     direction = DIRECTION_NORTH;
@@ -39,9 +36,10 @@ Phantom::Phantom() {
 
 
 /**
-    Roll the Phantom's hit points
+ * @brief Roll the Phantom's hit points
  */
-void Phantom::init() {
+void Phantom::init(void) {
+
     uint8_t level_index = (game.level - 1) * 4;
     uint8_t min_hit_points = level_data[level_index];
     uint8_t max_hit_points = level_data[level_index + 1];
@@ -54,10 +52,13 @@ void Phantom::init() {
 }
 
 
-/*
-    Set the Phantom on a new square.
+/**
+ * @brief Set the Phantom on a new square.
+ * 
+ * @param my_index: Current phantom's index.
  */
 void Phantom::place(uint8_t my_index) {
+
     while (true) {
         // Pick a random co-ordinate
         uint8_t new_x = Utils::irandom(0, 20);
@@ -92,13 +93,13 @@ void Phantom::place(uint8_t my_index) {
 }
 
 
-/*
-    Move the Phantom.
-
-    - Returns: `true` if the player was caught,
-               otherwise `false`.
+/**
+ * @brief Move the Phantom.
+ *
+ * @returns `true` if the player was caught, otherwise `false`.
  */
-bool Phantom::move() {
+bool Phantom::move(void) {
+
     // Has the Phantom been zapped? Don't move it
     if (x == NOT_ON_BOARD || hp < 1) return false;
 
@@ -113,7 +114,11 @@ bool Phantom::move() {
     int8_t dy = y - game.player.y;
 
     // Has the phantom got the player?
-    if (dx == 0 && dy == 0) return true;
+    if (dx == 0 && dy == 0) {
+        x = old_x;
+        y = old_y;
+        return true;
+    }
 
     // Set up direction storage
     uint8_t available_directions = 0;
@@ -260,19 +265,28 @@ bool Phantom::move() {
         }
     }
 
+    // FROM 1.1.3
+    // Record the Phantom's last location
+    old_x = x;
+    old_y = y;
+
     // Set the Phantom's new location
     x = new_x;
     y = new_y;
     direction = new_direction;
-
     return false;
 }
 
 
-/*
-    Move the Phantom one space according in the chosen direction.
+/**
+ * @brief Move the Phantom one space according in the chosen direction.
+ * 
+ * @param nd: New direction.
+ * @param nx: Pointer to phantom's X co-ordinate.
+ * @param nx: Pointer to phantom's Y co-ordinate.
  */
 void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
+
     if (nd == PHANTOM_NORTH) *ny = y - 1;
     if (nd == PHANTOM_SOUTH) *ny = y + 1;
     if (nd == PHANTOM_EAST)  *nx = x + 1;
@@ -280,10 +294,13 @@ void Phantom::move_one_square(uint8_t nd, uint8_t *nx, uint8_t *ny) {
 }
 
 
-/*
-    Return the direction the phantom has come from.
+/**
+ * @brief Return the direction the phantom has come from.
+ * 
+ * @returns The direction in which the phantom is facing.
  */
-uint8_t Phantom::came_from() {
+uint8_t Phantom::came_from(void) {
+
     if (direction == PHANTOM_WEST)  return PHANTOM_EAST;
     if (direction == PHANTOM_EAST)  return PHANTOM_WEST;
     if (direction == PHANTOM_NORTH) return PHANTOM_SOUTH;

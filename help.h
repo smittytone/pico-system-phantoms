@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Help page display
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -23,7 +22,7 @@
  */
 namespace Help {
     void        show_page(uint16_t page_number);
-    void        show_offer();
+    void        show_offer(void);
 }
 
 

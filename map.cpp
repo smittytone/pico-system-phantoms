@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Map management functions
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -157,7 +156,16 @@ uint8_t base_map_119[20] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 namespace Map {
 
 
+/**
+ * @brief Choose a map - not the same as the most recent one -
+ *        and set it as current.
+ * 
+ * @param last_map: The index of the most recent map.
+ * 
+ * @returns The index of the current map.
+ */
 uint8_t init(uint8_t last_map) {
+
     // FROM 1.0.2
     // Don't pick the same map as last time
     uint8_t map;
@@ -306,24 +314,24 @@ uint8_t init(uint8_t last_map) {
 }
 
 
-/*
-    Draw the current map on the screen buffer, centred but
-    vertically adjusted according to `y_delta`.
-    If `show_entities` is `true`, the phantom locations
-    are plotted in. The player and the teleport sqaure positions
-    are always shown.
-
-    NOTE With the map now drawn on 3x3 blocks, `y_delta`
-         has s very limited range of useable values.
-
-    - parameters:
-        - y_delta:       Offset in the y-axis.
-        - show_entities: Display phantoms.
+/**
+ * @brief Draw the current map on the screen buffer, centred but
+ *        vertically adjusted according to `y_delta`.
+ *        If `show_entities` is `true`, the phantom locations
+ *        are plotted in. The player position is always shown.
+ *
+ *        NOTE With the map now drawn on 3x3 blocks, `y_delta`
+ *             has a very limited range of useable values.
+ *
+ * @param y_delta:       Offset in the y-axis.
+ * @param show_entities: Display phantoms.
+ * @param show_tele:     Display the teleport square.
  */
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
+
     // Set the map background (blue)
     pen(BLUE);
-    frect(0, 0, 240, 240);
+    //frect(0, 0, 240, 240);
 
     // Draw the map
     uint8_t x = 40;
@@ -391,33 +399,33 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 }
 
 
-/*
-    Return the contents of the specified grid reference.
-
-    - Parameters:
-        - x: The square's x co-ordinate.
-        - y: The square's y co-ordinate.
-
-    - Returns: The contents of the square.
+/**
+ * @brief Return the contents of the specified grid reference.
+ *
+ * @param x: The square's X co-ordinate.
+ * @param y: The square's Y co-ordinate.
+ *
+ * @returns The contents of the square.
  */
 uint8_t get_square_contents(uint8_t x, uint8_t y) {
+
     if (x > MAP_MAX || y > MAP_MAX) return MAP_TILE_WALL;
     uint8_t *line = current_map[y];
     return line[x];
 }
 
 
-/*
-    Set the contents of the specified grid reference.
-
-    - Parameters:
-        - x:     The square's x co-ordinate.
-        - y:     The square's y co-ordinate.
-        - value: The square's new contents.
-
-    - Returns: `true` if the square was set, otherwise `false`.
+/**
+ * @brief Set the contents of the specified grid reference.
+ *
+ * @param x:     The square's X co-ordinate.
+ * @param y:     The square's Y co-ordinate.
+ * @param value: The square's new contents.
+ * 
+ * @returns: `true` if the square was set, otherwise `false`.
  */
 bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
+
     if (x > MAP_MAX || y > MAP_MAX) return false;
     uint8_t *line = current_map[y];
     line[x] = value;
@@ -425,18 +433,18 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
 }
 
 
-/*
-    Return the number of squares an entity can see.
-
-    - Parameters:
-        - x:         The entity's x co-ordinate.
-        - y:         The entity's y co-ordinate.
-        - direction: The direction in which the entity is facing.
-
-    - Returns: The number of visible squares up to a maximum,
-               excluding the entity's square.
+/**
+ * @brief Return the number of squares an entity can see.
+ *
+ * @param x:         The entity's X co-ordinate.
+ * @param y:         The entity's Y co-ordinate.
+ * @param direction: The direction in which the entity is facing.
+ *
+ * @returns The number of visible squares up to a maximum,
+ *          excluding the entity's square.
  */
 uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
+
     uint8_t count = 0;
     switch(direction) {
         case DIRECTION_NORTH:
@@ -476,18 +484,22 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
             } while (x >= 0);
     }
 
-    if (count > MAX_VIEW_RANGE) count = MAX_VIEW_RANGE;
+    //if (count > MAX_VIEW_RANGE) count = MAX_VIEW_RANGE;
     return count;
 }
 
 
-/*
-    Is there a Phantom on the specified square?
-
-    - Returns: The index of the Phantom in the vector,
-               or `ERROR_CONDITION` if the square is empty.
+/**
+ * @brief Is there a Phantom on the specified square?
+ *
+ * @param x:         The entity's X co-ordinate.
+ * @param y:         The entity's Y co-ordinate.
+ * 
+ * @returns The index of the Phantom in the vector,
+ *          or `ERROR_CONDITION` if the square is empty.
  */
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
+
     size_t number = game.phantoms.size();
     for (size_t i = 0 ; i < number ; ++i) {
         Phantom &p = game.phantoms.at(i);

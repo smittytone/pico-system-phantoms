@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Help page display
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -114,16 +113,15 @@ string help_page_4 =
 namespace Help {
 
 
-/*
-    Show a page of help text.
-
-    - Parameters:
-        - page_number: The index of the page to display.
+/**
+ * @brief Show a page of help text.
+ *
+ * @param page_number: The index of the page to display.
  */
 void show_page(uint16_t page_number) {
+
     // CLS
-    pen(GREEN);
-    clear();
+    Gfx::cls(GREEN);
 
     // Game title
     pen(BLACK);
@@ -133,7 +131,7 @@ void show_page(uint16_t page_number) {
     // Show the help text
     cursor(6, 30);
     // FROM 1.1.2 -- re-implement without a vector
-    //               access to save memory issues 
+    //               access to save memory issues
     //               introduced by SDK
     switch(page_number) {
         case 0:
@@ -154,25 +152,23 @@ void show_page(uint16_t page_number) {
     }
 
     // Call to action
-    if (page_number < 4) {
-        cursor(47, 230);
-        text("PRESS ANY KEY TO CONTINUE");
-    } else {
-        int32_t w, h;
-        measure("PRESS ANY KEY TO PLAY", w, h);
-        cursor((240 - w) / 2, 230);
-        text("PRESS ANY KEY TO PLAY");
-    }
+    int32_t w, h;
+    string s = "PRESS ANY KEY TO CONTINUE";
+    if (page_number > 0 && page_number < 4) s += ", B TO GO BACK";
+    if (page_number == 4) s = "PRESS ANY KEY TO PLAY, B TO GO BACK";
+    measure(s, w, h);
+    cursor((240 - w) / 2, 230);
+    text(s);
 }
 
 
-/*
-    Ask if the player wants help.
+/**
+ * @brief Ask if the player wants help.
  */
-void show_offer() {
+void show_offer(void) {
+
     // CLS
-    pen(GREEN);
-    clear();
+    Gfx::cls(GREEN);
 
     // Game title
     pen(BLACK);

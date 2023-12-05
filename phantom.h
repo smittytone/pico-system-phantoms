@@ -2,9 +2,8 @@
  * Phantom Slayer
  * Phantom class code
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021, Tony Smith
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -50,18 +49,17 @@ class Phantom {
     public:
         // Methods
         Phantom();
-
-        void        init();
+        void        init(void);
         void        place(uint8_t my_index);
-        bool        move();
+        bool        move(void);
         void        move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny);
-        uint8_t     came_from();
-
-
+        uint8_t     came_from(void);
 
         // Properties
         uint8_t     x;
         uint8_t     y;
+        uint8_t     old_x;
+        uint8_t     old_y;
         int8_t      hp;
         uint8_t     direction;
         uint8_t     back_steps;

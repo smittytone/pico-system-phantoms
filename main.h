@@ -1,9 +1,8 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
@@ -16,6 +15,7 @@
  */
 #include "picosystem.hpp"
 #include "hardware/adc.h"
+#include "hardware/structs/rosc.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -29,11 +29,6 @@
 #include "phantom.h"
 #include "tinymt32.h"
 #include "utils.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*
@@ -66,9 +61,23 @@ enum {
     ZAP_PHANTOM,
     SHOW_TEMP_MAP,
     PLAYER_IS_DEAD,
+    PLAYER_DEAD_NEXT_GAME,
     ANIMATE_RIGHT_TURN,
     ANIMATE_LEFT_TURN
 };
+
+// Keys
+enum {
+    KEY_A       = 0x01,
+    KEY_B       = 0x02,
+    KEY_X       = 0x04,
+    KEY_Y       = 0x08,
+    KEY_UP      = 0x10,
+    KEY_DOWN    = 0x20,
+    KEY_LEFT    = 0x40,
+    KEY_RIGHT   = 0x80
+};
+
 
 // Timer limits
 #define PHANTOM_MOVE_TIME_US                            1000000
@@ -77,6 +86,8 @@ enum {
 #define LASER_FIRE_US                                   200000
 #define LOGO_ANIMATION_US                               9000
 #define LOGO_PAUSE_TIME                                 5000000
+// FROM 1.1.3
+#define DEATH_MAP_INTERVAL                              4000
 
 // Map square types
 #define MAP_TILE_WALL                                   0xEE
@@ -157,36 +168,16 @@ typedef struct {
 } Rect;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /*
  *      PROTOTYPES
  */
-void        setup_device();
-void        start_new_game();
-void        init_game();
-void        init_phantoms();
-void        init_level();
-void        start_new_level();
-void        set_teleport_square();
 
-void        update_world();
-void        check_senses();
-bool        move_phantoms();
-void        manage_phantoms();
-
-uint8_t     get_direction(uint8_t key_pressed);
-uint8_t     get_facing_phantom(uint8_t range);
 uint8_t     count_facing_phantoms(uint8_t range);
-
-void        fire_laser();
-void        reset_laser();
-void        do_teleport();
-
-void        death();
-void        phantom_killed(bool is_last = false);
-void        show_scores(bool show_tele = false);
-uint8_t     fix_num_width(uint8_t value, uint8_t current);
-
-void        beep();
 
 
 #ifdef __cplusplus
