@@ -1,9 +1,8 @@
 /*
  * phantom-slayer for Raspberry Pi Pico
  *
- * @version     1.1.2
  * @author      smittytone
- * @copyright   2021
+ * @copyright   2023, Tony Smith
  * @licence     MIT
  *
  */
