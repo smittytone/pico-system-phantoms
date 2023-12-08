@@ -465,8 +465,7 @@ void setup_device(void) {
 
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, ROOT);
-    std::srand(ROOT);
+    tinymt32_init(&tinymt_store, RANDSEED);
 
     // Make the graphic frame rects
     // NOTE These are pixel values:

@@ -11,7 +11,7 @@ set(PICOSYSTEM_DIR ${SDKPATH})
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 execute_process(COMMAND date +%s OUTPUT_VARIABLE EPOCH)
-add_compile_definitions(ROOT=${EPOCH})
+add_compile_definitions(RANDSEED=${EPOCH})
 #add_compile_definitions(DEBUG=1)
 
 project(phantom-slayer
