@@ -72,8 +72,21 @@ enum class GAME_STATE: uint8_t {
     ZAP_PHANTOM,
     SHOW_TEMP_MAP,
     PLAYER_IS_DEAD,
+    NEW_GAME_OFFER,
     ANIMATE_RIGHT_TURN,
     ANIMATE_LEFT_TURN
+};
+
+// Keys
+enum class KEY: uint8_t {
+    A               = 0x01,
+    B               = 0x02,
+    X               = 0x04,
+    Y               = 0x08,
+    UP              = 0x10,
+    DOWN            = 0x20,
+    LEFT            = 0x40,
+    RIGHT           = 0x80
 };
 
 

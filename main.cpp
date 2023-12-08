@@ -113,7 +113,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             break;
         case GAME_STATE::OFFER_HELP:
             key = Utils::inkey();
-            if (key == 0x01) {
+            if (key == (uint8_t)KEY::A) {
                 //Help::init();
                 Help::show_page(0);
                 help_page_count = 0;
@@ -125,12 +125,16 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             break;
         case GAME_STATE::SHOW_HELP:
             // Run through the help pages with each key press
-            if (Utils::inkey() > 0) {
-                help_page_count++;
-                beep();
-            }
+            key = Utils::inkey();
+            if (key > 0) {
+                help_page_count += ((key == (uint8_t)KEY::B && help_page_count > 0) ? -1 : 1);
+                if (help_page_count >= MAX_HELP_PAGES) {
+                    start_new_game();
+                    break;
+                }
 
-            if (help_page_count >= MAX_HELP_PAGES) start_new_game();
+                if (help_page_count > MAX_HELP_PAGES - 1) help_page_count = 0;
+            }
             break;
         case GAME_STATE::START_COUNT:
             // Count down five seconds before
@@ -149,6 +153,14 @@ void update([[maybe_unused]] uint32_t tick_ms) {
         case GAME_STATE::PLAYER_IS_DEAD:
             // NOTE Call 'death()' before coming here
             // Just await any key press to start again
+            tick_count++;
+            if (tick_count > 200) {
+                tick_count = 0;
+                game.state = GAME_STATE::NEW_GAME_OFFER;
+            }
+            break;
+        case GAME_STATE::NEW_GAME_OFFER:
+            // Triggered after PLAYER_IS_DEAD has been visible
             if (Utils::inkey() > 0) start_new_game();
             break;
         case GAME_STATE::DO_TELEPORT_ONE:
@@ -215,7 +227,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             // Was a key tapped?
             key = Utils::inkey();
 
-            if ((key > 0x0F) && !game.show_reticule) {
+            if ((key > (uint8_t)KEY::Y) && !game.show_reticule) {
                 // A move key has been pressed
                 MOVE dir = get_direction(key);
                 uint8_t nx = game.player.x;
@@ -282,7 +294,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                         return;
                     }
                 }
-            } else if ((key & 0x02) && !game.show_reticule) {
+            } else if ((key & (uint8_t)KEY::B) && !game.show_reticule) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
@@ -292,7 +304,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
 
                     do_teleport();
                 }
-            } else if (key & 0x04) {
+            } else if (key & (uint8_t)KEY::X) {
                 #ifdef DEBUG
                 // Map mode should be for debugging only
                 map_mode = !map_mode;
@@ -306,7 +318,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                 #ifdef DEBUG
                 printf("RADAR RANGE %i\n", game.audio_range);
                 #endif
-            } else if (key & 0x08) {
+            } else if (key & (uint8_t)KEY::Y) {
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
@@ -395,6 +407,10 @@ void draw([[maybe_unused]] uint32_t tick_ms) {
             // We've already drawn the post kill map, so just exit
         case GAME_STATE::PLAYER_IS_DEAD:
             // We've already drawn the end-of-game map, so just exit
+            break;
+        case GAME_STATE::NEW_GAME_OFFER:
+            // Give instructions
+            Gfx::draw_word(WORDS::ANY_KEY, 44, 215, true);
             break;
         case GAME_STATE::ANIMATE_RIGHT_TURN:
             anim_x += SLICE;
@@ -522,6 +538,7 @@ void start_new_game() {
 
     // Set the game mode
     game.state = GAME_STATE::START_COUNT;
+    count_down = 5;
 
     #ifdef DEBUG
     printf("DONE START_NEW_GAME()\n");
@@ -791,10 +808,10 @@ void manage_phantoms(void) {
  */
 MOVE get_direction(uint8_t keys_pressed) {
 
-    if (keys_pressed & 0x10) return MOVE::FORWARD;
-    if (keys_pressed & 0x20) return MOVE::BACKWARD;
-    if (keys_pressed & 0x40) return MOVE::LEFT;
-    if (keys_pressed & 0x80) return MOVE::RIGHT;
+    if (keys_pressed & (uint8_t)KEY::UP) return MOVE::FORWARD;
+    if (keys_pressed & (uint8_t)KEY::DOWN) return MOVE::BACKWARD;
+    if (keys_pressed & (uint8_t)KEY::LEFT) return MOVE::LEFT;
+    if (keys_pressed & (uint8_t)KEY::RIGHT) return MOVE::RIGHT;
 
     // Just in case
     return MOVE::ERROR_CONDITION;
@@ -1047,9 +1064,6 @@ void death(void) {
 
     // Clear the display (blue)
     Gfx::cls(COLOURS::BLUE);
-
-    // Give instructions
-    Gfx::draw_word(WORDS::ANY_KEY, 44, 215, true);
 
     // Show the map
     show_scores(true);

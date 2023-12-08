@@ -154,18 +154,7 @@ void show_page(uint16_t page_number) {
     }
 
     // Call to action
-    if (page_number < 4) {
-        cursor(47, 230);
-        text("PRESS ANY KEY TO CONTINUE");
-    } else {
-        int32_t w;
-        int32_t h;
-        measure("PRESS ANY KEY TO PLAY", w, h);
-        cursor((240 - w) / 2, 230);
-        text("PRESS ANY KEY TO PLAY");
-    }
-
-    int32_t w
+    int32_t w;
     int32_t h;
      string s = "PRESS A TO CONTINUE";
      if (page_number > 0 && page_number < MAX_HELP_PAGES - 1) s += ", B TO GO BACK";
