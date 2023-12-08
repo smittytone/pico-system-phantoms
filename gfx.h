@@ -55,6 +55,7 @@ namespace Gfx {
     void        draw_left_wall(uint8_t frame_index, bool is_open);
     void        draw_right_wall(uint8_t frame_index, bool is_open);
     void        draw_far_wall(uint8_t frame_index);
+    void        draw_skirting(uint8_t frame_index);
 
     void        draw_reticule(void);
     void        draw_zap(uint8_t frame);

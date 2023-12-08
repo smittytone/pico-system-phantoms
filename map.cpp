@@ -330,7 +330,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
     // Set the map background (blue)
     // NOTE Assumes caller has already run `cls()`
-    pen((uint16_t)COLOURS::BLUE);
+    pen((color_t)COLOURS::BLUE);
     frect(0, 40, 200, 160);
 
     // Draw the map
@@ -344,18 +344,18 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
-                pen((uint16_t)COLOURS::YELLOW);
+                pen((color_t)COLOURS::YELLOW);
 
                 if (i == game.tele_y && j == game.tele_x && show_tele) {
                     // Show the teleport square in green
-                    pen((uint16_t)COLOURS::GREEN);
+                    pen((color_t)COLOURS::GREEN);
                 }
 
                 if (show_entities) {
                     // Show any phantoms at the current square as a red square
                     for (auto p: game.phantoms) {
                         if (j == p.x && i == p.y) {
-                            pen((uint16_t)COLOURS::RED);
+                            pen((color_t)COLOURS::RED);
                         }
                     }
                 }
@@ -365,7 +365,7 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
             // Show the player as an arrow at the current square
             if (j == game.player.x && i == game.player.y) {
-                pen((uint16_t)COLOURS::RED);
+                pen((color_t)COLOURS::RED);
                 switch(game.player.direction) {
                     case DIRECTION::NORTH:
                         frect(x + j * 8 + 3, y + i * 8, 2, 3);

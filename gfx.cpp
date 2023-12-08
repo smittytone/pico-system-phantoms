@@ -51,6 +51,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
     uint8_t far_frame = Map::get_view_distance(x, y, direction);
     int8_t frame = far_frame;
+    int8_t iFrame = frame;
 
     // Set 'phantom_count' upper nibble to total number of
     // Phantoms facing the player; lower nibble is the 'current'
@@ -62,7 +63,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     // Clear the screen
     cls(COLOURS::BLACK);
 
-    if (game.state == GAME_STATE::DO_TELEPORT_ONE) {
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE || game.state == GAME_STATE::ZAP_PHANTOM) {
         // 3D View: red
         pen((color_t)COLOURS::RED);
         frect(0, 40, 240, 160);
@@ -82,6 +83,15 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 // Draw the current frame
                 draw_section(x, i, (uint8_t)DIRECTION::WEST, (uint8_t)DIRECTION::EAST, frame, far_frame);
 
+                // Move to the next frame and square
+                --frame;
+                ++i;
+            } while (frame >= 0);
+
+            draw_skirting(far_frame);
+            i = x - far_frame;
+
+            do {
                 // Check for the presence of a Phantom on the drawn square
                 // and, if there is, draw it in
                 // NOTE 'phantom_count comes back so we can keep track of multiple
@@ -89,52 +99,78 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 //      laterally
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
+                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
                 }
 
                 // Move to the next frame and square
-                --frame;
+                --iFrame;
                 ++i;
-            } while (frame >= 0);
+            } while (iFrame >= 0);
         break;
 
         case DIRECTION::EAST:
             i = x + far_frame;
             do {
                 draw_section(i, y, (uint8_t)DIRECTION::NORTH, (uint8_t)DIRECTION::SOUTH, frame, far_frame);
-                uint8_t n = Map::phantom_on_square(i, y);
-                if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
-                }
                 --frame;
                 --i;
             } while (frame >= 0);
+
+            draw_skirting(far_frame);
+            i = x - far_frame;
+
+            do {
+                uint8_t n = Map::phantom_on_square(i, y);
+                if (phantom_count > 0 && n != NONE) {
+                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                }
+                --iFrame;
+                --i;
+            } while (iFrame >= 0);
+
             break;
 
         case DIRECTION::SOUTH:
             i = y + far_frame;
             do {
                 draw_section(x, i, (uint8_t)DIRECTION::EAST, (uint8_t)DIRECTION::WEST, frame, far_frame);
-                uint8_t n = Map::phantom_on_square(x, i);
-                if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
-                }
                 --frame;
                 --i;
             } while (frame >= 0);
+
+            draw_skirting(far_frame);
+            i = y + far_frame;
+
+            do {
+                uint8_t n = Map::phantom_on_square(x, i);
+                if (phantom_count > 0 && n != NONE) {
+                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                }
+                --iFrame;
+                --i;
+            } while (iFrame >= 0);
+
             break;
 
         default:
             i = x - far_frame;
             do {
                 draw_section(i, y, (uint8_t)DIRECTION::SOUTH, (uint8_t)DIRECTION::NORTH, frame, far_frame);
-                uint8_t n = Map::phantom_on_square(i, y);
-                if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(frame, &phantom_count, (n == dead_phantom));
-                }
                 --frame;
                 ++i;
             } while (frame >= 0);
+
+            draw_skirting(far_frame);
+            i = x - far_frame;
+
+            do {
+                uint8_t n = Map::phantom_on_square(i, y);
+                if (phantom_count > 0 && n != NONE) {
+                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                }
+                --iFrame;
+                ++i;
+            } while (iFrame >= 0);
     }
 }
 
@@ -159,13 +195,15 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     // Draw in left and right wall segments
     // NOTE Second argument is true or false: wall section is
     //      open or closed, respectively
-    draw_left_wall(current_frame, (Map::get_view_distance(x, y, left_dir) > 0));
-    draw_right_wall(current_frame, (Map::get_view_distance(x, y, right_dir) > 0));
+    if (game.state != GAME_STATE::ZAP_PHANTOM) {
+        draw_left_wall(current_frame, (Map::get_view_distance(x, y, left_dir) > 0));
+        draw_right_wall(current_frame, (Map::get_view_distance(x, y, right_dir) > 0));
 
-    // Have we reached the furthest square the viewer can see?
-    if (current_frame == furthest_frame) {
-        draw_far_wall(current_frame);
-        return true;
+        // Have we reached the furthest square the viewer can see?
+        if (current_frame == furthest_frame) {
+            draw_far_wall(current_frame);
+            return true;
+        }
     }
 
     // Draw a line on the floor
@@ -183,9 +221,31 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
 void draw_floor_line(uint8_t frame_index) {
 
     Rect r = rects[frame_index + 1];
-    pen(game.state == GAME_STATE::DO_TELEPORT_ONE ? (color_t)COLOURS::WHITE : (color_t)COLOURS::RED);
-    line(r.x, r.y + r.height + 39, r.x + r.width, r.y + r.height + 39);
-    line(r.x -1 , r.y + r.height + 40, r.x + r.width + 1, r.y + r.height + 40);
+    auto colour = (color_t)COLOURS::RED;
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
+    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
+    pen(colour);
+    hline(r.x, r.y + r.height + 39, r.width);
+    hline(r.x - 1 , r.y + r.height + 40, r.width + 2);
+}
+
+
+/**
+ * @brief Draw diagonal lines where floor meets wall.
+ *
+ * @param frame_index: The frame index of the current frame.
+ */
+void draw_skirting(uint8_t frame_index) {
+
+    Rect r = rects[frame_index + 1];
+    auto colour = (color_t)COLOURS::RED;
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
+    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
+    pen(colour);
+    line(r.x, r.y + r.height + 39, 0, 199);
+    line(r.x, r.y + r.height + 40 , 0, 200);
+    line(r.x + r.width, r.y + r.height + 39, 240, 199);
+    line(r.x + r.width, r.y + r.height + 40, 240, 200);
 }
 
 

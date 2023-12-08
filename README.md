@@ -51,6 +51,9 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 ### Release Notes
 
 * 1.1.3 *Unreleased*
+    * Make ‘Phantom zapped’ graphics look more like the original.
+    * Add back key to help.
+    * Fix missing new-level countdown.
     * Bring code into line with more modern C++.
     * Bring code into line with my current style standards.
 * 1.1.2 *3 November 2022*
