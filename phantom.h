@@ -12,10 +12,9 @@
 
 
 /*
- *  CONSTANTS
+ * CONSTANTS
  */
-# define NOT_ON_BOARD       99
-
+constexpr uint8_t NOT_ON_BOARD = 99;
 
 const uint8_t level_data[84] = {
     1,1,1,0,        // 1
@@ -43,27 +42,37 @@ const uint8_t level_data[84] = {
 
 
 /*
- *  PROTOTYPES
+ * ENUMERATIONS
+ */
+enum class PHANTOM_DIRECTION: uint8_t {
+    NONE =              0,
+    NORTH =             1,
+    EAST =              2,
+    SOUTH =             4,
+    WEST =              8,
+    ERROR_CONDITION =   99
+};
+
+
+/*
+ * PROTOTYPES
  */
 class Phantom {
     public:
-        // Methods
+        // Constructor
         Phantom();
-
-        void        init();
-        void        place(uint8_t my_index);
-        bool        move();
-        void        move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny);
-        uint8_t     came_from();
-
-
-
+        // Methods
+        void                init(void);
+        void                place(uint8_t my_index);
+        bool                move(void);
+        void                move_one_square(uint8_t nd, uint8_t* nx, uint8_t* ny) const;
+        PHANTOM_DIRECTION   came_from(void) const;
         // Properties
-        uint8_t     x;
-        uint8_t     y;
-        int8_t      hp;
-        uint8_t     direction;
-        uint8_t     back_steps;
+        uint8_t             x;
+        uint8_t             y;
+        int8_t              hp;
+        PHANTOM_DIRECTION   direction;
+        uint8_t             back_steps;
 };
 
 

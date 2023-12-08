@@ -156,7 +156,14 @@ uint8_t base_map_119[20] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 namespace Map {
 
 
+/**
+ * @brief Select and populate a new level's map.
+ *
+ * @param last_map: The previous map, provided so it's
+ *                  not selected again.
+ */
 uint8_t init(uint8_t last_map) {
+
     // FROM 1.0.2
     // Don't pick the same map as last time
     uint8_t map;
@@ -278,6 +285,7 @@ uint8_t init(uint8_t last_map) {
             current_map[17] = base_map_117;
             current_map[18] = base_map_118;
             current_map[19] = base_map_119;
+            break;
         default:
             current_map[0] = base_map_20;
             current_map[1] = base_map_21;
@@ -305,23 +313,23 @@ uint8_t init(uint8_t last_map) {
 }
 
 
-/*
-    Draw the current map on the screen buffer, centred but
-    vertically adjusted according to `y_delta`.
-    If `show_entities` is `true`, the phantom locations
-    are plotted in. The player and the teleport sqaure positions
-    are always shown.
-
-    NOTE With the map now drawn on 3x3 blocks, `y_delta`
-         has s very limited range of useable values.
-
-    - parameters:
-        - y_delta:       Offset in the y-axis.
-        - show_entities: Display phantoms.
+/**
+ * @brief Draw the current map on the screen buffer, centred but
+ *        vertically adjusted according to `y_delta`.
+ *        If `show_entities` is `true`, the phantom locations
+ *        are plotted in. The player and the teleport sqaure positions
+ *        are always shown.
+ *
+ *        NOTE With the map now drawn on 3x3 blocks, `y_delta`
+ *             has s very limited range of useable values.
+ *
+ * @param y_delta:       Offset in the y-axis.
+ * @param show_entities: Display phantoms.
  */
 void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
+
     // Set the map background (blue)
-    pen(BLUE);
+    pen((uint16_t)COLOURS::BLUE);
     frect(0, 0, 240, 240);
 
     // Draw the map
@@ -329,25 +337,24 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
     uint8_t y = 40 + y_delta;
 
     for (uint8_t i = 0 ; i < 20 ; ++i) {
-        uint8_t *line = current_map[i];
+        const uint8_t *line = current_map[i];
         for (uint8_t j = 0 ; j < 20 ; ++j) {
             uint8_t pixel = line[j];
 
             // Draw and empty (path) square
             if (pixel != MAP_TILE_WALL) {
-                pen(YELLOW);
+                pen((uint16_t)COLOURS::YELLOW);
 
                 if (i == game.tele_y && j == game.tele_x && show_tele) {
                     // Show the teleport square in green
-                    pen(GREEN);
+                    pen((uint16_t)COLOURS::GREEN);
                 }
 
                 if (show_entities) {
                     // Show any phantoms at the current square as a red square
-                    for (size_t k = 0 ; k < game.phantoms.size() ; ++k) {
-                        Phantom &p = game.phantoms.at(k);
+                    for (auto p: game.phantoms) {
                         if (j == p.x && i == p.y) {
-                            pen(RED);
+                            pen((uint16_t)COLOURS::RED);
                         }
                     }
                 }
@@ -357,21 +364,21 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 
             // Show the player as an arrow at the current square
             if (j == game.player.x && i == game.player.y) {
-                pen(RED);
+                pen((uint16_t)COLOURS::RED);
                 switch(game.player.direction) {
-                    case DIRECTION_NORTH:
+                    case DIRECTION::NORTH:
                         frect(x + j * 8 + 3, y + i * 8, 2, 3);
                         frect(x + j * 8, y + i * 8 + 3, 8, 2);
                         frect(x + j * 8, y + i * 8 + 5, 2, 3);
                         frect(x + j * 8 + 6, y + i * 8 + 5, 2, 3);
                         break;
-                    case DIRECTION_EAST:
+                    case DIRECTION::EAST:
                         frect(x + j * 8, y + i * 8, 3, 2);
                         frect(x + j * 8, y + i * 8 + 6, 3, 2);
                         frect(x + j * 8 + 3, y + i * 8, 2, 8);
                         frect(x + j * 8 + 5, y + i * 8 + 3, 3, 2);
                         break;
-                    case DIRECTION_SOUTH:
+                    case DIRECTION::SOUTH:
                         frect(x + j * 8 + 3, y + i * 8 + 5, 2, 3);
                         frect(x + j * 8, y + i * 8 + 3, 8, 2);
                         frect(x + j * 8, y + i * 8, 2, 3);
@@ -390,33 +397,33 @@ void draw(uint8_t y_delta, bool show_entities, bool show_tele) {
 }
 
 
-/*
-    Return the contents of the specified grid reference.
-
-    - Parameters:
-        - x: The square's x co-ordinate.
-        - y: The square's y co-ordinate.
-
-    - Returns: The contents of the square.
+/**
+ * @brief Return the contents of the specified grid reference.
+ *
+ * @param x: The square's x co-ordinate.
+ * @param y: The square's y co-ordinate.
+ *
+ * @returns: The contents of the square.
  */
 uint8_t get_square_contents(uint8_t x, uint8_t y) {
+
     if (x > MAP_MAX || y > MAP_MAX) return MAP_TILE_WALL;
-    uint8_t *line = current_map[y];
+    const uint8_t *line = current_map[y];
     return line[x];
 }
 
 
-/*
-    Set the contents of the specified grid reference.
-
-    - Parameters:
-        - x:     The square's x co-ordinate.
-        - y:     The square's y co-ordinate.
-        - value: The square's new contents.
-
-    - Returns: `true` if the square was set, otherwise `false`.
+/**
+ * @brief Set the contents of the specified grid reference.
+ *
+ * @param x:     The square's x co-ordinate.
+ * @param y:     The square's y co-ordinate.
+ * @param value: The square's new contents.
+ *
+ * @returns: `true` if the square was set, otherwise `false`.
  */
 bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
+
     if (x > MAP_MAX || y > MAP_MAX) return false;
     uint8_t *line = current_map[y];
     line[x] = value;
@@ -424,21 +431,21 @@ bool set_square_contents(uint8_t x, uint8_t y, uint8_t value) {
 }
 
 
-/*
-    Return the number of squares an entity can see.
-
-    - Parameters:
-        - x:         The entity's x co-ordinate.
-        - y:         The entity's y co-ordinate.
-        - direction: The direction in which the entity is facing.
-
-    - Returns: The number of visible squares up to a maximum,
-               excluding the entity's square.
+/**
+ * @brief Return the number of squares an entity can see.
+ *
+ * @param x:         The entity's x co-ordinate.
+ * @param y:         The entity's y co-ordinate.
+ * @param direction: The direction in which the entity is facing.
+ *
+ * @returns: The number of visible squares up to a maximum,
+ *           excluding the entity's square.
  */
 uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
+
     uint8_t count = 0;
-    switch(direction) {
-        case DIRECTION_NORTH:
+    switch((DIRECTION)direction) {
+        case DIRECTION::NORTH:
             if (y == 0) return count;
             --y;
             do {
@@ -447,7 +454,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
                 --y;
             } while (y >= 0);
             break;
-        case DIRECTION_EAST:
+        case DIRECTION::EAST:
             if (x > 18) return count;
             x++;
             do {
@@ -456,7 +463,7 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
                 ++x;
             } while (x < 20);
             break;
-        case DIRECTION_SOUTH:
+        case DIRECTION::SOUTH:
             if (y > 18) return count;
             ++y;
             do {
@@ -480,20 +487,21 @@ uint8_t get_view_distance(int8_t x, int8_t y, uint8_t direction) {
 }
 
 
-/*
-    Is there a Phantom on the specified square?
-
-    - Returns: The index of the Phantom in the vector,
-               or `ERROR_CONDITION` if the square is empty.
+/**
+ * @brief Is there a Phantom on the specified square?
+ *
+ * @returns: The index of the Phantom in the vector,
+ *           or `NONE` if the square is empty.
  */
 uint8_t phantom_on_square(uint8_t x, uint8_t y) {
+
     size_t number = game.phantoms.size();
     for (size_t i = 0 ; i < number ; ++i) {
-        Phantom &p = game.phantoms.at(i);
+        const Phantom &p = game.phantoms.at(i);
         if (x == p.x && y == p.y) return (i & 0x0F);
     }
 
-    return ERROR_CONDITION;
+    return NONE;
 }
 
 

@@ -51,7 +51,8 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 ### Release Notes
 
 * 1.1.3 *Unreleased*
-    * TBD
+    * Bring code into line with more modern C++.
+    * Bring code into line with my current style standards.
 * 1.1.2 *3 November 2022*
     * Fix some timing issues introduced by the latest Picosystem SDK.
     * Fix a graphics state issue introduced by the latest SDK.

@@ -110,22 +110,23 @@ string help_page_4 =
 "Remember the green square as an escape\n"
 "route.\n\n";
 
+
 namespace Help {
 
 
-/*
-    Show a page of help text.
-
-    - Parameters:
-        - page_number: The index of the page to display.
+/**
+ * @brief Show a page of help text.
+ *
+ * @param page_number: The index of the page to display.
  */
 void show_page(uint16_t page_number) {
+
     // CLS
-    pen(GREEN);
+    pen((color_t)COLOURS::GREEN);
     clear();
 
     // Game title
-    pen(BLACK);
+    pen((color_t)COLOURS::BLACK);
     cursor(80, 10);
     text("PHANTOM SLAYER");
 
@@ -157,7 +158,8 @@ void show_page(uint16_t page_number) {
         cursor(47, 230);
         text("PRESS ANY KEY TO CONTINUE");
     } else {
-        int32_t w, h;
+        int32_t w;
+        int32_t h;
         measure("PRESS ANY KEY TO PLAY", w, h);
         cursor((240 - w) / 2, 230);
         text("PRESS ANY KEY TO PLAY");
@@ -165,16 +167,17 @@ void show_page(uint16_t page_number) {
 }
 
 
-/*
-    Ask if the player wants help.
+/**
+ * @brief Ask if the player wants help.
  */
-void show_offer() {
+void show_offer(void) {
+
     // CLS
-    pen(GREEN);
+    pen((color_t)COLOURS::GREEN);
     clear();
 
     // Game title
-    pen(BLACK);
+    pen((color_t)COLOURS::BLACK);
     cursor(80, 20);
     text("PHANTOM SLAYER");
 

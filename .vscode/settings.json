@@ -22,5 +22,6 @@
         "locale": "cpp",
         "type_traits": "cpp",
         "array": "cpp"
-    }
+    },
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json"
 }

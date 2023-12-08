@@ -16,7 +16,7 @@
  */
 namespace Utils {
     int             irandom(int start, int max);
-    uint8_t         inkey();
+    uint8_t         inkey(void);
     uint32_t        bcd(uint32_t base);
 }
 

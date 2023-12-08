@@ -13,13 +13,13 @@ using namespace picosystem;
 
 
 /*
- *      EXTERNALLY-DEFINED GLOBALS
+ * EXTERNALLY-DEFINED GLOBALS
  */
 extern tinymt32_t   tinymt_store;
 
 
 /*
- *      GLOBALS
+ * GLOBALS
  */
 // NOTE Key values defined by picosystem
 uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
@@ -28,29 +28,30 @@ uint8_t keys[8] = {A, B, X, Y, UP, DOWN, LEFT, RIGHT};
 namespace Utils {
 
 /**
-    Randomise using TinyMT
-    https://github.com/MersenneTwister-Lab/TinyMT
-    Generate a PRG between 0 and max-1 then add start,
-    eg. 10, 20 -> range 10-29
-
-    - Parameters:
-        - start: A baseline value added to the rolled value.
-        - max:   A maximum roll.
-
-    - Returns: The random number.
+ * @brief Randomise using TinyMT
+ *        https://github.com/MersenneTwister-Lab/TinyMT
+ *        Generate a PRG between 0 and max-1 then add start,
+ *        eg. 10, 20 -> range 10-29
+ *
+ * @param start: A baseline value added to the rolled value.
+ * @param max:   A maximum roll.
+ *
+ * @returns: The random number.
  */
 int irandom(int start, int max) {
+
     int value = tinymt32_generate_uint32(&tinymt_store);
     return ((value % max) + start);
 }
 
 
 /**
-    Check all the keys to see if any have been pressed. Set a
-    bit for each key set in the order:
-    A (Bit 0), B, X, Y, UP, DOWN, LEFT, RIGHT (Bit 7)
+ * @brief Check all the keys to see if any have been pressed. Set a
+ *        bit for each key set in the order:
+ *        A (Bit 0), B, X, Y, UP, DOWN, LEFT, RIGHT (Bit 7)
  */
-uint8_t inkey() {
+uint8_t inkey(void) {
+
     uint8_t bits = 0;
     for (uint8_t i = 0 ; i < 8 ; ++i) {
         if (pressed(keys[i])) bits |= (1 << i);
@@ -61,15 +62,14 @@ uint8_t inkey() {
 
 
 /**
-    Convert a 16-bit int (to cover decimal range 0-9999) to
-    its BCD equivalent.
-
-    - Parameters:
-        - base: The input integer.
-
-    - Returns: The BCD encoding of the input.
+ * @brief Convert a 16-bit int (to cover decimal range 0-9999) to
+ *        its BCD equivalent.
+ * @param base: The input integer.
+ *
+ * @returns: The BCD encoding of the input.
  */
 uint32_t bcd(uint32_t base) {
+
     if (base > 9999) base = 9999;
     for (uint32_t i = 0 ; i < 16 ; ++i) {
         base = base << 1;

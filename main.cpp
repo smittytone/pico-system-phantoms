@@ -15,7 +15,7 @@ using namespace picosystem;
  *  GLOBALS
  */
 uint8_t     count_down = 5;
-uint8_t     dead_phantom = ERROR_CONDITION;
+uint8_t     dead_phantom = NONE;
 uint8_t     help_page_count = 0;
 uint8_t     stab_count = 0;
 
@@ -46,11 +46,16 @@ extern      buffer_t* side_buffer;
 
 
 /*
- *  PICOSYSTEM CALLBACKS
+ * PICOSYSTEM CALLBACKS
+ */
+
+/**
+ * @brief Picosystem callback function for
+ *        initialisation routines.
  */
 void init() {
     // Clear the display as soon as possible
-    Gfx::cls(GREEN);
+    Gfx::cls(COLOURS::GREEN);
 
 #ifdef DEBUG
     // Enable debugging
@@ -59,11 +64,12 @@ void init() {
 #endif
 
     // Show the version
-    pen(BLACK);
-    int32_t w, h;
-    measure("1.1.2", w, h);
+    pen((color_t)COLOURS::BLACK);
+    int32_t w;
+    int32_t h;
+    measure("1.1.3", w, h);
     cursor(238 - w, 238 - h);
-    text("1.1.2");
+    text("1.1.3");
 
     // Set up game device
     // NOTE This is all the stuff that is per session,
@@ -72,48 +78,52 @@ void init() {
 }
 
 
-void update(uint32_t tick_ms) {
+/**
+ * @brief Picosystem callback function for
+ *        game run loop.
+ */
+void update([[maybe_unused]] uint32_t tick_ms) {
     uint32_t now = time_us_32();
     uint8_t key = 0;
     switch (game.state) {
-        case ANIMATE_LOGO:
+        case GAME_STATE::ANIMATE_LOGO:
             if (now - tele_flash_time > LOGO_ANIMATION_US) {
                 logo_y++;
                 if (logo_y > 100) {
-                    game.state = ANIMATE_CREDIT;
+                    game.state = GAME_STATE::ANIMATE_CREDIT;
                     logo_y = 275;
                 }
                 tele_flash_time = now;
             }
             break;
-        case ANIMATE_CREDIT:
+        case GAME_STATE::ANIMATE_CREDIT:
             if (now - tele_flash_time > LOGO_ANIMATION_US) {
                 logo_y--;
                 if (logo_y < 130) {
-                    game.state = LOGO_PAUSE;
+                    game.state = GAME_STATE::LOGO_PAUSE;
                 }
                 tele_flash_time = now;
             }
             break;
-        case LOGO_PAUSE:
+        case GAME_STATE::LOGO_PAUSE:
             if (now - tele_flash_time > LOGO_PAUSE_TIME) {
-                game.state = OFFER_HELP;
+                game.state = GAME_STATE::OFFER_HELP;
                 tele_flash_time = 0;
             }
             break;
-        case OFFER_HELP:
+        case GAME_STATE::OFFER_HELP:
             key = Utils::inkey();
             if (key == 0x01) {
                 //Help::init();
                 Help::show_page(0);
                 help_page_count = 0;
-                game.state = SHOW_HELP;
+                game.state = GAME_STATE::SHOW_HELP;
                 beep();
             } else if (key != 0) {
                 start_new_game();
             }
             break;
-        case SHOW_HELP:
+        case GAME_STATE::SHOW_HELP:
             // Run through the help pages with each key press
             if (Utils::inkey() > 0) {
                 help_page_count++;
@@ -122,7 +132,7 @@ void update(uint32_t tick_ms) {
 
             if (help_page_count >= MAX_HELP_PAGES) start_new_game();
             break;
-        case START_COUNT:
+        case GAME_STATE::START_COUNT:
             // Count down five seconds before
             // actually starting the game
             tick_count++;
@@ -133,21 +143,21 @@ void update(uint32_t tick_ms) {
 
             if (count_down == 0) {
                 tick_count = 0;
-                game.state = IN_PLAY;
+                game.state = GAME_STATE::IN_PLAY;
             }
             break;
-        case PLAYER_IS_DEAD:
+        case GAME_STATE::PLAYER_IS_DEAD:
             // NOTE Call 'death()' before coming here
             // Just await any key press to start again
             if (Utils::inkey() > 0) start_new_game();
             break;
-        case DO_TELEPORT_ONE:
+        case GAME_STATE::DO_TELEPORT_ONE:
             // Flip between TELE_ONE and TELE_TWO
             // every 1/4 second for two seconds
             tick_count++;
             if (tick_count == 5) {
                 tick_count = 0;
-                game.state = DO_TELEPORT_TWO;
+                game.state = GAME_STATE::DO_TELEPORT_TWO;
                 if (now - tele_flash_time > 1000000) {
                     // Half way through, switch co-ords
                     game.player.x = game.start_x;
@@ -155,35 +165,35 @@ void update(uint32_t tick_ms) {
                 }
             }
             break;
-        case DO_TELEPORT_TWO:
+        case GAME_STATE::DO_TELEPORT_TWO:
             tick_count++;
             if (tick_count == 5) {
                 tick_count = 0;
-                game.state = now - tele_flash_time < 2000000 ? DO_TELEPORT_ONE : IN_PLAY;
+                game.state = now - tele_flash_time < 2000000 ? GAME_STATE::DO_TELEPORT_ONE : GAME_STATE::IN_PLAY;
             }
             break;
-        case SHOW_TEMP_MAP:
+        case GAME_STATE::SHOW_TEMP_MAP:
             // Wait 3s while the post-kill
             // map is on screen
             tick_count++;
             if (tick_count == 150) {
                 tick_count = 0;
-                game.state = IN_PLAY;
+                game.state = GAME_STATE::IN_PLAY;
             }
             break;
-        case ANIMATE_RIGHT_TURN:
-        case ANIMATE_LEFT_TURN:
+        case GAME_STATE::ANIMATE_RIGHT_TURN:
+        case GAME_STATE::ANIMATE_LEFT_TURN:
             //anim_x += SLICE;
             if (anim_x > 240) {
-                game.state = IN_PLAY;
+                game.state = GAME_STATE::IN_PLAY;
                 blend(ALPHA);
             }
             break;
-        case ZAP_PHANTOM:
+        case GAME_STATE::ZAP_PHANTOM:
             tick_count++;
             if (tick_count == 25) {
                 tick_count = 0;
-                game.state = SHOW_TEMP_MAP;
+                game.state = GAME_STATE::SHOW_TEMP_MAP;
                 bool last_phantom_killed = (game.level_kills == game.phantom_count);
                 phantom_killed(last_phantom_killed);
 
@@ -192,11 +202,12 @@ void update(uint32_t tick_ms) {
                 // NOTE `manage_phantoms()` calls `start_new_level()`
                 //      if necessary
                 Phantom &p = game.phantoms.at(dead_phantom);
-                p.x = ERROR_CONDITION;
-                p.y = ERROR_CONDITION;
-                dead_phantom = ERROR_CONDITION;
+                p.x = NOT_ON_BOARD;
+                p.y = NOT_ON_BOARD;
+                dead_phantom = NONE;
                 manage_phantoms();
             }
+            break;
         default:
             // The game is afoot! game.state = IN_PLAY
             // NOTE Return as quickly as possible
@@ -206,20 +217,20 @@ void update(uint32_t tick_ms) {
 
             if ((key > 0x0F) && !game.show_reticule) {
                 // A move key has been pressed
-                uint8_t dir = get_direction(key);
+                MOVE dir = get_direction(key);
                 uint8_t nx = game.player.x;
                 uint8_t ny = game.player.y;
 
-                if (dir == MOVE_FORWARD || dir == MOVE_BACKWARD) {
+                if (dir == MOVE::FORWARD || dir == MOVE::BACKWARD) {
                     // Move player forward or backward if we can
-                    if (game.player.direction == DIRECTION_NORTH) ny += (dir == MOVE_FORWARD ? -1 : 1);
-                    if (game.player.direction == DIRECTION_SOUTH) ny += (dir == MOVE_FORWARD ? 1 : -1);
-                    if (game.player.direction == DIRECTION_EAST) nx += (dir == MOVE_FORWARD ? 1 : -1);
-                    if (game.player.direction == DIRECTION_WEST) nx += (dir == MOVE_FORWARD ? -1 : 1);
+                    if (game.player.direction == DIRECTION::NORTH) ny += (dir == MOVE::FORWARD ? -1 : 1);
+                    if (game.player.direction == DIRECTION::SOUTH) ny += (dir == MOVE::FORWARD ? 1 : -1);
+                    if (game.player.direction == DIRECTION::EAST) nx += (dir == MOVE::FORWARD ? 1 : -1);
+                    if (game.player.direction == DIRECTION::WEST) nx += (dir == MOVE::FORWARD ? -1 : 1);
 
                     if (ny < 20 && nx < 20 && Map::get_square_contents(nx, ny) != MAP_TILE_WALL) {
                         // Has the player walked up to a Phantom?
-                        if (Map::phantom_on_square(nx, ny) != ERROR_CONDITION) {
+                        if (Map::phantom_on_square(nx, ny) != NONE) {
                             // Yes -- so the player is dead!
                             death();
 
@@ -237,10 +248,11 @@ void update(uint32_t tick_ms) {
                         printf("MOVED PLAYER (KEY: %02x), DIRECTION: %i\n", key, game.player.direction);
                         #endif
                     }
-                } else if (dir == TURN_RIGHT) {
+                } else if (dir == MOVE::RIGHT) {
                     // Turn player right
-                    game.player.direction++;
-                    if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_NORTH;
+                    game.player.direction = do_turn_right(game.player.direction);
+                    //game.player.direction += DIRECTION::EAST;
+                    //if (game.player.direction > DIRECTION::WEST) game.player.direction = DIRECTION::NORTH;
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
@@ -249,14 +261,14 @@ void update(uint32_t tick_ms) {
                         #endif
 
                         anim_x = -SLICE;
-                        game.state = ANIMATE_RIGHT_TURN;
+                        game.state = GAME_STATE::ANIMATE_RIGHT_TURN;
                         Gfx::animate_turn();
                         return;
                     }
-                } else if (dir == TURN_LEFT) {
+                } else if (dir == MOVE::LEFT) {
                     // Turn player left
-                    game.player.direction--;
-                    if (game.player.direction > DIRECTION_WEST) game.player.direction = DIRECTION_WEST;
+                    game.player.direction = do_turn_left(game.player.direction);
+                    //if (game.player.direction > DIRECTION::WEST) game.player.direction = DIRECTION::WEST;
 
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
@@ -265,7 +277,7 @@ void update(uint32_t tick_ms) {
                         #endif
 
                         anim_x = -SLICE;
-                        game.state = ANIMATE_LEFT_TURN;
+                        game.state = GAME_STATE::ANIMATE_LEFT_TURN;
                         Gfx::animate_turn();
                         return;
                     }
@@ -309,15 +321,12 @@ void update(uint32_t tick_ms) {
             // NOTE This uses separate code because it requires the button
             //      to be held down (fire on release)
             if (button(A)) {
-                if (game.can_fire) {
-                    // Button A pressed
-                    if (!game.show_reticule) {
-                        game.show_reticule = true;
+                if (game.can_fire && !game.show_reticule) {
+                    game.show_reticule = true;
 
-                        #ifdef DEBUG
-                        printf("READY TO FIRE\n");
-                        #endif
-                    }
+                    #ifdef DEBUG
+                    printf("READY TO FIRE\n");
+                    #endif
                 }
             } else {
                 // Button released: check it was previously
@@ -343,48 +352,51 @@ void update(uint32_t tick_ms) {
 }
 
 
-void draw(uint32_t tick_ms) {
-    uint8_t nx;
-    buffer_t* scrn = SCREEN;
+/**
+ * @brief Picosystem callback function for
+ *        graphics routines
+ */
+void draw([[maybe_unused]] uint32_t tick_ms) {
+
     switch(game.state) {
-        case ANIMATE_LOGO:
-            pen(GREEN);
+        case GAME_STATE::ANIMATE_LOGO:
+            pen((color_t)COLOURS::GREEN);
             Gfx::animate_logo(logo_y);
             //play(piano, 2000 + ((logo_y + 20) * 10), 80, 30);
             break;
-        case ANIMATE_CREDIT:
-            pen(GREEN);
+        case GAME_STATE::ANIMATE_CREDIT:
+            pen((color_t)COLOURS::GREEN);
             Gfx::animate_credit(logo_y);
             //play(piano, 2000 + (300 - logo_y) * 100, 30);
             break;
-        case LOGO_PAUSE:
+        case GAME_STATE::LOGO_PAUSE:
             break;
-        case OFFER_HELP:
+        case GAME_STATE::OFFER_HELP:
             Help::show_offer();
             break;
-        case SHOW_HELP:
+        case GAME_STATE::SHOW_HELP:
             // Display a help page
             Help::show_page(help_page_count);
             break;
-        case START_COUNT:
+        case GAME_STATE::START_COUNT:
             // Update the on-screen countdown
             // NOTE The map is already there, so
             //      we only need to update the countdown
             //      itself
             // Clear the number
-            pen(BLUE);
+            pen((color_t)COLOURS::BLUE);
             frect(112, 214, 16, 20);
 
             // Show the new number
-            pen(YELLOW);
+            pen((color_t)COLOURS::YELLOW);
             Gfx::draw_number(count_down, (count_down == 1 ? 118 : 114), 214, true);
             break;
-        case SHOW_TEMP_MAP:
+        case GAME_STATE::SHOW_TEMP_MAP:
             // We've already drawn the post kill map, so just exit
-        case PLAYER_IS_DEAD:
+        case GAME_STATE::PLAYER_IS_DEAD:
             // We've already drawn the end-of-game map, so just exit
             break;
-        case ANIMATE_RIGHT_TURN:
+        case GAME_STATE::ANIMATE_RIGHT_TURN:
             anim_x += SLICE;
             if (anim_x > 240 - SLICE) break;
 
@@ -394,7 +406,7 @@ void draw(uint32_t tick_ms) {
             // Blit side slice to last slice of screen
             Gfx::alt_blit(side_buffer, anim_x, 40, SLICE, 160, 240 - SLICE, 40);
             break;
-        case ANIMATE_LEFT_TURN:
+        case GAME_STATE::ANIMATE_LEFT_TURN:
             anim_x += SLICE;
             if (anim_x > 240) break;
 
@@ -409,18 +421,18 @@ void draw(uint32_t tick_ms) {
             // Render the screen
             if (chase_mode) {
                 // Show the first Phantom's view
-                Phantom &p = game.phantoms.at(0);
-                Gfx::draw_screen(p.x, p.y, p.direction);
+                const Phantom &p = game.phantoms.at(0);
+                Gfx::draw_screen(p.x, p.y, (uint8_t)p.direction);
             } else if (map_mode) {
                 // Draw an overhead view
                 Map::draw(BASE_MAP_DELTA, true);
             } else {
                 // Show the player's view
-                Gfx::draw_screen(game.player.x, game.player.y, game.player.direction);
+                Gfx::draw_screen(game.player.x, game.player.y, (uint8_t)game.player.direction);
             }
 
             // Don't show gunnery if a Phantom has been hit
-            if (game.state == ZAP_PHANTOM) return;
+            if (game.state == GAME_STATE::ZAP_PHANTOM) return;
 
             // Is the laser being fired?
             if (game.is_firing) Gfx::draw_zap(game.zap_frame);
@@ -432,9 +444,15 @@ void draw(uint32_t tick_ms) {
 
 
 /*
- *      INITIALISATION FUNCTIONS
+ * INITIALISATION FUNCTIONS
  */
-void setup_device() {
+
+/**
+ * @brief Initial hardware setup and fundamental config
+ *        (power-cycle level stuff)
+ */
+void setup_device(void) {
+
     // Set the LCD backlight
     // TODO Make this controllable during the game
     backlight(100);
@@ -474,7 +492,7 @@ void setup_device() {
     }
 
     // Start the game loop at the intro animation
-    game.state = ANIMATE_LOGO;
+    game.state = GAME_STATE::ANIMATE_LOGO;
 
     #ifdef DEBUG
     printf("DONE SETUP_DEVICE\n");
@@ -482,12 +500,13 @@ void setup_device() {
 }
 
 
-/*
-    Start a new game by re-initialising the game state,
-    and setting up a new maze. Called at the start of the
-    first game and subsequently when the player dies.
+/**
+ * @brief Start a new game by re-initialising the game state,
+ *        and setting up a new maze. Called at the start of the
+ *        first game and subsequently when the player dies.
  */
 void start_new_game() {
+
     // Reset the settings
     init_game();
     init_phantoms();
@@ -496,14 +515,14 @@ void start_new_game() {
     // Clear the screen (blue), present the current map
     // and give the player a five-second countdown before
     // entering the maze
-    Gfx::cls(BLUE);
+    Gfx::cls(COLOURS::BLUE);
     Map::draw(BASE_MAP_DELTA, false);
 
     Gfx::draw_number(game.level, 156, 12, true);
-    Gfx::draw_word(WORD_LEVEL, 72, 12, true);
+    Gfx::draw_word(WORDS::LEVEL, 72, 12, true);
 
     // Set the game mode
-    game.state = START_COUNT;
+    game.state = GAME_STATE::START_COUNT;
 
     #ifdef DEBUG
     printf("DONE START_NEW_GAME()\n");
@@ -511,13 +530,14 @@ void start_new_game() {
 }
 
 
-/*
-    Reset the main game control structure. Called only at the start of
-    a game, not the start of a level.
-
-    NOTE Phantom data is separated out into `init_phantoms()`.
+/**
+ * @brief Reset the main game control structure. Called only at the start of
+ *        a game, not the start of a level.
+ *
+ *        NOTE Phantom data is separated out into `init_phantoms()`.
  */
-void init_game() {
+void init_game(void) {
+
     // If either of these demo/test modes are both set,
     // chase mode takes priority
     chase_mode = false;
@@ -526,12 +546,12 @@ void init_game() {
     // FROM 1.0.2
     // Store the current map number so it's not
     // used in the next game
-    game.map = ERROR_CONDITION;
+    game.map = NONE;
     game.phantom_count = 1;
 
     game.player.x = 0;
     game.player.y = 0;
-    game.player.direction = DIRECTION_NORTH;
+    game.player.direction = DIRECTION::NORTH;
 
     game.tele_x = 0;
     game.tele_y = 0;
@@ -552,11 +572,12 @@ void init_game() {
 }
 
 
-/*
-    Reset the main game control structure values
-    for the start of a level.
+/**
+ * @brief Reset the main game control structure values
+ *        for the start of a level.
  */
-void init_level() {
+void init_level(void) {
+
     game.show_reticule = false;
     game.can_fire = true;
     game.is_firing = false;
@@ -574,10 +595,11 @@ void init_level() {
 }
 
 
-/*
-    Initialise the current game's Phantom data.
+/**
+ * @brief Initialise the current game's Phantom data.
  */
-void init_phantoms() {
+void init_phantoms(void) {
+
     // Reset the array stored phantoms structures
     game.phantoms.clear();
     for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
@@ -595,12 +617,12 @@ void init_phantoms() {
 
 
 /**
-    Generate and populate a new level. This happens
-    at the start of a new game and at the start of
-    each level. A level jump is triggered when all the
-    current phantoms have been dispatched.
+ * @brief Generate and populate a new level. This happens
+ *        at the start of a new game and at the start of
+ *        each level. A level jump is triggered when all the
+ *        current phantoms have been dispatched.
  */
-void start_new_level() {
+void start_new_level(void) {
     // Initialise the current map
     game.map = Map::init(game.map);
     init_level();
@@ -617,7 +639,7 @@ void start_new_level() {
 
     game.player.x = x;
     game.player.y = y;
-    game.player.direction = (uint8_t)(Utils::irandom(0, 4));
+    game.player.direction = (DIRECTION)(Utils::irandom(0, 4));
     //if (game.player.direction > 3) game.player.direction = 1
     game.start_x = x;
     game.start_y = y;
@@ -641,7 +663,7 @@ void start_new_level() {
     /* TEST DATA
     game.player.x = 0;
     game.player.y = 0;
-    game.player.direction = DIRECTION_EAST;
+    game.player.direction = DIRECTION::EAST;
      */
 
     #ifdef DEBUG
@@ -651,9 +673,10 @@ void start_new_level() {
 
 
 /**
-    Randomly roll a teleport square.
+ * @brief Randomly roll a teleport square.
  */
-void set_teleport_square() {
+void set_teleport_square(void) {
+
     while (true) {
         // Pick a random co-ordinate
         uint8_t x = Utils::irandom(0, 20);
@@ -669,10 +692,11 @@ void set_teleport_square() {
 
 
 /**
-    Update the world at the end of the move cycle.
-    Called from the main `update()` callback.
+ * @brief Update the world at the end of the move cycle.
+ *        Called from the main `update()` callback.
  */
-void update_world() {
+void update_world(void ) {
+
     // Move the Phantom(s) periodically -- this is how
     // we increase their speed as the game progresses
     uint32_t now = time_us_32();
@@ -711,12 +735,13 @@ void update_world() {
 
 
 /**
-    Check whether we need to increase the number of phantoms
-    on the board or increase their speed -- all caused by a
-    level-up. We up the level if all the level's phantoms have
-    been zapped.
+ * @brief Check whether we need to increase the number of phantoms
+ *        on the board or increase their speed -- all caused by a
+ *        level-up. We up the level if all the level's phantoms have
+ *        been zapped.
  */
-void manage_phantoms() {
+void manage_phantoms(void) {
+
     bool level_up = false;
 
     // If we're on levels 1 and 2, we only have that number of
@@ -746,8 +771,8 @@ void manage_phantoms() {
         // Take all existing Phantoms off the board
         for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
             Phantom &p = game.phantoms.at(i);
-            p.x = ERROR_CONDITION;
-            p.y = ERROR_CONDITION;
+            p.x = NONE;
+            p.y = NONE;
         }
 
         // Create a new level
@@ -757,69 +782,69 @@ void manage_phantoms() {
 
 
 /**
-    Get player movement action from the joypad
-    Favour movement over rotation.
-
-    - Parameters:
-        - keys_pressed: Bitfield indicating which
-                        keys have been pressed.
-
-    - Returns: The direction in which the player is facing.
+ * @brief Get player movement action from the joypad
+ *        Favour movement over rotation.
+ *
+ * @param keys_pressed: Bitfield indicating which
+ *                      keys have been pressed.
+ *
+ * @returns: The direction in which the player is facing.
  */
-uint8_t get_direction(uint8_t keys_pressed) {
-    if (keys_pressed & 0x10) return MOVE_FORWARD;
-    if (keys_pressed & 0x20) return MOVE_BACKWARD;
-    if (keys_pressed & 0x40) return TURN_LEFT;
-    if (keys_pressed & 0x80) return TURN_RIGHT;
+MOVE get_direction(uint8_t keys_pressed) {
+
+    if (keys_pressed & 0x10) return MOVE::FORWARD;
+    if (keys_pressed & 0x20) return MOVE::BACKWARD;
+    if (keys_pressed & 0x40) return MOVE::LEFT;
+    if (keys_pressed & 0x80) return MOVE::RIGHT;
 
     // Just in case
-    return ERROR_CONDITION;
+    return MOVE::ERROR_CONDITION;
 }
 
 
 /**
-    Return the index of the closest facing Phantom to the
-    player from the the 'game.phantoms' vector --
-    or `ERROR_CONDITION`.
-
-    - Parameters:
-        - range: The number of squares to iterate over.
-
-    - Returns: The index of the Phantom in the vector.
+ * @brief Return the index of the closest facing Phantom to the
+ *        player from the the 'game.phantoms' vector --
+ *        or `NONE`.
+ *
+ * @param range: The number of squares to iterate over.
+ *
+ * @returns: The index of the Phantom in the vector.
  */
 uint8_t get_facing_phantom(uint8_t range) {
-    uint8_t p_index = ERROR_CONDITION;
+
+    uint8_t p_index = NONE;
     switch(game.player.direction) {
-        case DIRECTION_NORTH:
-            if (game.player.y == 0) return ERROR_CONDITION;
+        case DIRECTION::NORTH:
+            if (game.player.y == 0) return NONE;
             if (game.player.y - range < 0) range = game.player.y;
             for (int8_t i = game.player.y ; i > game.player.y - range ; --i) {
                 p_index = Map::phantom_on_square(game.player.x, i);
-                if (p_index != ERROR_CONDITION) return p_index;
+                if (p_index != NONE) return p_index;
             }
             break;
-        case DIRECTION_EAST:
-            if (game.player.x == MAP_MAX) return ERROR_CONDITION;
+        case DIRECTION::EAST:
+            if (game.player.x == MAP_MAX) return NONE;
             if (game.player.x + range > MAP_MAX) range = MAP_MAX - game.player.x;
             for (int8_t i = game.player.x ; i < game.player.x + range ; ++i) {
                 p_index = Map::phantom_on_square(i, game.player.y);
-                if (p_index != ERROR_CONDITION) return p_index;
+                if (p_index != NONE) return p_index;
             }
             break;
-        case DIRECTION_SOUTH:
-            if (game.player.y == MAP_MAX) return ERROR_CONDITION;
+        case DIRECTION::SOUTH:
+            if (game.player.y == MAP_MAX) return NONE;
             if (game.player.y + range > MAP_MAX) range = MAP_MAX - game.player.y;
             for (int8_t i = game.player.y ; i < game.player.y + range ; ++i) {
                 p_index = Map::phantom_on_square(game.player.x, i);
-                if (p_index != ERROR_CONDITION) return p_index;
+                if (p_index != NONE) return p_index;
             }
             break;
         default:
-            if (game.player.x == 0) return ERROR_CONDITION;
+            if (game.player.x == 0) return NONE;
             if (game.player.x - range < 0) range = game.player.x;
             for (int8_t i = game.player.x ; i > game.player.x - range ; --i) {
                 p_index = Map::phantom_on_square(i, game.player.y);
-                if (p_index != ERROR_CONDITION) return p_index;
+                if (p_index != NONE) return p_index;
             }
     }
 
@@ -828,45 +853,45 @@ uint8_t get_facing_phantom(uint8_t range) {
 
 
 /**
-    Return the number of Phantoms in front of the player.
-
-    - Parameters:
-        - range: The number of squares to iterate over.
-
-    - Returns: The number of Phantoms in front of the Player.
+ * @brief Return the number of Phantoms in front of the player.
+ *
+ * @param range: The number of squares to iterate over.
+ *
+ * @returns: The number of Phantoms in front of the Player.
  */
 uint8_t count_facing_phantoms(uint8_t range) {
+
     uint8_t phantom_count = 0;
     switch(game.player.direction) {
-        case DIRECTION_NORTH:
+        case DIRECTION::NORTH:
             if (game.player.y == 0) return phantom_count;
             if (game.player.y - range < 0) range = game.player.y;
             for (int8_t i = game.player.y ; i >= game.player.y - range ; --i) {
-                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != NONE ? 1 : 0);
             }
             break;
-        case DIRECTION_EAST:
+        case DIRECTION::EAST:
             if (game.player.x == MAP_MAX) {
                 Gfx::draw_number(8, 90, 12);
                 return phantom_count;
             }
             if (game.player.x + range > MAP_MAX) range = MAP_MAX - game.player.x;
             for (int8_t i = game.player.x ; i <= game.player.x + range ; ++i) {
-                phantom_count += (Map::phantom_on_square((uint8_t)i, game.player.y) != ERROR_CONDITION ? 1 : 0);
+                phantom_count += (Map::phantom_on_square((uint8_t)i, game.player.y) != NONE ? 1 : 0);
             }
             break;
-        case DIRECTION_SOUTH:
+        case DIRECTION::SOUTH:
             if (game.player.y == MAP_MAX) return phantom_count;
             if (game.player.y + range > MAP_MAX) range = MAP_MAX - game.player.y;
             for (int8_t i = game.player.y ; i <= game.player.y + range ; ++i) {
-                phantom_count += (Map::phantom_on_square(game.player.x, i) != ERROR_CONDITION ? 1 : 0);
+                phantom_count += (Map::phantom_on_square(game.player.x, i) != NONE ? 1 : 0);
             }
             break;
         default:
             if (game.player.x == 0) return phantom_count;
             if (game.player.x - range < 0) range = game.player.x;
             for (int8_t i = game.player.x ; i >= game.player.x - range ; --i) {
-                phantom_count += (Map::phantom_on_square(i, game.player.y) != ERROR_CONDITION ? 1 : 0);
+                phantom_count += (Map::phantom_on_square(i, game.player.y) != NONE ? 1 : 0);
             }
     }
 
@@ -876,12 +901,13 @@ uint8_t count_facing_phantoms(uint8_t range) {
 
 
 /**
-    Tell all of the current Phantoms to move.
-
-    - Returns: `true` if a Phantom caught the Player,
-               otherwise `false`.
+ * @brief Tell all of the current Phantoms to move.
+ *
+ * @returns: `true` if a Phantom caught the Player,
+ *           otherwise `false`.
 */
-bool move_phantoms() {
+bool move_phantoms(void) {
+
     for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
         Phantom &p = game.phantoms.at(i);
         if (p.move()) return true;
@@ -892,9 +918,9 @@ bool move_phantoms() {
 
 
 /**
-    Scan around the player for nearby Phantoms.
+ * @brief Scan around the player for nearby Phantoms.
  */
-void check_senses() {
+void check_senses(void) {
 
     int dx = game.player.x - game.audio_range;
     int dy = game.player.y - game.audio_range;
@@ -906,7 +932,7 @@ void check_senses() {
             if (y < 0) continue;
             if (y > MAP_MAX) break;
             uint8_t nabbed = Map::phantom_on_square(x, y);
-            if (nabbed != ERROR_CONDITION) {
+            if (nabbed != NONE) {
                 // There's a Phantom in range, so sound a tone
                 led(100, 0, 0);
                 beep();
@@ -922,21 +948,26 @@ void check_senses() {
 }
 
 
-void beep() {
+/**
+ * @brief Simple beep routine.
+ */
+void beep(void) {
+
     play(blip, 200, 50);
 }
 
 
 /*
- *      ACTIONS
+ * ACTIONS
  */
 
 /**
-    Jump back to the teleport square if the player has walked over it.
+ * @brief Jump back to the teleport square if the player has walked over it.
  */
-void do_teleport() {
+void do_teleport(void) {
+
     // Move the player to the stored square
-    game.state = DO_TELEPORT_ONE;
+    game.state = GAME_STATE::DO_TELEPORT_ONE;
     tele_flash_time = time_us_32();
 
     // Reset the laser if it's firing
@@ -948,13 +979,14 @@ void do_teleport() {
 
 
 /**
-    Hit the front-most facing Phantom, if there is one.
+ * @brief Hit the front-most facing Phantom, if there is one.
  */
-void fire_laser() {
+void fire_laser(void) {
+
     // Did we hit a Phantom?
     play(zap, 640, 200);
     uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
-    if (n != ERROR_CONDITION) {
+    if (n != NONE) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
         Phantom &p = game.phantoms.at(n);
@@ -978,7 +1010,7 @@ void fire_laser() {
             // tone(600, 100, 200);
 
             // Quickly show the map
-            game.state = ZAP_PHANTOM;
+            game.state = GAME_STATE::ZAP_PHANTOM;
             dead_phantom = n;
 
             // Reset the laser
@@ -989,9 +1021,10 @@ void fire_laser() {
 
 
 /**
-    Reset the laser after firing.
+ * @brief Reset the laser after firing.
  */
-void reset_laser() {
+void reset_laser(void) {
+
     game.is_firing = false;
     game.can_fire = false;
     game.zap_charge_time = time_us_32();
@@ -1000,53 +1033,60 @@ void reset_laser() {
 
 
 /*
- *      GAME OUTCOMES
+ * GAME OUTCOMES
  */
 
 /**
-    The player has died -- show the map and the score.
+ * @brief The player has died -- show the map and the score.
  */
-void death() {
-    game.state = PLAYER_IS_DEAD;
+void death(void) {
+
+    game.state = GAME_STATE::PLAYER_IS_DEAD;
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     //sleep_ms(50);
     //tone(2200, 500, 600);
 
     // Clear the display (blue)
-    Gfx::cls(BLUE);
+    Gfx::cls(COLOURS::BLUE);
 
     // Give instructions
-    Gfx::draw_word(PHRASE_ANY_KEY, 44, 215, true);
+    Gfx::draw_word(WORDS::ANY_KEY, 44, 215, true);
 
     // Show the map
     show_scores(true);
 
     // Clear a space and say what happened
-    pen(BLUE);
+    pen((color_t)COLOURS::BLUE);
     frect(36, 106, 168, 28);
-    Gfx::draw_word(PHRASE_PLAYER_DEAD, 38, 110, true);
+    Gfx::draw_word(WORDS::PLAYER_DEAD, 38, 110, true);
 }
 
 
 /**
-    Just show the map briefly after killing a Phantom
+ * @brief Just show the map briefly after killing a Phantom.
+ *
+ * @param is_last: Is this the last Phantom of a group?
  */
 void phantom_killed(bool is_last) {
-    Gfx::cls(BLUE);
+
+    Gfx::cls(COLOURS::BLUE);
     show_scores(is_last);
 }
 
 
 /**
-    Code used in a couple of 'show map' locations
-    Show the current score alongside the map.
+ * @brief Code used in a couple of 'show map' locations
+ *        Show the current score alongside the map.
+ *
+ * @param do_show_teleport: Should the teleport square be included?
  */
-void show_scores(bool show_tele) {
+void show_scores(bool do_show_teleport) {
+
     uint8_t cx = 10;
     if (game.high_score < game.score) game.high_score = game.score;
 
     // Show the score
-    Gfx::draw_word(WORD_SCORE, 10, 5, false);
+    Gfx::draw_word(WORDS::SCORE, 10, 5, false);
     uint32_t score = Utils::bcd(game.score);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
     cx += (((score & 0xF000) >> 12) == 1 ? 6 : 14);
@@ -1057,10 +1097,10 @@ void show_scores(bool show_tele) {
     Gfx::draw_number(score & 0x000F, cx, 18, true);
 
     // Show the high score
-    Gfx::draw_word(WORD_HIGH, 162, 5, false);
-    Gfx::draw_word(WORD_SCORE, 192, 5, false);
+    Gfx::draw_word(WORDS::HIGH, 162, 5, false);
+    Gfx::draw_word(WORDS::SCORE, 192, 5, false);
     score = Utils::bcd(game.high_score);
-    cx = (score & 0x000F == 1) ? 226 : 218;
+    cx = ((score & 0x000F) == 1) ? 226 : 218;
     Gfx::draw_number(score & 0x000F, cx, 18, true);
     cx = fix_num_width((score & 0x00F0) >> 4, cx);
     Gfx::draw_number((score & 0x00F0) >> 4,  cx, 18, true);
@@ -1069,29 +1109,50 @@ void show_scores(bool show_tele) {
     cx = fix_num_width((score & 0xF000) >> 12, cx);
     Gfx::draw_number((score & 0xF000) >> 12, cx, 18, true);
 
-    if (game.state != PLAYER_IS_DEAD) {
+    if (game.state != GAME_STATE::PLAYER_IS_DEAD) {
         // This is for the intermediate map only
         // Show kills
-        Gfx::draw_word(WORD_KILLS, 198, 228, false);
+        Gfx::draw_word(WORDS::KILLS, 198, 228, false);
         score = Utils::bcd(game.level_kills);
         cx = (score == 1) ? 226 : 220;
         Gfx::draw_number(score, cx, 204, true);
 
         // Show hits
-        Gfx::draw_word(WORD_HITS, 10, 228, false);
+        Gfx::draw_word(WORDS::HITS, 10, 228, false);
         score = Utils::bcd(game.level_hits);
         Gfx::draw_number(score, 10, 204, true);
     }
 
     // Add in the map
-    Map::draw(BASE_MAP_DELTA, true, show_tele);
+    Map::draw(BASE_MAP_DELTA, true, do_show_teleport);
 }
 
 
-/*
-    Return the delta when presenting a number.
-    Lower for 1, bigger for 0, 2-9
+/**
+ * @brief Return the delta when presenting a number.
+ *        Lower for 1, bigger for 0, 2-9
  */
 uint8_t fix_num_width(uint8_t value, uint8_t current) {
+
     return (current - (value == 1 ? 6 : 14));
 }
+
+
+inline DIRECTION do_turn_right(DIRECTION current) {
+
+    auto a = (uint8_t)current;
+    a++;
+    if (a > (uint8_t)DIRECTION::WEST) return DIRECTION::NORTH;
+    return (DIRECTION)a;
+}
+
+
+inline DIRECTION do_turn_left(DIRECTION current) {
+
+    auto a = (uint8_t)current;
+    a--;
+    if (a > (uint8_t)DIRECTION::WEST) return DIRECTION::WEST;
+    return (DIRECTION)a;
+}
+
+

@@ -11,8 +11,9 @@
 
 
 /*
- * C++ HEADERS
+ * Includes
  */
+// System, C++
 #include "picosystem.hpp"
 #include "hardware/adc.h"
 #include <iostream>
@@ -21,7 +22,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
-
+// Application
 #include "gfx.h"
 #include "help.h"
 #include "map.h"
@@ -30,27 +31,33 @@
 #include "utils.h"
 
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
 /*
- *      CONSTANTS
+ * ENUMERATIONS
  */
 // Player movement directions
-#define DIRECTION_NORTH                                 0
-#define DIRECTION_EAST                                  1
-#define DIRECTION_SOUTH                                 2
-#define DIRECTION_WEST                                  3
+enum class DIRECTION: uint8_t {
+    NORTH =             0,
+    EAST,
+    SOUTH,
+    WEST
+};
 
-#define MOVE_FORWARD                                    0
-#define TURN_RIGHT                                      1
-#define MOVE_BACKWARD                                   2
-#define TURN_LEFT                                       3
+enum class MOVE: uint8_t {
+    FORWARD =           0,
+    RIGHT =             1,
+    BACKWARD =          2,
+    LEFT =              3,
+    ERROR_CONDITION =   99
+};
 
 // Game states
-enum {
+enum class GAME_STATE: uint8_t {
     NOT_IN_PLAY,
     ANIMATE_LOGO,
     ANIMATE_CREDIT,
@@ -69,40 +76,30 @@ enum {
     ANIMATE_LEFT_TURN
 };
 
+
+/*
+ * CONSTANTS
+ */
 // Timer limits
-#define PHANTOM_MOVE_TIME_US                            1000000
-#define LASER_RECHARGE_US                               2000000
-#define MAP_POST_KILL_SHOW_MS                           3000
-#define LASER_FIRE_US                                   200000
-#define LOGO_ANIMATION_US                               9000
-#define LOGO_PAUSE_TIME                                 5000000
-
+constexpr uint32_t PHANTOM_MOVE_TIME_US =               1000000;
+constexpr uint32_t LASER_RECHARGE_US =                  2000000;
+constexpr uint32_t MAP_POST_KILL_SHOW_MS =              3000;
+constexpr uint32_t LASER_FIRE_US =                      200000;
+constexpr uint32_t LOGO_ANIMATION_US =                  9000;
+constexpr uint32_t LOGO_PAUSE_TIME =                    5000000;
 // Map square types
-#define MAP_TILE_WALL                                   0xEE
-#define MAP_TILE_CLEAR                                  0xFF
-#define MAP_TILE_TELEPORTER                             0xAA
-#define MAX_VIEW_RANGE                                  5
-#define BASE_MAP_DELTA                                  4
-
-#define MAX_PHANTOMS                                    3
-#define ERROR_CONDITION                                 99
-#define PHANTOM_NORTH                                   1
-#define PHANTOM_EAST                                    2
-#define PHANTOM_SOUTH                                   4
-#define PHANTOM_WEST                                    8
-
-// Colours
-#define GREEN                                           0xF0F0
-#define BLUE                                            0x0FF0
-#define RED                                             0x00FF
-#define WHITE                                           0xFFFF
-#define YELLOW                                          0xF0FF
-#define ORANGE                                          0xA0FF
-#define CLEAR                                           0x0000
-#define BLACK                                           0x00F0
-
+constexpr uint8_t MAP_TILE_WALL =                       0xEE;
+constexpr uint8_t MAP_TILE_CLEAR =                      0xFF;
+constexpr uint8_t MAP_TILE_TELEPORTER =                 0xAA;
+// Maximum viewable distance
+constexpr uint8_t MAX_VIEW_RANGE =                      5;
+// ???
+constexpr uint8_t BASE_MAP_DELTA =                      4;
 // Turn animation screen slice size
-#define SLICE                                           16
+constexpr uint8_t SLICE  =                              16;
+// No Phantom in view
+constexpr uint8_t NONE =                                99;
+constexpr uint8_t MAX_PHANTOMS =                        5;
 
 
 /*
@@ -111,7 +108,7 @@ enum {
 typedef struct {
     uint8_t                 x;
     uint8_t                 y;
-    uint8_t                 direction;
+    DIRECTION               direction;
 } Player;
 
 typedef struct {
@@ -127,7 +124,7 @@ typedef struct {
 
     Player                  player;
 
-    uint8_t                 state;
+    GAME_STATE              state;
     uint8_t                 map;
     uint8_t                 audio_range;
     uint8_t                 tele_x;
@@ -157,41 +154,42 @@ typedef struct {
 
 
 /*
- *      PROTOTYPES
+ * PROTOTYPES
  */
-void        setup_device();
-void        start_new_game();
-void        init_game();
-void        init_phantoms();
-void        init_level();
-void        start_new_level();
-void        set_teleport_square();
+void                setup_device(void);
+void                start_new_game(void);
+void                init_game(void);
+void                init_phantoms(void);
+void                init_level(void);
+void                start_new_level(void);
+void                set_teleport_square(void);
 
-void        update_world();
-void        check_senses();
-bool        move_phantoms();
-void        manage_phantoms();
+void                update_world(void);
+void                check_senses(void);
+bool                move_phantoms(void);
+void                manage_phantoms(void);
 
-uint8_t     get_direction(uint8_t key_pressed);
-uint8_t     get_facing_phantom(uint8_t range);
-uint8_t     count_facing_phantoms(uint8_t range);
+MOVE                get_direction(uint8_t key_pressed);
+uint8_t             get_facing_phantom(uint8_t range);
+uint8_t             count_facing_phantoms(uint8_t range);
 
-void        fire_laser();
-void        reset_laser();
-void        do_teleport();
+void                fire_laser(void);
+void                reset_laser(void);
+void                do_teleport(void);
 
-void        death();
-void        phantom_killed(bool is_last = false);
-void        show_scores(bool show_tele = false);
-uint8_t     fix_num_width(uint8_t value, uint8_t current);
+void                death(void);
+void                phantom_killed(bool is_last = false);
+void                show_scores(bool show_tele = false);
+uint8_t             fix_num_width(uint8_t value, uint8_t current);
 
-void        beep();
-
+void                beep(void);
+inline DIRECTION    do_turn_right(DIRECTION current);
+inline DIRECTION    do_turn_left(DIRECTION current);
 
 #ifdef __cplusplus
 }
-
-
 #endif
+
+
 
 #endif // _PHANTOM_SLAYER_MAIN_HEADER_

@@ -12,17 +12,17 @@
 
 
 /*
- *      CONSTANTS
+ * CONSTANTS
  */
-#define MAX_HELP_PAGES          5
+constexpr uint8_t MAX_HELP_PAGES = 5;
 
 
 /*
- *      PROTOTYPES
+ * PROTOTYPES
  */
 namespace Help {
     void        show_page(uint16_t page_number);
-    void        show_offer();
+    void        show_offer(void);
 }
 
 

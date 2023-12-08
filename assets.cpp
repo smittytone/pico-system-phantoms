@@ -37,7 +37,7 @@ const uint8_t word_sizes[] = {
 
 
 /*
- *      PHANTOM SPRITES
+ * PHANTOM SPRITES
  */
 const uint16_t phantom_sprites[] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3288,7 +3288,7 @@ const uint16_t phantom_sprites[] = {
 
 
 /*
- *      ZAPPED PHANTOM SPRITES
+ * ZAPPED PHANTOM SPRITES
  */
 const uint16_t zapped_sprites[] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6539,7 +6539,7 @@ const uint16_t zapped_sprites[] = {
 
 
 /*
- *      TEXT SPRITES
+ * TEXT SPRITES
  */
 const uint16_t word_sprites[] = {
     0xf0ff, 0xf0ff, 0xf0ff, 0xf0ff, 0xf0ff, 0xf0ff, 0xf0ff, 0xf0ff,
@@ -7264,7 +7264,7 @@ const uint16_t word_sprites[] = {
 
 
 /*
- *      LOGO SPRITE
+ * LOGO SPRITE
  */
 const uint16_t logo_sprite[] = {
     0x00ff, 0x00ff, 0x00ff, 0x00ff, 0x00ff, 0x00ff, 0x0000, 0x0000, 0x00ff, 0x00ff, 0x0000, 0x0000, 0x00ff, 0x00ff, 0x0000, 0x0000,
@@ -7536,7 +7536,7 @@ const uint16_t logo_sprite[] = {
 
 
 /*
- *      CREDIT SPRITE
+ * CREDIT SPRITE
  */
 const uint16_t credit_sprite[] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00ff, 0x00ff, 0x00ff, 0x00ff, 0x0000, 0x0000, 0x0000, 0x0000, 0x00ff, 0x00ff,

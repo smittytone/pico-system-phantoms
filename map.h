@@ -14,8 +14,8 @@
 /*
  * CONSTANTS
  */
-#define NUMBER_OF_MAPS              6
-#define MAP_MAX                     19
+constexpr uint8_t   NUMBER_OF_MAPS =  6;
+constexpr uint8_t   MAP_MAX =         19;
 
 
 /*
