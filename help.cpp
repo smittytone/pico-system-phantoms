@@ -164,6 +164,15 @@ void show_page(uint16_t page_number) {
         cursor((240 - w) / 2, 230);
         text("PRESS ANY KEY TO PLAY");
     }
+
+    int32_t w
+    int32_t h;
+     string s = "PRESS A TO CONTINUE";
+     if (page_number > 0 && page_number < MAX_HELP_PAGES - 1) s += ", B TO GO BACK";
+     if (page_number == MAX_HELP_PAGES - 1) s = "PRESS A TO PLAY, B TO GO BACK";
+     measure(s, w, h);
+     cursor((240 - w) / 2, 230);
+     text(s);
 }
 
 
