@@ -16,6 +16,7 @@
 // System, C++
 #include "picosystem.hpp"
 #include "hardware/adc.h"
+#include "hardware/regs/rosc.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -94,25 +95,25 @@ enum class KEY: uint8_t {
  * CONSTANTS
  */
 // Timer limits
-constexpr uint32_t PHANTOM_MOVE_TIME_US =               1000000;
-constexpr uint32_t LASER_RECHARGE_US =                  2000000;
-constexpr uint32_t MAP_POST_KILL_SHOW_MS =              3000;
-constexpr uint32_t LASER_FIRE_US =                      200000;
-constexpr uint32_t LOGO_ANIMATION_US =                  9000;
-constexpr uint32_t LOGO_PAUSE_TIME =                    5000000;
+constexpr uint32_t PHANTOM_MOVE_TIME_US     = 1000000;
+constexpr uint32_t LASER_RECHARGE_US        = 2000000;
+constexpr uint32_t MAP_POST_KILL_SHOW_MS    = 3000;
+constexpr uint32_t LASER_FIRE_US            = 200000;
+constexpr uint32_t LOGO_ANIMATION_US        = 9000;
+constexpr uint32_t LOGO_PAUSE_TIME          = 5000000;
 // Map square types
-constexpr uint8_t MAP_TILE_WALL =                       0xEE;
-constexpr uint8_t MAP_TILE_CLEAR =                      0xFF;
-constexpr uint8_t MAP_TILE_TELEPORTER =                 0xAA;
+constexpr uint8_t MAP_TILE_WALL             = 0xEE;
+constexpr uint8_t MAP_TILE_CLEAR            = 0xFF;
+constexpr uint8_t MAP_TILE_TELEPORTER       = 0xAA;
 // Maximum viewable distance
-constexpr uint8_t MAX_VIEW_RANGE =                      5;
+constexpr uint8_t MAX_VIEW_RANGE            = 5;
 // ???
-constexpr uint8_t BASE_MAP_DELTA =                      4;
+constexpr uint8_t BASE_MAP_Y_DELTA          = 4;
 // Turn animation screen slice size
-constexpr uint8_t SLICE  =                              16;
+constexpr uint8_t SLICE                     = 16;
 // No Phantom in view
-constexpr uint8_t NONE =                                99;
-constexpr uint8_t MAX_PHANTOMS =                        5;
+constexpr uint8_t NONE                      = 99;
+constexpr uint8_t MAX_PHANTOMS              = 5;
 
 
 /*
@@ -136,6 +137,7 @@ typedef struct {
     int8_t                  crosshair_delta;
 
     Player                  player;
+    bool                    is_dead;
 
     GAME_STATE              state;
     uint8_t                 map;

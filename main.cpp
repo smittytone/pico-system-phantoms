@@ -15,7 +15,7 @@ using namespace picosystem;
  *  GLOBALS
  */
 uint8_t     count_down = 5;
-uint8_t     dead_phantom = NONE;
+uint8_t     dead_phantom_index = NONE;
 uint8_t     help_page_count = 0;
 uint8_t     stab_count = 0;
 
@@ -85,6 +85,12 @@ void init() {
 void update([[maybe_unused]] uint32_t tick_ms) {
     uint32_t now = time_us_32();
     uint8_t key = 0;
+
+    if (game.is_dead) {
+        death();
+        return;
+    }
+
     switch (game.state) {
         case GAME_STATE::ANIMATE_LOGO:
             if (now - tele_flash_time > LOGO_ANIMATION_US) {
@@ -213,10 +219,10 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                 // (so it gets re-rolled in `manage_phantoms()`)
                 // NOTE `manage_phantoms()` calls `start_new_level()`
                 //      if necessary
-                Phantom &p = game.phantoms.at(dead_phantom);
+                Phantom& p = game.phantoms.at(dead_phantom_index);
                 p.x = NOT_ON_BOARD;
                 p.y = NOT_ON_BOARD;
-                dead_phantom = NONE;
+                dead_phantom_index = NONE;
                 manage_phantoms();
             }
             break;
@@ -227,7 +233,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             // Was a key tapped?
             key = Utils::inkey();
 
-            if ((key > (uint8_t)KEY::Y) && !game.show_reticule) {
+            if ((key > (uint8_t)KEY::Y) && !game.show_reticule && !game.is_firing) {
                 // A move key has been pressed
                 MOVE dir = get_direction(key);
                 uint8_t nx = game.player.x;
@@ -244,7 +250,8 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                         // Has the player walked up to a Phantom?
                         if (Map::phantom_on_square(nx, ny) != NONE) {
                             // Yes -- so the player is dead!
-                            death();
+                            //death();
+                            game.is_dead = true;
 
                             #ifdef DEBUG
                             printf("\nPLAYER IS DEAD\n");
@@ -257,7 +264,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                         game.player.y = ny;
 
                         #ifdef DEBUG
-                        printf("MOVED PLAYER (KEY: %02x), DIRECTION: %i\n", key, game.player.direction);
+                        printf("MOVED PLAYER (KEY: %02x), DIRECTION: %u\n", key, (uint8_t)game.player.direction);
                         #endif
                     }
                 } else if (dir == MOVE::RIGHT) {
@@ -269,7 +276,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         #ifdef DEBUG
-                        printf("TURNED PLAYER RIGHT, DIRECTION: %i\n", game.player.direction);
+                        printf("TURNED PLAYER RIGHT, DIRECTION: %u\n", (uint8_t)game.player.direction);
                         #endif
 
                         anim_x = -SLICE;
@@ -285,7 +292,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                     // Animate the turn now
                     if (!chase_mode && !map_mode) {
                         #ifdef DEBUG
-                        printf("TURNED PLAYER LEFT, DIRECTION: %i\n", game.player.direction);
+                        printf("TURNED PLAYER LEFT, DIRECTION: %u\n", (uint8_t)game.player.direction);
                         #endif
 
                         anim_x = -SLICE;
@@ -294,7 +301,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                         return;
                     }
                 }
-            } else if ((key & (uint8_t)KEY::B) && !game.show_reticule) {
+            } else if ((key & (uint8_t)KEY::B) && !game.show_reticule && !game.is_firing) {
                 // Player can only teleport if they have walked over the
                 // teleport square and they are not firing the laser
                 if (game.player.x == game.tele_x && game.player.y == game.tele_y) {
@@ -316,16 +323,21 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                 beep();
 
                 #ifdef DEBUG
-                printf("RADAR RANGE %i\n", game.audio_range);
+                printf("RADAR RANGE %u\n", game.audio_range);
                 #endif
             } else if (key & (uint8_t)KEY::Y) {
+                #ifdef DEBUG
+                // Map mode should be for debugging only
+                chase_mode = !chase_mode;
+                #endif
+
                 // Lower radar range
                 game.audio_range--;
                 if (game.audio_range < 1) game.audio_range = 6;
                 beep();
 
                 #ifdef DEBUG
-                printf("RADAR RANGE %i\n", game.audio_range);
+                printf("RADAR RANGE %u\n", game.audio_range);
                 #endif
             }
 
@@ -437,11 +449,11 @@ void draw([[maybe_unused]] uint32_t tick_ms) {
             // Render the screen
             if (chase_mode) {
                 // Show the first Phantom's view
-                const Phantom &p = game.phantoms.at(0);
+                const Phantom& p = game.phantoms.at(0);
                 Gfx::draw_screen(p.x, p.y, (uint8_t)p.direction);
             } else if (map_mode) {
                 // Draw an overhead view
-                Map::draw(BASE_MAP_DELTA, true);
+                Map::draw(BASE_MAP_Y_DELTA, true);
             } else {
                 // Show the player's view
                 Gfx::draw_screen(game.player.x, game.player.y, (uint8_t)game.player.direction);
@@ -473,26 +485,16 @@ void setup_device(void) {
     // TODO Make this controllable during the game
     backlight(100);
 
-    // Use one of the Pico's other analog inputs
-    // to seed the random number generator
-    //adc_init();
-    //adc_gpio_init(28);
-    //adc_select_input(2);
-
-    // Randomise using TinyMT
-    // https://github.com/MersenneTwister-Lab/TinyMT
-    tinymt32_init(&tinymt_store, RANDSEED);
-
     // Make the graphic frame rects
     // NOTE These are pixel values:
     //      left, top, width, height, Phantom lateral offset
     uint8_t coords[] = { 0,    0, 240, 160, 60,     // Outer LED frame
-                         20,  10, 200, 140, 50,
+                         20,   9, 200, 142, 50,
                          44,  20, 152, 120, 38,
                          66,  30, 108, 100, 26,
                          88,  40,  64,  80, 20,
                          102, 46,  36,  68,  8,
-                         114, 50,  12,  60,  2};    // 'End wall' for distant views
+                         114, 51,  12,  58,  2};    // 'End wall' for distant views
 
     // Read the array values into Rect structures
     uint8_t c = 0;
@@ -531,7 +533,7 @@ void start_new_game() {
     // and give the player a five-second countdown before
     // entering the maze
     Gfx::cls(COLOURS::BLUE);
-    Map::draw(BASE_MAP_DELTA, false);
+    Map::draw(BASE_MAP_Y_DELTA, false);
 
     Gfx::draw_number(game.level, 156, 12, true);
     Gfx::draw_word(WORDS::LEVEL, 72, 12, true);
@@ -582,9 +584,16 @@ void init_game(void) {
     game.crosshair_delta = 0;
     game.audio_range = 4;
 
+    game.is_dead = false;
+
     #ifdef DEBUG
     printf("DONE INIT_GAME()\n");
     #endif
+
+    // FROM 1.1.3 -- Move this here
+    // Randomise using TinyMT
+    // https://github.com/MersenneTwister-Lab/TinyMT
+    tinymt32_init(&tinymt_store, Utils::get_seed());
 }
 
 
@@ -655,13 +664,13 @@ void start_new_level(void) {
 
     game.player.x = x;
     game.player.y = y;
-    game.player.direction = (DIRECTION)(Utils::irandom(0, 4));
+    game.player.direction = static_cast<DIRECTION>(Utils::irandom(0, 4));
     //if (game.player.direction > 3) game.player.direction = 1
     game.start_x = x;
     game.start_y = y;
 
     #ifdef DEBUG
-    printf("PLAYER LOCATION: %i, %i. DIRECTION: %i\n", x, y, game.player.direction);
+    printf("PLAYER LOCATION: %u,%u. DIRECTION: %u\n", x, y, (uint8_t)game.player.direction);
     #endif
 
     // Set the teleport
@@ -671,7 +680,7 @@ void start_new_level(void) {
     // or where the player has been placed.
     // NOTE 'game.phantom_count' set in 'init_game()' and 'manage_phantoms()'
     for (uint8_t i = 0 ; i < game.phantom_count ; i++) {
-        Phantom &p = game.phantoms.at(i);
+        Phantom& p = game.phantoms.at(i);
         p.init();
         p.place(i);
     }
@@ -722,7 +731,8 @@ void update_world(void ) {
             check_senses();
         } else {
             // Player was killed
-            death();
+            //death();
+            game.is_dead = true;
 
             #ifdef DEBUG
             printf("PLAYER IS DEAD\n");
@@ -785,8 +795,8 @@ void manage_phantoms(void) {
         if (game.phantom_count > MAX_PHANTOMS) game.phantom_count = MAX_PHANTOMS;
 
         // Take all existing Phantoms off the board
-        for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
-            Phantom &p = game.phantoms.at(i);
+        for (uint8_t i = 0 ; i < game.phantom_count ; i++) {
+            Phantom& p = game.phantoms.at(i);
             p.x = NONE;
             p.y = NONE;
         }
@@ -887,10 +897,7 @@ uint8_t count_facing_phantoms(uint8_t range) {
             }
             break;
         case DIRECTION::EAST:
-            if (game.player.x == MAP_MAX) {
-                Gfx::draw_number(8, 90, 12);
-                return phantom_count;
-            }
+            if (game.player.x == MAP_MAX) return phantom_count;
             if (game.player.x + range > MAP_MAX) range = MAP_MAX - game.player.x;
             for (int8_t i = game.player.x ; i <= game.player.x + range ; ++i) {
                 phantom_count += (Map::phantom_on_square((uint8_t)i, game.player.y) != NONE ? 1 : 0);
@@ -911,7 +918,6 @@ uint8_t count_facing_phantoms(uint8_t range) {
             }
     }
 
-    Gfx::draw_number(phantom_count, 80, 12);
     return phantom_count;
 }
 
@@ -924,12 +930,13 @@ uint8_t count_facing_phantoms(uint8_t range) {
 */
 bool move_phantoms(void) {
 
+    bool player_is_caught = false;
     for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
-        Phantom &p = game.phantoms.at(i);
-        if (p.move()) return true;
+        Phantom& p = game.phantoms.at(i);
+        if (p.move()) player_is_caught = true;
     }
 
-    return false;
+    return player_is_caught;
 }
 
 
@@ -1001,11 +1008,11 @@ void fire_laser(void) {
 
     // Did we hit a Phantom?
     play(zap, 640, 200);
-    uint8_t n = get_facing_phantom(MAX_VIEW_RANGE);
-    if (n != NONE) {
+    uint8_t index = get_facing_phantom(MAX_VIEW_RANGE);
+    if (index != NONE) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
-        Phantom &p = game.phantoms.at(n);
+        Phantom& p = game.phantoms.at(index);
         p.hp--;
 
         // FROM 1.0.2
@@ -1017,17 +1024,20 @@ void fire_laser(void) {
         // Did that kill it?
         if (p.hp < 1) {
             // Yes! One dead Phantom...
+            p.hp = 0;
+            //p.x = NOT_ON_BOARD;
+            //p.y = NOT_ON_BOARD;
             game.score += 10;
             game.level_kills++;
             game.kills++;
 
-            // Briefly invert the screen and sound some tones
+            // Briefly sound some tones
             // tone(1200, 100, 200);
             // tone(600, 100, 200);
 
             // Quickly show the map
             game.state = GAME_STATE::ZAP_PHANTOM;
-            dead_phantom = n;
+            dead_phantom_index = index;
 
             // Reset the laser
             reset_laser();
@@ -1058,6 +1068,7 @@ void reset_laser(void) {
 void death(void) {
 
     game.state = GAME_STATE::PLAYER_IS_DEAD;
+    game.is_dead = false;
     //for (unsigned int i = 400 ; i > 100 ; i -= 2) tone(i, 30, 0);
     //sleep_ms(50);
     //tone(2200, 500, 600);
@@ -1137,7 +1148,7 @@ void show_scores(bool do_show_teleport) {
     }
 
     // Add in the map
-    Map::draw(BASE_MAP_DELTA, true, do_show_teleport);
+    Map::draw(BASE_MAP_Y_DELTA, true, do_show_teleport);
 }
 
 

@@ -52,6 +52,7 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 
 * 1.1.3 *Unreleased*
     * Make ‘Phantom zapped’ graphics look more like the original.
+    * Player should not be able to turn while firing.
     * Add back key to help.
     * Fix missing new-level countdown.
     * Bring code into line with more modern C++.

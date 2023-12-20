@@ -38,9 +38,9 @@ namespace Utils {
  *
  * @returns: The random number.
  */
-int irandom(int start, int max) {
+uint32_t irandom(int start, int max) {
 
-    int value = tinymt32_generate_uint32(&tinymt_store);
+    uint32_t value = tinymt32_generate_uint32(&tinymt_store);
     return ((value % max) + start);
 }
 
@@ -81,6 +81,28 @@ uint32_t bcd(uint32_t base) {
     }
 
     return (base >> 16) & 0xFFFF;
+}
+
+
+
+/**
+ * @brief RNG seed maker. Based on code from
+ *        https://people.ece.cornell.edu/land/courses/ece4760/RP2040/C_SDK_random/index_random.html
+ */
+uint32_t get_seed(void) {
+
+    int random, random_bit1;
+    volatile uint32_t* rnd_reg = (uint32_t *)(ROSC_BASE + ROSC_RANDOMBIT_OFFSET);
+
+    for (size_t i = 0 ; i < 32 ; i++) {
+        // At least one nop need to be here for timing
+        asm("nop");
+        asm("nop");     // Adds one microsec to execution
+        random_bit1 = 0x00000001 & (*rnd_reg);
+        random = (random << 1) | random_bit1;
+    }
+
+    return (uint32_t)random;
 }
 
 

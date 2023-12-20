@@ -102,7 +102,7 @@ void Phantom::place(uint8_t my_index) {
 bool Phantom::move(void) {
 
     // Has the Phantom been zapped? Don't move it
-    if (x == NOT_ON_BOARD || hp < 1) return false;
+    if (x == NOT_ON_BOARD) return false;
 
     uint8_t new_x = x;
     uint8_t new_y = y;
@@ -114,7 +114,7 @@ bool Phantom::move(void) {
     int8_t dx = x - game.player.x;
     int8_t dy = y - game.player.y;
 
-    // Has the phantom got the player?
+    // Has the phantom caught the player?
     if (dx == 0 && dy == 0) return true;
 
     // Set up direction storage
@@ -225,18 +225,18 @@ bool Phantom::move(void) {
         }
     } else {
         // Count == 0 -- this is the special case where phantom can't move
-        //  where it wants so must move away or wait (if it has NOWHERE to go)
+        // where it wants so must move away or wait (if it has NOWHERE to go)
         if (available_directions != 0) {
             // Just pick a random available direction and take it,
             // but remove the way the phantom came (provided it
             // doesn't leave it with no way out)
-            // NOTE re-calculate 'from' here so we don't mess up
+            // NOTE re-calculate `from` here so we don't mess up
             //      the ealier case when it needs to be zero
             from = (uint8_t)came_from();
             uint8_t ad = available_directions;
             ad &= (~from);
 
-            // Just in case removing from leaves the Phantom nowhere to go
+            // Just in case removing `from` leaves the Phantom nowhere to go
             // ie. it's at a dead end
             if (ad != 0) available_directions = ad;
 
@@ -263,10 +263,14 @@ bool Phantom::move(void) {
     }
 
     // Set the Phantom's new location
+    #ifdef DEBUG
+    printf("Phanton moved from %u,%u to %u,%u\n", x, y, new_x, new_y);
+    #endif
     x = new_x;
     y = new_y;
     direction = new_direction;
 
+    // Phantom moved and player was not caught
     return false;
 }
 

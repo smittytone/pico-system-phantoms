@@ -15,9 +15,10 @@
  * PROTOYPES
  */
 namespace Utils {
-    int             irandom(int start, int max);
+    uint32_t        irandom(int start, int max);
     uint8_t         inkey(void);
     uint32_t        bcd(uint32_t base);
+    uint32_t        get_seed(void);
 }
 
 

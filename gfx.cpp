@@ -19,7 +19,7 @@ using std::string;
 extern tinymt32_t       tinymt_store;
 extern Game             game;
 extern Rect             rects[7];
-extern uint8_t          dead_phantom;
+extern uint8_t          dead_phantom_index;
 
 
 /*
@@ -51,7 +51,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
 
     uint8_t far_frame = Map::get_view_distance(x, y, direction);
     int8_t frame = far_frame;
-    int8_t iFrame = frame;
+    int8_t phantom_frame = frame;
 
     // Set 'phantom_count' upper nibble to total number of
     // Phantoms facing the player; lower nibble is the 'current'
@@ -63,15 +63,21 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     // Clear the screen
     cls(COLOURS::BLACK);
 
+#ifdef DEBUG
+    pen((color_t)COLOURS::WHITE);
+    draw_number(phantom_count & 0x0F, 200, 230);
+#endif
+
     if (game.state == GAME_STATE::DO_TELEPORT_ONE || game.state == GAME_STATE::ZAP_PHANTOM) {
         // 3D View: red
         pen((color_t)COLOURS::RED);
-        frect(0, 40, 240, 160);
     } else {
         // 3D View: yellow
         pen((color_t)COLOURS::YELLOW);
-        frect(0, 40, 240, 160);
     }
+
+    // File the drawing area
+    frect(0, 40, 240, 160);
 
     switch((DIRECTION)direction) {
         case DIRECTION::NORTH:
@@ -89,7 +95,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             } while (frame >= 0);
 
             draw_skirting(far_frame);
-            i = x - far_frame;
+            i = y - far_frame;
 
             do {
                 // Check for the presence of a Phantom on the drawn square
@@ -99,13 +105,13 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 //      laterally
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
                 }
 
                 // Move to the next frame and square
-                --iFrame;
+                --phantom_frame;
                 ++i;
-            } while (iFrame >= 0);
+            } while (phantom_frame >= 0);
         break;
 
         case DIRECTION::EAST:
@@ -117,16 +123,16 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             } while (frame >= 0);
 
             draw_skirting(far_frame);
-            i = x - far_frame;
+            i = x + far_frame;
 
             do {
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
                 }
-                --iFrame;
+                --phantom_frame;
                 --i;
-            } while (iFrame >= 0);
+            } while (phantom_frame >= 0);
 
             break;
 
@@ -144,11 +150,11 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             do {
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
                 }
-                --iFrame;
+                --phantom_frame;
                 --i;
-            } while (iFrame >= 0);
+            } while (phantom_frame >= 0);
 
             break;
 
@@ -166,12 +172,15 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             do {
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(iFrame, &phantom_count, (n == dead_phantom));
+                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
                 }
-                --iFrame;
+                --phantom_frame;
                 ++i;
-            } while (iFrame >= 0);
+            } while (phantom_frame >= 0);
     }
+
+    pen((color_t)COLOURS::BLACK);
+    hline(0, 200, 240);
 }
 
 
@@ -246,6 +255,8 @@ void draw_skirting(uint8_t frame_index) {
     line(r.x, r.y + r.height + 40 , 0, 200);
     line(r.x + r.width, r.y + r.height + 39, 240, 199);
     line(r.x + r.width, r.y + r.height + 40, 240, 200);
+    hline(r.x, r.y + r.height + 39, r.width);
+    hline(r.x - 1 , r.y + r.height + 40, r.width + 2);
 }
 
 
@@ -387,7 +398,7 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
     uint8_t current = c & 0x0F;
     game.crosshair_delta = 0;
 
-    // Space the phantoms sideways ccording to
+    // Space the phantoms sideways according to
     // the number of them on screen
     if (number_phantoms > 1) {
         if (current == 2) {
@@ -418,6 +429,7 @@ void draw_phantom(uint8_t frame_index, uint8_t* count, bool is_zapped) {
     }
 
     // Paint in the Phantom
+    if (is_zapped) pen((color_t)COLOURS::WHITE);
     blit(is_zapped ? zapped_buffer : phantom_buffer, sx, sy, width, height, dx, dy);
 }
 
