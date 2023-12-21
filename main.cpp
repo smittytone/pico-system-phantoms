@@ -361,11 +361,8 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                     reset_laser();
                     game.is_firing = true;
 
-                    // Check if we've hit a Phantom
-                    // fire_laser();
-
                     #ifdef DEBUG
-                        printf("FIRED\n");
+                    printf("FIRED\n");
                     #endif
                 }
             }
@@ -722,6 +719,7 @@ void set_teleport_square(void) {
  */
 void update_world(void ) {
 
+    // FROM 1.1.3 -- move from `update()` and add firing check.
     // Check if we've hit a Phantom
     if (game.is_firing) fire_laser();
 
@@ -880,6 +878,14 @@ uint8_t get_facing_phantom(uint8_t range) {
 }
 
 
+/**
+ * @brief Return distance to facing phantom.
+ *
+ * @param index: The index of the foremost Phantom (see
+ *               `get_facing_phantom()`)
+ *
+ * @returns: The distance to the specified Phantom.
+ */
 uint8_t range_facing_phantom(uint8_t index) {
 
     const Phantom& p = game.phantoms.at(index);
@@ -1026,6 +1032,8 @@ void fire_laser(void) {
     // Did we hit a Phantom?
     play(zap, 640, 200);
     uint8_t index = get_facing_phantom(MAX_VIEW_RANGE);
+    // FROM 1.1.3
+    // Only process hit when the last bolt has reached the Phantom
     if (index != NONE && game.zap_frame >= range_facing_phantom(index)) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
