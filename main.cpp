@@ -362,7 +362,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                     game.is_firing = true;
 
                     // Check if we've hit a Phantom
-                    fire_laser();
+                    // fire_laser();
 
                     #ifdef DEBUG
                         printf("FIRED\n");
@@ -722,6 +722,9 @@ void set_teleport_square(void) {
  */
 void update_world(void ) {
 
+    // Check if we've hit a Phantom
+    if (game.is_firing) fire_laser();
+
     // Move the Phantom(s) periodically -- this is how
     // we increase their speed as the game progresses
     uint32_t now = time_us_32();
@@ -731,7 +734,6 @@ void update_world(void ) {
             check_senses();
         } else {
             // Player was killed
-            //death();
             game.is_dead = true;
 
             #ifdef DEBUG
@@ -878,6 +880,21 @@ uint8_t get_facing_phantom(uint8_t range) {
 }
 
 
+uint8_t range_facing_phantom(uint8_t index) {
+
+    const Phantom& p = game.phantoms.at(index);
+    switch(game.player.direction) {
+        case DIRECTION::NORTH:
+            return game.player.y - p.y;
+        case DIRECTION::EAST:
+            return p.x - game.player.x;
+        case DIRECTION::SOUTH:
+            return p.y - game.player.y;
+        default: // WEST
+            return game.player.x - p.x;
+    }
+}
+
 /**
  * @brief Return the number of Phantoms in front of the player.
  *
@@ -931,7 +948,7 @@ uint8_t count_facing_phantoms(uint8_t range) {
 bool move_phantoms(void) {
 
     bool player_is_caught = false;
-    for (uint8_t i = 0 ; i < MAX_PHANTOMS ; i++) {
+    for (uint8_t i = 0 ; i < game.phantom_count ; i++) {
         Phantom& p = game.phantoms.at(i);
         if (p.move()) player_is_caught = true;
     }
@@ -1009,7 +1026,7 @@ void fire_laser(void) {
     // Did we hit a Phantom?
     play(zap, 640, 200);
     uint8_t index = get_facing_phantom(MAX_VIEW_RANGE);
-    if (index != NONE) {
+    if (index != NONE && game.zap_frame >= range_facing_phantom(index)) {
         // A hit! A palpable hit!
         // Deduct 1HP from the Phantom
         Phantom& p = game.phantoms.at(index);

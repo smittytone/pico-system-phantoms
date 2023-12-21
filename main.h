@@ -187,6 +187,7 @@ void                manage_phantoms(void);
 MOVE                get_direction(uint8_t key_pressed);
 uint8_t             get_facing_phantom(uint8_t range);
 uint8_t             count_facing_phantoms(uint8_t range);
+uint8_t             range_facing_phantom(uint8_t index);
 
 void                fire_laser(void);
 void                reset_laser(void);

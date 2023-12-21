@@ -74,7 +74,8 @@ void Phantom::place(uint8_t my_index) {
                 if (game.phantom_count > 1) {
                     for (uint8_t i = 0 ; i < game.phantom_count ; ++i) {
                         if (i == my_index) continue;
-                        const Phantom &p = game.phantoms.at(i);
+                        const Phantom& p = game.phantoms.at(i);
+                        if (p.x == NOT_ON_BOARD) continue;
                         if (p.x == new_x && p.y == new_y) {
                             good = false;
                             break;
