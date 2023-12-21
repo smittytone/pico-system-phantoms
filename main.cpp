@@ -67,9 +67,9 @@ void init() {
     pen((color_t)COLOURS::BLACK);
     int32_t w;
     int32_t h;
-    measure("1.1.3", w, h);
+    measure("1.2.0", w, h);
     cursor(238 - w, 238 - h);
-    text("1.1.3");
+    text("1.2.0");
 
     // Set up game device
     // NOTE This is all the stuff that is per session,
@@ -587,7 +587,7 @@ void init_game(void) {
     printf("DONE INIT_GAME()\n");
     #endif
 
-    // FROM 1.1.3 -- Move this here
+    // FROM 1.2.0 -- Move this here
     // Randomise using TinyMT
     // https://github.com/MersenneTwister-Lab/TinyMT
     tinymt32_init(&tinymt_store, Utils::get_seed());
@@ -719,7 +719,7 @@ void set_teleport_square(void) {
  */
 void update_world(void ) {
 
-    // FROM 1.1.3 -- move from `update()` and add firing check.
+    // FROM 1.2.0 -- move from `update()` and add firing check.
     // Check if we've hit a Phantom
     if (game.is_firing) fire_laser();
 
@@ -1032,7 +1032,7 @@ void fire_laser(void) {
     // Did we hit a Phantom?
     play(zap, 640, 200);
     uint8_t index = get_facing_phantom(MAX_VIEW_RANGE);
-    // FROM 1.1.3
+    // FROM 1.2.0
     // Only process hit when the last bolt has reached the Phantom
     if (index != NONE && game.zap_frame >= range_facing_phantom(index)) {
         // A hit! A palpable hit!

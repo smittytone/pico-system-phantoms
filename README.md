@@ -1,4 +1,4 @@
-# Phantom Slayer for the Pimoroni PicoSystem 1.1.3
+# Phantom Slayer for the Pimoroni PicoSystem 1.2.0
 
 A retro-style 3D arcade game written in C++.
 
@@ -50,10 +50,12 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 
 ### Release Notes
 
-* 1.1.3 *Unreleased*
+* 1.2.0 *Unreleased*
     * Make ‘Phantom zapped’ graphics look more like the original.
-    * Player should not be able to turn while firing.
-    * Add back key to help.
+    * Show laser bolt before it hits a Phantom.
+    * Player can no longer turn while preparing to fire.
+    * New, proper RNG seeding with good entropy source.
+    * Add back key to help text pages.
     * Fix missing new-level countdown.
     * Bring code into line with more modern C++.
     * Bring code into line with my current style standards.
