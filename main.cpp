@@ -209,6 +209,38 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             break;
         case GAME_STATE::ZAP_PHANTOM:
             tick_count++;
+            if (tick_count == 10) {
+                tick_count = 0;
+                uint8_t index = get_facing_phantom(MAX_VIEW_RANGE);
+                if (index != NONE) {
+                    // Did that kill it?
+                    Phantom& p = game.phantoms.at(index);
+                    if (p.hp < 1) {
+                        // Yes! One dead Phantom...
+                        p.hp = 0;
+                        game.score += 10;
+                        game.level_kills++;
+                        game.kills++;
+
+                        // Briefly sound some tones
+                        // tone(1200, 100, 200);
+                        // tone(600, 100, 200);
+
+                        // Quickly show the map
+                        game.state = GAME_STATE::PHANTOM_DEAD;
+                        dead_phantom_index = index;
+
+                        // Reset the laser
+                        reset_laser();
+                        break;
+                    }
+                }
+
+                game.state = GAME_STATE::IN_PLAY;
+            }
+            break;
+        case GAME_STATE::PHANTOM_DEAD:
+            tick_count++;
             if (tick_count == 25) {
                 tick_count = 0;
                 game.state = GAME_STATE::SHOW_TEMP_MAP;
@@ -457,7 +489,7 @@ void draw([[maybe_unused]] uint32_t tick_ms) {
             }
 
             // Don't show gunnery if a Phantom has been hit
-            if (game.state == GAME_STATE::ZAP_PHANTOM) return;
+            if (game.state == GAME_STATE::PHANTOM_DEAD) return;
 
             // Is the laser being fired?
             if (game.is_firing) Gfx::draw_zap(game.zap_frame);
@@ -1046,27 +1078,10 @@ void fire_laser(void) {
         game.level_hits++;
         game.is_firing = false;
 
-        // Did that kill it?
-        if (p.hp < 1) {
-            // Yes! One dead Phantom...
-            p.hp = 0;
-            //p.x = NOT_ON_BOARD;
-            //p.y = NOT_ON_BOARD;
-            game.score += 10;
-            game.level_kills++;
-            game.kills++;
-
-            // Briefly sound some tones
-            // tone(1200, 100, 200);
-            // tone(600, 100, 200);
-
-            // Quickly show the map
-            game.state = GAME_STATE::ZAP_PHANTOM;
-            dead_phantom_index = index;
-
-            // Reset the laser
-            reset_laser();
-        }
+        // FROM 1.2.0
+        // Just show the hit graphic: we'll check for damage
+        // during the update cycle
+        game.state = GAME_STATE::ZAP_PHANTOM;
     }
 }
 

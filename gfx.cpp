@@ -68,17 +68,21 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
     draw_number(phantom_count & 0x0F, 200, 230);
 #endif
 
-    if (game.state == GAME_STATE::DO_TELEPORT_ONE || game.state == GAME_STATE::ZAP_PHANTOM) {
-        // 3D View: red
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE || game.state == GAME_STATE::PHANTOM_DEAD) {
+        // Background red
         pen((color_t)COLOURS::RED);
+    } else if (game.state == GAME_STATE::ZAP_PHANTOM) {
+        // Background blue
+        pen((color_t)COLOURS::BLUE);
     } else {
-        // 3D View: yellow
+        // Background yellow
         pen((color_t)COLOURS::YELLOW);
     }
 
     // File the drawing area
     frect(0, 40, 240, 160);
 
+    bool phantom_is_hit = (game.state == GAME_STATE::PHANTOM_DEAD || game.state == GAME_STATE::ZAP_PHANTOM);
     switch((DIRECTION)direction) {
         case DIRECTION::NORTH:
             // Viewer is facing north, so left = West, right = East
@@ -105,7 +109,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
                 //      laterally
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
+                    draw_phantom(phantom_frame, &phantom_count, phantom_is_hit);
                 }
 
                 // Move to the next frame and square
@@ -128,7 +132,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             do {
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
+                    draw_phantom(phantom_frame, &phantom_count, phantom_is_hit);
                 }
                 --phantom_frame;
                 --i;
@@ -150,7 +154,7 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             do {
                 uint8_t n = Map::phantom_on_square(x, i);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
+                    draw_phantom(phantom_frame, &phantom_count, phantom_is_hit);
                 }
                 --phantom_frame;
                 --i;
@@ -172,13 +176,15 @@ void draw_screen(uint8_t x, uint8_t y, uint8_t direction) {
             do {
                 uint8_t n = Map::phantom_on_square(i, y);
                 if (phantom_count > 0 && n != NONE) {
-                    draw_phantom(phantom_frame, &phantom_count, (game.state == GAME_STATE::ZAP_PHANTOM));
+                    draw_phantom(phantom_frame, &phantom_count, phantom_is_hit);
                 }
                 --phantom_frame;
                 ++i;
             } while (phantom_frame >= 0);
     }
 
+    // FROM 1.2.0
+    // Draw over protruding diagonals below the view
     pen((color_t)COLOURS::BLACK);
     hline(0, 200, 240);
 }
@@ -204,7 +210,7 @@ bool draw_section(uint8_t x, uint8_t y, uint8_t left_dir, uint8_t right_dir, uin
     // Draw in left and right wall segments
     // NOTE Second argument is true or false: wall section is
     //      open or closed, respectively
-    if (game.state != GAME_STATE::ZAP_PHANTOM) {
+    if (game.state != GAME_STATE::PHANTOM_DEAD) {
         draw_left_wall(current_frame, (Map::get_view_distance(x, y, left_dir) > 0));
         draw_right_wall(current_frame, (Map::get_view_distance(x, y, right_dir) > 0));
 
@@ -232,7 +238,7 @@ void draw_floor_line(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
     auto colour = (color_t)COLOURS::RED;
     if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
-    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
+    if (game.state == GAME_STATE::PHANTOM_DEAD || game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
     pen(colour);
     hline(r.x, r.y + r.height + 39, r.width);
     hline(r.x - 1 , r.y + r.height + 40, r.width + 2);
@@ -249,7 +255,7 @@ void draw_skirting(uint8_t frame_index) {
     Rect r = rects[frame_index + 1];
     auto colour = (color_t)COLOURS::RED;
     if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
-    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
+    if (game.state == GAME_STATE::PHANTOM_DEAD || game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::GREEN;
     pen(colour);
     line(r.x, r.y + r.height + 39, 0, 199);
     line(r.x, r.y + r.height + 40 , 0, 200);
@@ -291,7 +297,10 @@ void draw_left_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(game.state == GAME_STATE::DO_TELEPORT_ONE ? (color_t)COLOURS::WHITE : (color_t)COLOURS::BLUE);
+    auto colour = (color_t)COLOURS::BLUE;
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
+    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::YELLOW;
+    pen(colour);
     frect(o.x, i.y + 40, i.x - o.x - 1, i.height);
     if (is_open) return;
 
@@ -317,7 +326,10 @@ void draw_right_wall(uint8_t frame_index, bool is_open) {
 
     // Draw an open left wall, ie. the facing wall of the
     // adjoining corridor, and then return
-    pen(game.state == GAME_STATE::DO_TELEPORT_ONE ? (color_t)COLOURS::WHITE : (color_t)COLOURS::BLUE);
+    auto colour = (color_t)COLOURS::BLUE;
+    if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
+    if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::YELLOW;
+    pen(colour);
     uint8_t xd = i.x + i.width;
     frect(xd + 1, i.y + 40, o.width + o.x - xd - 1, i.height);
     if (is_open) return;
@@ -350,7 +362,10 @@ void draw_far_wall(uint8_t frame_index) {
                rxd - 4, ryd + 37,
                rxd - 4, r.y + 42});
     } else {
-        pen(game.state == GAME_STATE::DO_TELEPORT_ONE ? (color_t)COLOURS::WHITE : (color_t)COLOURS::BLUE);
+        auto colour = (color_t)COLOURS::BLUE;
+        if (game.state == GAME_STATE::DO_TELEPORT_ONE) colour = (color_t)COLOURS::WHITE;
+        if (game.state == GAME_STATE::ZAP_PHANTOM) colour = (color_t)COLOURS::YELLOW;
+        pen(colour);
         frect(r.x, r.y + 40, r.width, r.height);
     }
 }
