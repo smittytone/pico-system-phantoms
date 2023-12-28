@@ -52,6 +52,8 @@ This games is based on a 1982 original created by Ken Kalish of Med Systems for 
 
 * 1.2.0 *Unreleased*
     * Make ‘Phantom zapped’ graphics look more like the original.
+    * Add 'hit Phantom' view as per the original.
+    * Add pre-game Phantom animation as per the original.
     * Show laser bolt before it hits a Phantom.
     * Player can no longer turn while preparing to fire.
     * New, proper RNG seeding with good entropy source.

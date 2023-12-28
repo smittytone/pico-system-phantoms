@@ -588,4 +588,18 @@ void cls(COLOURS colour) {
 }
 
 
+void draw_pre_map_background(void) {
+
+    // Clear the screen
+    cls(COLOURS::GREEN);
+    //pen((color_t)COLOURS::GREEN);
+    //frect(0, 40, 240, 160);
+
+    pen((color_t)COLOURS::YELLOW);
+    for (size_t i = 0 ; i < 240 ; i += 4) {
+        vline(i, 40, 160);
+    }
+}
+
+
 }   // namespace Gfx

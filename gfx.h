@@ -72,6 +72,7 @@ namespace Gfx {
 
     void        alt_blit(const buffer_t *src, int32_t sx, int32_t sy, int32_t w, int32_t h, int32_t dx, int32_t dy);
     void        cls(COLOURS colour);
+    void        draw_pre_map_background(void);
 }
 
 

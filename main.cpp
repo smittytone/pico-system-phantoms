@@ -126,7 +126,8 @@ void update([[maybe_unused]] uint32_t tick_ms) {
                 game.state = GAME_STATE::SHOW_HELP;
                 beep();
             } else if (key != 0) {
-                start_new_game();
+                // FROM 1.2.0 -- Show pre-map screen
+                game.state = GAME_STATE::PRE_GAME_VIEW;
             }
             break;
         case GAME_STATE::SHOW_HELP:
@@ -135,11 +136,20 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             if (key > 0) {
                 help_page_count += ((key == (uint8_t)KEY::B && help_page_count > 0) ? -1 : 1);
                 if (help_page_count >= MAX_HELP_PAGES) {
-                    start_new_game();
+                    // FROM 1.2.0 -- Show pre-map screen
+                    game.state = GAME_STATE::PRE_GAME_VIEW;
                     break;
                 }
 
                 if (help_page_count > MAX_HELP_PAGES - 1) help_page_count = 0;
+            }
+            break;
+        // FROM 1.2.0
+        case GAME_STATE::PRE_GAME_VIEW:
+            tick_count++;
+            if (tick_count > 79) {
+                tick_count = 0;
+                start_new_game();
             }
             break;
         case GAME_STATE::START_COUNT:
@@ -167,7 +177,7 @@ void update([[maybe_unused]] uint32_t tick_ms) {
             break;
         case GAME_STATE::NEW_GAME_OFFER:
             // Triggered after PLAYER_IS_DEAD has been visible
-            if (Utils::inkey() > 0) start_new_game();
+            if (Utils::inkey() > 0) game.state = GAME_STATE::PRE_GAME_VIEW;
             break;
         case GAME_STATE::DO_TELEPORT_ONE:
             // Flip between TELE_ONE and TELE_TWO
@@ -411,6 +421,8 @@ void update([[maybe_unused]] uint32_t tick_ms) {
  */
 void draw([[maybe_unused]] uint32_t tick_ms) {
 
+    uint8_t count = 1;
+
     switch(game.state) {
         case GAME_STATE::ANIMATE_LOGO:
             pen((color_t)COLOURS::GREEN);
@@ -430,6 +442,16 @@ void draw([[maybe_unused]] uint32_t tick_ms) {
         case GAME_STATE::SHOW_HELP:
             // Display a help page
             Help::show_page(help_page_count);
+            break;
+        // FROM 1.2.0
+        case GAME_STATE::PRE_GAME_VIEW:
+            if (tick_count % 10 == 0 && tick_count < 61) {
+                Gfx::draw_pre_map_background();
+                if (tick_count == 30) Gfx::draw_phantom(4, &count, false);
+                if (tick_count == 40) Gfx::draw_phantom(3, &count, false);
+                if (tick_count == 50) Gfx::draw_phantom(2, &count, false);
+                if (tick_count == 60) Gfx::draw_phantom(1, &count, false);
+            }
             break;
         case GAME_STATE::START_COUNT:
             // Update the on-screen countdown

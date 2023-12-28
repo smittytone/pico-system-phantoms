@@ -66,6 +66,7 @@ enum class GAME_STATE: uint8_t {
     DO_STAB,
     OFFER_HELP,
     SHOW_HELP,
+    PRE_GAME_VIEW,
     START_COUNT,
     IN_PLAY,
     DO_TELEPORT_ONE,
@@ -78,9 +79,7 @@ enum class GAME_STATE: uint8_t {
     ANIMATE_RIGHT_TURN,
     ANIMATE_LEFT_TURN,
     MAZE_SELECT,
-    SPEED_SELECT,
-    PRE_MAP,
-    MAP_GLANCE
+    SPEED_SELECT
 };
 
 // Keys
