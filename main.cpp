@@ -2,7 +2,7 @@
  * phantom-slayer for Raspberry Pi Pico
  *
  * @author      smittytone
- * @copyright   2023, Tony Smith
+ * @copyright   2024, Tony Smith
  * @licence     MIT
  *
  */
@@ -1240,5 +1240,3 @@ inline DIRECTION do_turn_left(DIRECTION current) {
     if (a > (uint8_t)DIRECTION::WEST) return DIRECTION::WEST;
     return (DIRECTION)a;
 }
-
-
